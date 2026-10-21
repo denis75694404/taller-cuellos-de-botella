@@ -1498,7 +1498,8 @@ function viewPlenario(entering) {
         : "La propuesta con más votos de todo el taller es la ganadora del plenario.")),
     open ? h("div", { class: "chips" }, h("span", { class: "chip" + (mv ? " used" : "") }, mv ? svgCheck() : "1")) : null)));
   if (f === "preparacion") {
-    out.push(h("div", { class: "vlist" }, ...p.items.map((it, i) => h("div", { class: "vitem" + (entering ? " enter" : ""), style: `--d:${i * 0.06}s` },
+    // el facilitador ve solo la tarjeta de edición (que ya lista las propuestas); los participantes ven la lista
+    if (!fac) out.push(h("div", { class: "vlist" }, ...p.items.map((it, i) => h("div", { class: "vitem" + (entering ? " enter" : ""), style: `--d:${i * 0.06}s` },
       h("span", { class: "body" }, h("div", { class: "who" }, `Grupo ${it.g}` + (it.orig ? " · editada por el facilitador" : "")), h("div", { class: "txt" }, it.t))))));
     if (fac) out.push(plenEditCard(p), h("div", { class: "ractions" }, h("button", { class: "btn", onclick: votarPlenario }, "▶ Iniciar votación del plenario (3 min)")));
     else out.push(h("div", { class: "sys" }, "Espera: la votación del plenario aún no empieza."));
@@ -2249,7 +2250,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021182833";
+const BUILD = "20261021183113";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
