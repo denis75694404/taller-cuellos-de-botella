@@ -930,15 +930,26 @@ function openSala(code) {
   if (ROLE === "admin" && S.isAdmin) S.unsub.push(salaRef().collection("encuesta").onSnapshot(q => { S.enc = new Map(q.docs.map(d => [d.id, d.data()])); }, () => {}));
 }
 function ensureGroupSubs() {
+  S.subRetry = S.subRetry || {};
   const want = new Set(isFac() ? Array.from({ length: nGrupos() }, (_, i) => i + 1) : (me()?.grupo ? [me().grupo] : []));
   for (const [g, us] of S.gsubs) if (!want.has(g)) { us.forEach(u => u()); S.gsubs.delete(g); S.G.delete(g); }
   for (const g of want) {
     if (S.gsubs.has(g)) continue;
     S.G.set(g, { resp: [], votos: new Map(), sol: new Map() });
+    // si Firebase aún no registra al integrante en el grupo (red lenta o recién cambió de grupo),
+    // rechaza la escucha: se vuelve a intentar sola en vez de quedarse sin respuestas
+    const err = e => {
+      const us = S.gsubs.get(g); if (!us) return;
+      us.forEach(u => u()); S.gsubs.delete(g);
+      const n = (S.subRetry[g] = (S.subRetry[g] || 0) + 1);
+      if (n > 12) return fbError(e);
+      setTimeout(() => { if (S.roomReady) { ensureGroupSubs(); render(); } }, Math.min(8000, 700 * n));
+    };
+    const ok = () => { S.subRetry[g] = 0; };
     S.gsubs.set(g, [
-      grupoRef(g).collection("respuestas").orderBy("ts").onSnapshot({ includeMetadataChanges: true }, q => { gdata(g).resp = q.docs.map(d => ({ id: d.id, ...d.data(), pend: d.metadata.hasPendingWrites })).filter(r => typeof r.t === "string"); S.G.set(g, gdata(g)); render(); }, fbError),
-      grupoRef(g).collection("soluciones").onSnapshot(q => { gdata(g).sol = new Map(q.docs.map(d => [d.id, d.data()])); S.G.set(g, gdata(g)); render(); }, fbError),
-      grupoRef(g).collection("votos").onSnapshot(q => { gdata(g).votos = new Map(q.docs.map(d => [d.id, d.data()])); S.G.set(g, gdata(g)); render(); }, fbError)
+      grupoRef(g).collection("respuestas").orderBy("ts").onSnapshot({ includeMetadataChanges: true }, q => { ok(); gdata(g).resp = q.docs.map(d => ({ id: d.id, ...d.data(), pend: d.metadata.hasPendingWrites })).filter(r => typeof r.t === "string"); S.G.set(g, gdata(g)); S.sig = ""; render(); }, err),
+      grupoRef(g).collection("soluciones").onSnapshot(q => { gdata(g).sol = new Map(q.docs.map(d => [d.id, d.data()])); S.G.set(g, gdata(g)); render(); }, err),
+      grupoRef(g).collection("votos").onSnapshot(q => { gdata(g).votos = new Map(q.docs.map(d => [d.id, d.data()])); S.G.set(g, gdata(g)); render(); }, err)
     ]);
   }
 }
@@ -2027,7 +2038,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021163325";
+const BUILD = "20261021164502";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
