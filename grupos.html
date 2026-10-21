@@ -345,6 +345,15 @@ main > .inner{flex:1 0 auto;width:100%}
 .nextcard p{margin:0;color:var(--muted);font-size:14px}
 .nextcard .btn{flex:1 1 100%}
 .nextcard .lottie-mini{width:54px;height:40px;flex:none}
+/* cartel con imagen dentro de la sala */
+.wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
+.wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
+.wbanner .bimg.contain{background-color:#c4dfef;background-size:contain;background-repeat:no-repeat}
+.wbanner .bt{min-width:0}
+.wbanner .eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.wbanner h4{margin:2px 0 3px;font-family:var(--f-disp);font-weight:800;font-size:18px;line-height:1.15;text-wrap:balance}
+.wbanner p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.4}
+@media (max-width:420px){.wbanner .bimg{width:72px;height:72px}.wbanner h4{font-size:16px}}
 /* bienvenida */
 .ocard.welcome{padding:0;overflow:hidden;max-width:440px;text-align:left}
 .welcome .wimg{height:210px;background-size:cover;background-position:center;position:relative}
@@ -1124,7 +1133,7 @@ function confirmReset() {
 }
 
 function viewSummary(tab) {
-  const out = [h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())}` + (curQ() === qActiva() ? " · activa en todos los grupos" : " · anterior (solo consulta)")), h("div", { class: "txt" }, qTexto(curQ())))];
+  const out = [banner(true), h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())}` + (curQ() === qActiva() ? " · activa en todos los grupos" : " · anterior (solo consulta)")), h("div", { class: "txt" }, qTexto(curQ())))];
   const cards = [];
   for (let g = 1; g <= nGrupos(); g++) {
     const ms = miembrosDe(g), d = gdata(g), t = tally(g);
@@ -1146,7 +1155,7 @@ function viewSummary(tab) {
 }
 
 function viewChat(g) {
-  const out = [h("div", { class: "day" }, "Grupo " + g)];
+  const out = [isFac() ? null : banner(false), h("div", { class: "day" }, "Grupo " + g)].filter(Boolean);
   out.push(h("div", { class: "msg q" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())} del facilitador`), h("div", { class: "txt" }, qTexto(curQ()))));
   const fac = isFac(), props = proposals(g);
   let stagger = 0;
@@ -1278,6 +1287,16 @@ function downloadCSV() {
 }
 
 /* ---------- bienvenida ---------- */
+function banner(fac) {
+  const nombre = (S.nombre || "").split(" ")[0];
+  return fac
+    ? h("div", { class: "wbanner" }, h("div", { class: "bimg", style: "background-image:url('img/administrador.jpg')", "aria-hidden": "true" }),
+        h("div", { class: "bt" }, h("div", { class: "eyebrow" }, "Taller DESEM"), h("h4", {}, "Cada idea puede destrabar un proceso"),
+          h("p", {}, "Escucha a cada grupo: de estas respuestas saldrán las soluciones que nos harán avanzar.")))
+    : h("div", { class: "wbanner" }, h("div", { class: "bimg contain", style: "background-image:url('img/grupo.jpg')", "aria-hidden": "true" }),
+        h("div", { class: "bt" }, h("div", { class: "eyebrow" }, "Taller DESEM · Grupo " + curG()), h("h4", {}, nombre ? `¡Tu voz cuenta, ${nombre}!` : "¡Tu voz cuenta!"),
+          h("p", {}, "Nadie conoce mejor los procesos que quienes los viven. Comparte lo que ves y construyamos juntos la solución.")));
+}
 const BIENVENIDA = ROLE === "admin" ? {
   img: "img/administrador.jpg", contain: false, eyebrow: "Taller DESEM · Te damos la bienvenida",
   t: "Hoy, cada idea puede destrabar un proceso",
@@ -1290,7 +1309,6 @@ const BIENVENIDA = ROLE === "admin" ? {
   cta: "¡Quiero participar! →"
 };
 function welcome() {
-  try { if (sessionStorage.getItem("taller-bienvenida-" + ROLE)) return; sessionStorage.setItem("taller-bienvenida-" + ROLE, "1"); } catch {}
   const B = BIENVENIDA;
   let close;
   const go = h("button", { class: "btn block", onclick: () => { close(); setTimeout(() => burst({ particleCount: 90, spread: 80, origin: { y: .7 } }), 150); } }, B.cta);
