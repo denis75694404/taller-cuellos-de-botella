@@ -544,6 +544,21 @@ html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
 html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 /* teclado del celular: la app ocupa solo el alto que queda visible */
 .app{height:var(--appH,100%)}
+/* Bloque 2 en tabla de trabajo */
+.b2table .pri{width:84px;text-align:center;vertical-align:middle}
+.b2table.trabajo tbody th{font-size:15px}
+.b2table.trabajo tbody th .b2count{margin-top:8px;font-size:12px}
+.b2table tr.on td{background:var(--accent-soft)}
+.b2table tr.mine td:not(.pri){background:color-mix(in srgb,var(--mine) 55%,transparent)}
+.b2table tr.on.mine td{background:var(--accent-soft)}
+.b2t{overflow-wrap:anywhere}
+.b2who{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px;display:flex;gap:10px;align-items:center}
+.b2check{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--panel);display:inline-grid;place-items:center;color:var(--accent-fg);transition:transform .15s,background .2s,border-color .2s}
+.b2check:active{transform:scale(.9)}
+.b2check[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.b2check svg{width:22px;height:22px}
+.b2table tr.form td{background:var(--bar)}
+@media (max-width:560px){.b2table{font-size:13.5px}.b2table th,.b2table td{padding:8px}.b2table tbody th{width:30%}.b2table.trabajo tbody th{font-size:13.5px}.b2table .pri{width:62px}.b2table thead th{font-size:12px}.b2form{flex-direction:column;align-items:stretch}}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -1662,38 +1677,41 @@ function viewBloque2(g, entering) {
   const out = [h("div", { class: "card" }, h("div", { class: "vhead" }, h("div", {}, h("h2", {}, titulo), h("p", {}, desc))))];
   if (!temas.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay cuellos de botella priorizados"), "Nadie votó en el plenario.")); return out; }
   if (f === "resultados") { out.push(tablaB2()); return out; }
-  temas.forEach((tm, k) => {
-    const props = b2Props(tm.id);
-    const box = h("div", { class: "b2tema", style: `--d:${k * 0.08}s` },
-      h("div", { class: "b2head" }, h("span", { class: "b2n" }, k + 1), h("div", {}, h("div", { class: "eyebrow" }, "Cuello de botella priorizado"), h("h3", {}, tm.t))));
-    if (f === "escribir") {
-      box.append(...(props.length ? props.map(p => h("div", { class: "b2prop" + (p.uid === S.uid ? " mine" : "") },
-        h("div", { class: "txt" }, p.t), h("div", { class: "who" }, p.uid === S.uid ? "Tú" : p.nombre || "Participante",
-          p.uid === S.uid || fac ? h("button", { class: "del", onclick: () => salaRef().collection("b2prop").doc(p.id).delete().catch(fbError), "aria-label": "Borrar esta propuesta" }, "borrar") : null)))
-        : [h("p", { class: "note" }, "Aún no hay propuestas para este cuello de botella.")]));
-      if (!fac && me()) {
-        const mias = misPropsB2(tm.id).length;
-        if (mias < B2_MAX) {
-          const ta = h("textarea", { rows: 2, maxlength: 400, id: "b2in-" + tm.id, placeholder: "Escribe una propuesta de solución…", "aria-label": "Propuesta de solución para el cuello de botella " + (k + 1) });
-          box.append(h("div", { class: "b2form" }, ta, h("button", { class: "btn", onclick: () => enviarPropB2(tm.id, ta) }, "Agregar")),
-            h("p", { class: "note" }, mias ? `Puedes agregar ${B2_MAX - mias} más.` : `Puedes agregar hasta ${B2_MAX}.`));
-        } else box.append(h("p", { class: "note" }, `Ya agregaste tus ${B2_MAX} propuestas para este cuello de botella.`));
-      }
-    } else if (f === "votar") {
-      const sel = miSelB2()[tm.id] || [];
-      if (!fac) box.append(h("div", { class: "b2count" + (sel.length >= B2_SEL ? " full" : "") }, `Marcaste ${sel.length} de ${B2_SEL}`));
-      if (!props.length) box.append(h("p", { class: "note" }, "Nadie escribió propuestas para este cuello de botella."));
-      for (const p of props) {
-        const on = sel.includes(p.id);
-        const bt = h("button", { class: "vitem" + (S.pulse === p.id ? " pulse" : ""), "aria-pressed": on, disabled: fac || !me(), onclick: () => toggleB2(tm.id, p.id) },
-          h("span", { class: "box" }, on ? svgCheck() : null),
-          h("span", { class: "body" }, h("div", { class: "who" }, p.uid === S.uid ? "Tu propuesta" : p.nombre || "Participante"), h("div", { class: "txt" }, p.t)));
-        box.append(bt);
-      }
-    } else box.append(h("p", { class: "note" }, fac ? "Inicia el Bloque 2 desde el panel." : "Espera: el facilitador iniciará el tiempo para escribir propuestas."));
-    out.push(box);
-  });
+  out.push(tablaB2Trabajo(f, temas));
   return out;
+}
+// tabla de trabajo: escribir propuestas y marcar prioridad, en las mismas 3 columnas
+function tablaB2Trabajo(f, temas) {
+  const fac = isFac(), puedeEscribir = f === "escribir" && !fac && !!me(), puedeMarcar = f === "votar" && !fac && !!me();
+  const filas = temas.flatMap((tm, k) => {
+    const props = b2Props(tm.id), sel = miSelB2()[tm.id] || [], mias = misPropsB2(tm.id).length;
+    const form = puedeEscribir && mias < B2_MAX;
+    const n = Math.max(1, props.length) + (form ? 1 : 0);
+    const cab = h("th", { scope: "row", rowspan: String(n) }, h("span", { class: "b2n" }, k + 1), tm.t,
+      puedeMarcar ? h("div", { class: "b2count" + (sel.length >= B2_SEL ? " full" : "") }, `Marcaste ${sel.length} de ${B2_SEL}`) : null,
+      puedeEscribir ? h("div", { class: "b2count" }, mias >= B2_MAX ? `Ya agregaste tus ${B2_MAX}` : `Puedes agregar ${B2_MAX - mias}`) : null);
+    const rows = [];
+    if (!props.length) rows.push(h("tr", { class: "first" }, cab, h("td", { class: "muted" }, f === "prep" ? "Las propuestas aparecerán aquí." : "Aún no hay propuestas."), h("td", { class: "pri" }, "—")));
+    props.forEach((p, i) => {
+      const on = sel.includes(p.id), mine = p.uid === S.uid;
+      const pri = puedeMarcar
+        ? h("button", { class: "b2check", "aria-pressed": on, "aria-label": (on ? "Quitar prioridad: " : "Marcar como prioritaria: ") + p.t, onclick: () => toggleB2(tm.id, p.id) }, on ? svgCheck() : null)
+        : h("span", { class: "muted" }, "—");
+      rows.push(h("tr", { class: (i === 0 ? "first" : "") + (on ? " on" : "") + (mine ? " mine" : "") },
+        i === 0 ? cab : null,
+        h("td", {}, h("div", { class: "b2t" }, p.t), h("div", { class: "b2who" }, mine ? "Tú" : p.nombre || "Participante",
+          f === "escribir" && (mine || fac) ? h("button", { class: "del", onclick: () => salaRef().collection("b2prop").doc(p.id).delete().catch(fbError), "aria-label": "Borrar esta propuesta" }, "borrar") : null)),
+        h("td", { class: "pri" }, pri)));
+    });
+    if (form) {
+      const ta = h("textarea", { rows: 2, maxlength: 400, id: "b2in-" + tm.id, placeholder: "Escribe una propuesta de solución…", "aria-label": "Propuesta de solución para el cuello de botella " + (k + 1) });
+      rows.push(h("tr", { class: "form" }, h("td", { colspan: "2" }, h("div", { class: "b2form" }, ta, h("button", { class: "btn", onclick: () => enviarPropB2(tm.id, ta) }, "Agregar")))));
+    }
+    return rows;
+  });
+  return h("div", { class: "b2tablewrap" }, h("table", { class: "b2table trabajo" },
+    h("thead", {}, h("tr", {}, h("th", {}, "Cuellos de botella priorizados"), h("th", {}, "Propuestas de solución"), h("th", { class: "pri" }, "Prioridad"))),
+    h("tbody", {}, ...filas)));
 }
 
 /* ---------- Bloque 2: propuesta de solución y responsable ---------- */
@@ -2250,7 +2268,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021183113";
+const BUILD = "20261021183537";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
