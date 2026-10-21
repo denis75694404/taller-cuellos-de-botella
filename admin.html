@@ -709,11 +709,20 @@ let voteQ = Promise.resolve();
 function vote(key) {
   if (S.room.fase !== "votacion" || isFac()) return;
   const g = curG(), q = qActiva(), vid = voteId(), ref = grupoRef(g).collection("votos").doc(vid);
-  const quitar = myVote() === key;
+  const quitar = myVote() === key, antes = gdata(g).votos.get(vid);
   if (quitar) gdata(g).votos.delete(vid); else gdata(g).votos.set(vid, { id: key, q, uid: S.uid });
   S.pulse = key; render();
-  if (!quitar) setTimeout(voteOverlay, 200);
-  voteQ = voteQ.then(() => quitar ? ref.delete() : ref.set({ id: key, q, uid: S.uid, nombre: S.nombre.slice(0, 50), ts: Date.now() })).catch(fbError);
+  voteQ = voteQ
+    .then(() => quitar ? ref.delete() : ref.set({ id: key, q, uid: S.uid, nombre: S.nombre.slice(0, 50), ts: Date.now() }))
+    .then(() => { if (!quitar) voteOverlay(); else toast("Quitaste tu voto."); })
+    .catch(e => {
+      // el voto no se guardó: se desmarca y se explica por qué
+      if (antes) gdata(g).votos.set(vid, antes); else gdata(g).votos.delete(vid);
+      S.sig = ""; render();
+      if ((e?.code || "").includes("permission-denied"))
+        toast(S.room.fase !== "votacion" ? "La votación ya se cerró." : "Firebase no aceptó el voto. El facilitador debe publicar las reglas nuevas de Firestore.", 6000);
+      else fbError(e);
+    });
 }
 const setRoom = patch => salaRef().update(patch).catch(fbError);
 function setTimer(min) { const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos."); setRoom({ fin: Date.now() + Math.round(m * 60000), fase: "respuestas" }); toast(`Tiempo iniciado: ${m} min para todos los grupos.`); }
