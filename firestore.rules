@@ -1,33 +1,54 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function sala(s) { return get(/databases/$(database)/documents/salas/$(s)).data; }
     function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function sala(s) { return get(/databases/$(database)/documents/salas/$(s)).data; }
+    function miembro(s) { return /databases/$(database)/documents/salas/$(s)/miembros/$(request.auth.uid); }
+    function miembroEn(s, g) { return signedIn() && exists(miembro(s)) && string(get(miembro(s)).data.grupo) == g; }
+
+    // Código del facilitador: documento config/admin con el campo "codigo". Nadie lo puede leer.
+    match /config/{doc} { allow read, write: if false; }
+
+    // Un dispositivo queda como administrador solo si escribe el código correcto.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.codigo == get(/databases/$(database)/documents/config/admin).data.codigo;
+    }
 
     match /salas/{s} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.creador == request.auth.uid;
-      allow update: if signedIn() && resource.data.creador == request.auth.uid
-                    && request.resource.data.creador == resource.data.creador;
-      allow delete: if signedIn() && resource.data.creador == request.auth.uid;
+      allow create, update, delete: if isAdmin();
 
-      match /respuestas/{id} {
+      match /miembros/{uid} {
         allow read: if signedIn();
-        allow create: if signedIn()
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.grupo is int
+          && request.resource.data.grupo >= 1 && request.resource.data.grupo <= sala(s).grupos
+          && request.resource.data.nombre is string && request.resource.data.nombre.size() <= 50;
+        allow delete: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      }
+
+      // Cada grupo solo ve lo suyo; el facilitador ve todos los grupos.
+      match /grupos/{g}/respuestas/{id} {
+        allow read: if isAdmin() || miembroEn(s, g);
+        allow create: if miembroEn(s, g)
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.t is string
           && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 400
-          && sala(s).fase == 'respuestas';
-        allow delete: if signedIn()
-          && (resource.data.uid == request.auth.uid || sala(s).creador == request.auth.uid);
+          && sala(s).fase == 'respuestas'
+          && (sala(s).fin == null || request.time.toMillis() < sala(s).fin + 15000);
+        allow delete: if isAdmin() || (miembroEn(s, g) && resource.data.uid == request.auth.uid);
       }
 
-      match /votos/{uid} {
-        allow read: if signedIn();
-        allow create, update: if signedIn() && request.auth.uid == uid
-          && request.resource.data.ids is list && request.resource.data.ids.size() <= 2
+      // Un solo voto por integrante: el documento lleva su propio uid.
+      match /grupos/{g}/votos/{uid} {
+        allow read: if isAdmin() || miembroEn(s, g);
+        allow create, update: if miembroEn(s, g) && request.auth.uid == uid
+          && request.resource.data.id is string
           && sala(s).fase == 'votacion';
-        allow delete: if signedIn() && (request.auth.uid == uid || sala(s).creador == request.auth.uid);
+        allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
       }
     }
   }
