@@ -37,18 +37,22 @@ service cloud.firestore {
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.t is string
           && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 400
+          && request.resource.data.q == sala(s).qid
           && sala(s).fase == 'respuestas'
           && (sala(s).fin == null || request.time.toMillis() < sala(s).fin + 15000);
         allow delete: if isAdmin() || (miembroEn(s, g) && resource.data.uid == request.auth.uid);
       }
 
-      // Un solo voto por integrante: el documento lleva su propio uid.
-      match /grupos/{g}/votos/{uid} {
+      // Un solo voto por integrante y por pregunta: el documento se llama <uid>_<pregunta>.
+      match /grupos/{g}/votos/{vid} {
         allow read: if isAdmin() || miembroEn(s, g);
-        allow create, update: if miembroEn(s, g) && request.auth.uid == uid
+        allow create, update: if miembroEn(s, g)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.q == sala(s).qid
+          && vid == request.auth.uid + '_' + request.resource.data.q
           && request.resource.data.id is string
           && sala(s).fase == 'votacion';
-        allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       }
     }
   }

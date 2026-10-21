@@ -476,6 +476,13 @@ const gdata = g => S.G.get(g) || { resp: [], votos: new Map() };
 const miembrosDe = g => [...S.miembros.entries()].filter(([, m]) => m.grupo === g).sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
 const restante = () => S.room?.fin ? S.room.fin - Date.now() : null;
 const abierto = () => S.room?.fase === "respuestas" && (S.room.fin == null || restante() > 0);
+/* preguntas: la activa la reciben todos los grupos; el facilitador puede revisar las anteriores */
+const preguntas = () => S.room?.preguntas || [];
+const qActiva = () => S.room?.qid;
+const curQ = () => isFac() && S.viewQ && preguntas().some(p => p.id === S.viewQ) ? S.viewQ : qActiva();
+const qTexto = q => preguntas().find(p => p.id === q)?.t || DEFAULT_Q;
+const qNum = q => preguntas().findIndex(p => p.id === q) + 1;
+const qOf = r => r?.q || "p1";
 
 /* ---------- pantallas de inicio ---------- */
 const root = $("root");
@@ -597,7 +604,8 @@ async function crearSala(titulo, pregunta, n) {
     for (let i = 0; i < 5; i++) { code = nuevoCodigo(); if (!(await S.db.collection("salas").doc(code).get()).exists) break; }
     await S.db.collection("salas").doc(code).set({
       creador: S.uid, titulo: (titulo || "").trim().slice(0, 80) || "Taller: cuellos de botella",
-      pregunta: (pregunta || "").trim().slice(0, 300) || DEFAULT_Q, fase: "respuestas", fin: null, grupos: n, ts: Date.now()
+      preguntas: [{ id: "p1", t: (pregunta || "").trim().slice(0, 300) || DEFAULT_Q }], qid: "p1",
+      fase: "respuestas", fin: null, grupos: n, ts: Date.now()
     });
     S.justCreated = true;
     openSala(code);
@@ -611,7 +619,12 @@ function openSala(code) {
   S.unsub.push(salaRef().onSnapshot(d => {
     if (!d.exists) { S.unsub.forEach(u => u()); S.unsub = []; toast("No existe una sala con el código " + code + ".", 4000); history.replaceState(null, "", location.pathname + location.hash); S.code = null; return homeScreen(); }
     const v = d.data();
-    S.room = { ...v, fase: FASES.includes(v.fase) ? v.fase : "respuestas", pregunta: v.pregunta || DEFAULT_Q, fin: typeof v.fin === "number" ? v.fin : null };
+    const pre = (Array.isArray(v.preguntas) ? v.preguntas : []).filter(p => p && typeof p.id === "string" && typeof p.t === "string");
+    if (!pre.length) pre.push({ id: "p1", t: v.pregunta || DEFAULT_Q });
+    const qid = pre.some(p => p.id === v.qid) ? v.qid : pre[pre.length - 1].id;
+    S.room = { ...v, fase: FASES.includes(v.fase) ? v.fase : "respuestas", preguntas: pre, qid, fin: typeof v.fin === "number" ? v.fin : null };
+    // salas creadas antes de tener varias preguntas: el facilitador las actualiza al abrirlas
+    if (ROLE === "admin" && S.isAdmin && (!Array.isArray(v.preguntas) || !v.qid)) salaRef().update({ preguntas: pre, qid }).catch(() => {});
     S.roomReady = true; route();
   }, fbError));
   S.unsub.push(salaRef().collection("miembros").onSnapshot(q => {
@@ -656,13 +669,15 @@ function fbError(e) {
 }
 
 /* ---------- datos derivados ---------- */
-function proposals(g) { return gdata(g).resp.map(r => ({ key: r.id, uid: r.uid, a: r.nombre || "Participante", t: String(r.t).slice(0, 400), ts: +r.ts || 0 })); }
-const myProps = () => gdata(curG()).resp.filter(r => r.uid === S.uid);
-const myVote = () => { const v = gdata(curG()).votos.get(S.uid)?.id; return typeof v === "string" ? v : null; };
-function tally(g) {
-  const props = proposals(g), valid = new Set(props.map(p => p.key)), c = new Map();
+function proposals(g, q = curQ()) { return gdata(g).resp.filter(r => qOf(r) === q).map(r => ({ key: r.id, uid: r.uid, a: r.nombre || "Participante", t: String(r.t).slice(0, 400), ts: +r.ts || 0 })); }
+const myProps = () => gdata(curG()).resp.filter(r => r.uid === S.uid && qOf(r) === qActiva());
+const voteId = () => S.uid + "_" + qActiva();
+const myVote = () => { const v = gdata(curG()).votos.get(voteId())?.id; return typeof v === "string" ? v : null; };
+const votosDe = (g, q) => [...gdata(g).votos.values()].filter(d => qOf(d) === q);
+function tally(g, q = curQ()) {
+  const props = proposals(g, q), valid = new Set(props.map(p => p.key)), c = new Map();
   let voters = 0;
-  for (const [, d] of gdata(g).votos) if (valid.has(d?.id)) { voters++; c.set(d.id, (c.get(d.id) || 0) + 1); }
+  for (const d of votosDe(g, q)) if (valid.has(d?.id)) { voters++; c.set(d.id, (c.get(d.id) || 0) + 1); }
   const ranked = props.map(p => ({ ...p, n: c.get(p.key) || 0 })).sort((a, b) => b.n - a.n || a.ts - b.ts);
   return { ranked, voters, votos: voters, props };
 }
@@ -675,7 +690,7 @@ async function sendMsg() {
   ta.value = ""; autosize(); updateComposer();
   const b = $("send"); b.classList.remove("fly"); void b.offsetWidth; b.classList.add("fly");
   S.stick = true;
-  try { await grupoRef(curG()).collection("respuestas").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), t: text.slice(0, 400), ts: Date.now() }); }
+  try { await grupoRef(curG()).collection("respuestas").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), t: text.slice(0, 400), q: qActiva(), ts: Date.now() }); }
   catch (e) { ta.value = text; updateComposer(); fbError(e); }
 }
 function deleteMsg(id, el) {
@@ -685,12 +700,12 @@ function deleteMsg(id, el) {
 let voteQ = Promise.resolve();
 function vote(key) {
   if (S.room.fase !== "votacion" || isFac()) return;
-  const g = curG(), ref = grupoRef(g).collection("votos").doc(S.uid);
+  const g = curG(), q = qActiva(), vid = voteId(), ref = grupoRef(g).collection("votos").doc(vid);
   const quitar = myVote() === key;
-  if (quitar) gdata(g).votos.delete(S.uid); else gdata(g).votos.set(S.uid, { id: key });
+  if (quitar) gdata(g).votos.delete(vid); else gdata(g).votos.set(vid, { id: key, q, uid: S.uid });
   S.pulse = key; render();
   if (!quitar) setTimeout(voteOverlay, 200);
-  voteQ = voteQ.then(() => quitar ? ref.delete() : ref.set({ id: key, nombre: S.nombre.slice(0, 50), ts: Date.now() })).catch(fbError);
+  voteQ = voteQ.then(() => quitar ? ref.delete() : ref.set({ id: key, q, uid: S.uid, nombre: S.nombre.slice(0, 50), ts: Date.now() })).catch(fbError);
 }
 const setRoom = patch => salaRef().update(patch).catch(fbError);
 function setTimer(min) { const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos."); setRoom({ fin: Date.now() + Math.round(m * 60000), fase: "respuestas" }); toast(`Tiempo iniciado: ${m} min para todos los grupos.`); }
@@ -789,15 +804,19 @@ function paintTimer() {
 
 function render() {
   if (S.mode !== "app" || !S.roomReady || !$("view")) return;
-  if (S.room.fase !== S.faseSeen) { const had = S.faseSeen; S.faseSeen = S.room.fase; S.tab = null; if (had !== null) stageOverlay(S.room.fase); }
+  if (S.room.qid !== S.qSeen) {
+    const had = S.qSeen; S.qSeen = S.room.qid; S.faseSeen = S.room.fase; S.tab = null; S.viewQ = null;
+    if (had != null) questionOverlay();
+  } else if (S.room.fase !== S.faseSeen) { const had = S.faseSeen; S.faseSeen = S.room.fase; S.tab = null; if (had !== null) stageOverlay(S.room.fase); }
   if (S.endedFor === null && S.room.fin && restante() <= 0) S.endedFor = S.room.fin;
   const tab = currentTab(), g = curG(), fac = isFac();
   document.title = (S.room.titulo || "Taller") + " · " + S.code;
   $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
   const nm = g ? miembrosDe(g).length : S.miembros.size;
+  const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
   $("sub").textContent = fac
-    ? (g ? `Facilitador · viendo el Grupo ${g} · ${nm} ${nm === 1 ? "integrante" : "integrantes"}` : `Facilitador · ${nGrupos()} grupos · ${S.miembros.size} participantes`)
-    : `${S.nombre} · ${nm} de ${CUPO} integrantes · Etapa: ${FASE_NOMBRE[S.room.fase]}`;
+    ? (g ? `Facilitador · Grupo ${g} · ${qLbl}` : `Facilitador · ${nGrupos()} grupos · ${S.miembros.size} participantes · ${qLbl}`)
+    : `${S.nombre} · ${nm} de ${CUPO} integrantes · ${qLbl} · ${FASE_NOMBRE[S.room.fase]}`;
   document.querySelectorAll(".tab").forEach(b => {
     const t = b.dataset.tab;
     b.setAttribute("aria-selected", t === tab); b.disabled = !tabAllowed(t);
@@ -807,10 +826,11 @@ function render() {
   moveInk(); paintFac(); paintTimer();
 
   const gd = g ? gdata(g) : null;
-  const sig = JSON.stringify([tab, g, S.room.fase, S.room.pregunta, fac, abierto(), S.room.grupos,
-    !g ? [...S.G].map(([k, d]) => [k, d.resp.length, d.resp.slice(-2).map(r => r.id), [...d.votos.values()].map(v => v.id)]).concat([[...S.miembros.values()].map(m => m.grupo)]) :
-    tab === "respuestas" ? gd.resp.map(r => r.id) : tab === "votacion" ? [gd.resp.map(r => r.id), myVote(), fac ? gd.votos.size : 0] : tally(g).ranked.map(r => r.key + ":" + r.n)]);
-  const view = $("view"), main = $("main"), prevKey = view.dataset.key, key = tab + "|" + g;
+  const q = curQ();
+  const sig = JSON.stringify([tab, g, q, qTexto(q), qActiva(), S.room.fase, fac, abierto(), S.room.grupos,
+    !g ? [...S.G].map(([k]) => [k, proposals(k, q).map(p => p.key), votosDe(k, q).map(v => v.id)]).concat([[...S.miembros.values()].map(m => m.grupo)]) :
+    tab === "respuestas" ? proposals(g, q).map(p => p.key) : tab === "votacion" ? [proposals(g, q).map(p => p.key), myVote(), fac ? votosDe(g, q).length : 0] : tally(g, q).ranked.map(r => r.key + ":" + r.n)]);
+  const view = $("view"), main = $("main"), prevKey = view.dataset.key, key = tab + "|" + g + "|" + q;
   if (sig !== S.sig) {
     S.sig = sig;
     const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 80;
@@ -829,7 +849,7 @@ function paintFac() {
   const sec = $("fac"); sec.hidden = !isFac(); if (sec.hidden) return;
   const r = S.room;
   const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
-  const facSig = JSON.stringify([r.fase, r.fin != null, S.viewG, counts, nGrupos()]);
+  const facSig = JSON.stringify([r.fase, r.fin != null, S.viewG, counts, nGrupos(), preguntas().map(p => p.id), qActiva(), curQ()]);
   if (facSig === S.facSig && document.activeElement?.closest?.("#fac")) return;
   S.facSig = facSig;
   const minIn = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: S.lastMin || 5, "aria-label": "Minutos para responder" });
@@ -845,20 +865,54 @@ function paintFac() {
       r.fin ? h("button", { class: "tbtn", onclick: () => extend(5) }, "+5 min") : null,
       r.fin ? h("button", { class: "tbtn", onclick: () => { setRoom({ fin: null }); toast("Sin límite de tiempo."); } }, "Sin límite") : null),
     h("span", { class: "spacer" }),
-    h("button", { class: "lnk", onclick: editPregunta }, "Editar pregunta"),
     h("button", { class: "lnk danger", onclick: confirmReset }, "Reiniciar"),
+    h("div", { class: "gchips", role: "group", "aria-label": "Preguntas" },
+      h("span", { class: "lbl", style: "align-self:center;margin-right:4px" }, "Preguntas"),
+      ...preguntas().map((p, i) => h("button", { class: "gchip", "aria-pressed": p.id === curQ(), title: p.t, onclick: () => { S.viewQ = p.id; S.facSig = ""; render(); } },
+        p.id === qActiva() ? h("span", { class: "live", style: "width:7px;height:7px;border-radius:50%;background:var(--accent)" }) : null, "P" + (i + 1))),
+      h("button", { class: "gchip add", onclick: newPregunta }, "+ Nueva pregunta"),
+      h("button", { class: "gchip", onclick: editPregunta }, "Editar P" + qNum(curQ())),
+      curQ() !== qActiva() ? h("button", { class: "gchip", style: "color:var(--accent)", onclick: () => activarPregunta(curQ()) }, "Enviar P" + qNum(curQ()) + " a los grupos") : null),
     h("div", { class: "gchips", role: "group", "aria-label": "Elegir grupo" },
       h("button", { class: "gchip", "aria-pressed": S.viewG === 0, onclick: () => { S.viewG = 0; render(); } }, "Resumen"),
       ...counts.map((n, i) => h("button", { class: "gchip", "aria-pressed": S.viewG === i + 1, onclick: () => { S.viewG = i + 1; render(); } }, "Grupo " + (i + 1), h("small", {}, `${n}/${CUPO}`))),
       h("button", { class: "gchip add", onclick: () => setRoom({ grupos: nGrupos() + 1 }), "aria-label": "Agregar un grupo" }, "+ Grupo")));
 }
 function editPregunta() {
-  const inp = h("textarea", { id: "qIn", rows: 3, maxlength: 300 }); inp.value = S.room.pregunta;
+  const q = curQ(), inp = h("textarea", { id: "qIn", rows: 3, maxlength: 300 }); inp.value = qTexto(q);
   let close;
-  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Editar la pregunta"), h("p", {}, "El cambio aparece al instante en todos los grupos."), inp,
+  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Editar la pregunta " + qNum(q)), h("p", {}, q === qActiva() ? "El cambio aparece al instante en todos los grupos." : "Esta pregunta no está activa; los grupos la verán cuando la envíes."), inp,
     h("div", { class: "row" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
-      h("button", { class: "btn", onclick: () => { const v = inp.value.trim(); if (!v) return toast("La pregunta no puede quedar vacía."); setRoom({ pregunta: v.slice(0, 300) }); close(); toast("Pregunta actualizada en todos los grupos."); } }, "Guardar"))), 0);
+      h("button", { class: "btn", onclick: () => {
+        const v = inp.value.trim(); if (!v) return toast("La pregunta no puede quedar vacía.");
+        setRoom({ preguntas: preguntas().map(p => p.id === q ? { ...p, t: v.slice(0, 300) } : p) }); close(); toast("Pregunta actualizada.");
+      } }, "Guardar"))), 0);
   setTimeout(() => inp.focus(), 50);
+}
+function newPregunta() {
+  const inp = h("textarea", { id: "qNewIn", rows: 3, maxlength: 300, placeholder: "Ej.: ¿Qué propuesta de solución planteas para el cuello de botella priorizado?" });
+  let close;
+  const send = () => {
+    const v = inp.value.trim(); if (!v) return toast("Escribe la pregunta.");
+    const id = "p" + Date.now().toString(36);
+    setRoom({ preguntas: [...preguntas(), { id, t: v.slice(0, 300) }], qid: id, fase: "respuestas", fin: null });
+    S.viewQ = null; close(); toast(`Pregunta ${preguntas().length + 1} enviada a todos los grupos.`);
+  };
+  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Nueva pregunta"),
+    h("p", {}, "Se envía a todos los grupos y empieza una nueva ronda: responder, votar y resultados. Las respuestas de las preguntas anteriores se conservan."), inp,
+    h("div", { class: "row" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"), h("button", { class: "btn", onclick: send }, "Enviar a todos los grupos"))), 0);
+  setTimeout(() => inp.focus(), 50);
+}
+function activarPregunta(q) {
+  setRoom({ qid: q, fase: "respuestas", fin: null });
+  S.viewQ = null; toast(`Pregunta ${qNum(q)} enviada a todos los grupos.`);
+}
+function questionOverlay() {
+  const n = qNum(qActiva());
+  overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, isFac() ? "Enviada a todos los grupos" : "Nueva pregunta"),
+    h("div", { class: "bignum" }, "P" + n), h("h3", { style: "font-size:21px;text-wrap:balance" }, qTexto(qActiva())),
+    h("p", {}, isFac() ? "Los grupos ya pueden responder." : "Escribe tu respuesta en el chat de tu grupo.")), 3200);
+  setTimeout(() => burst({ particleCount: 60, spread: 70, origin: { y: .6 } }), 450);
 }
 function confirmReset() {
   let close;
@@ -868,12 +922,13 @@ function confirmReset() {
 }
 
 function viewSummary(tab) {
-  const out = [h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, "Pregunta para todos los grupos"), h("div", { class: "txt" }, S.room.pregunta))];
+  const out = [h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())}` + (curQ() === qActiva() ? " · activa en todos los grupos" : " · anterior (solo consulta)")), h("div", { class: "txt" }, qTexto(curQ())))];
   const cards = [];
   for (let g = 1; g <= nGrupos(); g++) {
     const ms = miembrosDe(g), d = gdata(g), t = tally(g);
     let body;
-    if (tab === "respuestas") body = [h("span", { class: "note" }, `${d.resp.length} ${d.resp.length === 1 ? "respuesta" : "respuestas"}`), ...d.resp.slice(-2).map(r => h("div", { class: "mini" }, r.t))];
+    const pr = proposals(g);
+    if (tab === "respuestas") body = [h("span", { class: "note" }, `${pr.length} ${pr.length === 1 ? "respuesta" : "respuestas"}`), ...pr.slice(-2).map(r => h("div", { class: "mini" }, r.t))];
     else if (tab === "votacion") body = [h("span", { class: "note" }, `${t.voters} de ${ms.length} votaron`), h("div", { class: "prog" }, h("i", { style: `width:${ms.length ? t.voters / ms.length * 100 : 0}%` }))];
     else body = t.ranked.filter(r => r.n > 0).slice(0, TOP).map((r, i) => h("div", { class: "mini" }, h("b", {}, `${i + 1}.`), r.t, ` (${r.n})`));
     if (tab === "resultados" && !body.length) body = [h("span", { class: "note" }, "Sin votos todavía.")];
@@ -892,7 +947,7 @@ function viewSummary(tab) {
 
 function viewChat(g) {
   const out = [h("div", { class: "day" }, "Grupo " + g)];
-  out.push(h("div", { class: "msg q" }, h("div", { class: "who" }, "Pregunta del facilitador"), h("div", { class: "txt" }, S.room.pregunta)));
+  out.push(h("div", { class: "msg q" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())} del facilitador`), h("div", { class: "txt" }, qTexto(curQ()))));
   const fac = isFac(), props = proposals(g);
   let stagger = 0;
   for (const p of props) {
@@ -990,9 +1045,9 @@ function viewResults(g, entering) {
     tie ? h("span", { class: "note" }, `Hay empate en el puesto ${TOP}: el grupo decide cuál pasa.`) : null));
   return out;
 }
-function groupText(g) {
-  const { ranked, voters } = tally(g);
-  const lines = [`Grupo ${g} · ${S.room.titulo || "Taller"}`, S.room.pregunta, ""];
+function groupText(g, q = curQ()) {
+  const { ranked, voters } = tally(g, q);
+  const lines = [`Grupo ${g} · ${S.room.titulo || "Taller"}`, `Pregunta ${qNum(q)}: ${qTexto(q)}`, ""];
   ranked.forEach((r, i) => lines.push(`${i + 1}. ${r.t.replace(/\s+/g, " ")} (${r.n} ${r.n === 1 ? "voto" : "votos"})${i < TOP && r.n > 0 ? " · Prioridad " + (i + 1) : ""}`));
   lines.push(`Votaron: ${voters} de ${miembrosDe(g).length}`);
   return lines.join("\n");
@@ -1000,8 +1055,11 @@ function groupText(g) {
 function allResultsText() { return Array.from({ length: nGrupos() }, (_, i) => groupText(i + 1)).join("\n\n"); }
 function downloadCSV() {
   const q = s => '"' + String(s).replace(/"/g, '""') + '"';
-  const rows = [["Grupo", "Puesto", "Cuello de botella", "Autor", "Votos", "Prioridad", "Propuesta de solución", "Responsable"].map(q).join(";")];
-  for (let g = 1; g <= nGrupos(); g++) tally(g).ranked.forEach((r, i) => rows.push([g, i + 1, r.t.replace(/\s+/g, " "), r.a, r.n, i < TOP && r.n > 0 ? i + 1 : "", "", ""].map(q).join(";")));
+  const rows = [["N° pregunta", "Pregunta", "Grupo", "Puesto", "Respuesta", "Autor", "Votos", "Prioridad", "Propuesta de solución", "Responsable"].map(q).join(";")];
+  preguntas().forEach((p, pi) => {
+    for (let g = 1; g <= nGrupos(); g++) tally(g, p.id).ranked.forEach((r, i) =>
+      rows.push([pi + 1, p.t, g, i + 1, r.t.replace(/\s+/g, " "), r.a, r.n, i < TOP && r.n > 0 ? i + 1 : "", "", ""].map(q).join(";")));
+  });
   const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" })), download: `resultados-sala-${S.code}.csv` });
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast("Descargado: resultados-sala-" + S.code + ".csv");
