@@ -691,7 +691,7 @@ function stageOverlay(fase) {
   aviso("etapa");
   const i = FASES.indexOf(fase) + 1;
   overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Etapa " + i + " de 3"), h("div", { class: "bignum" }, i), h("h3", {}, FASE_NOMBRE[fase]),
-    h("p", {}, isFac() ? "Todos los grupos pasaron a esta etapa." : FASE_TXT[fase])), 2600);
+    h("p", {}, isFac() ? "Todos los grupos pasaron a esta etapa." : fase === "votacion" ? `Tienes ${minVoto()} y 1 voto. Elige la respuesta de tu grupo que mejor describe el problema.` : FASE_TXT[fase])), 2600);
   if (fase === "resultados") setTimeout(bigBurst, 500);
 }
 function timeUpOverlay() {
@@ -996,6 +996,7 @@ function fbError(e) {
 function proposals(g, q = curQ()) { return gdata(g).resp.filter(r => qOf(r) === q).map(r => ({ key: r.id, uid: r.uid, a: r.nombre || "Participante", t: String(r.t).slice(0, 400), ts: +r.ts || 0, pend: !!r.pend })); }
 const myProps = () => gdata(curG()).resp.filter(r => r.uid === S.uid && qOf(r) === qActiva());
 const voteId = () => S.uid + "_" + qActiva();
+const minVoto = () => { const m = Math.max(1, Math.round(durVoto(S.room) / 60000)); return m + (m === 1 ? " minuto" : " minutos"); };
 const myVote = () => { const v = gdata(curG()).votos.get(voteId())?.id; return typeof v === "string" ? v : null; };
 const votosDe = (g, q) => [...gdata(g).votos.values()].filter(d => qOf(d) === q);
 function tally(g, q = curQ()) {
@@ -1208,7 +1209,7 @@ function viewChat(g) {
     out.push(next(h("div", { class: "ic" }, lot), fac ? "Todo listo para empezar" : "Prepárate para responder",
       fac ? "Inicia la ronda en el panel de arriba y los grupos podrán escribir." : "Lee la pregunta y piensa tu respuesta. Podrás escribir en cuanto el facilitador inicie el tiempo."));
   } else if (S.room.fase === "votacion") {
-    out.push(next(h("div", { class: "ic" }, "2"), "¡La votación está abierta!", fac ? "Los grupos están eligiendo su respuesta." : "Elige la respuesta de tu grupo que mejor describe el problema. Tienes 3 minutos.",
+    out.push(next(h("div", { class: "ic" }, "2"), "¡La votación está abierta!", fac ? "Los grupos están eligiendo su respuesta." : `Elige la respuesta de tu grupo que mejor describe el problema. Tienes ${minVoto()}.`,
       fac ? "Ver la votación →" : "Ir a votar →", ir("votacion")));
   } else if (S.room.fase === "resultados") {
     out.push(next(h("div", { class: "ic" }, "3"), "¡Ya están los resultados!", fac ? "Cada grupo ya ve sus prioridades." : "Descubre qué priorizó tu grupo.", "Ver resultados →", ir("resultados")));
@@ -1227,8 +1228,8 @@ function viewVote(g) {
   out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
     h("div", {}, h("h2", {}, fac ? `Votación del Grupo ${g}` : "Elige 1 respuesta"),
       h("p", {}, fac ? `${t.voters} de ${nm} integrantes ya votaron.${S.room.fase === "votacion" && faltanVotar(g).length ? " Faltan: " + faltanVotar(g).join(", ") + "." : ""} Los votos se muestran en Resultados.`
-        : S.room.fase === "votacion" ? "Toca la respuesta de tu grupo que mejor describe el cuello de botella. Tienes 3 minutos; puedes cambiar tu voto hasta que termine el tiempo."
-        : S.room.fase === "respuestas" ? "La votación empieza sola cuando termine el tiempo para responder y dura 3 minutos." : "La votación está cerrada.")),
+        : S.room.fase === "votacion" ? `Toca la respuesta de tu grupo que mejor describe el cuello de botella. Tienes ${minVoto()}; puedes cambiar tu voto hasta que termine el tiempo.`
+        : S.room.fase === "respuestas" ? `La votación empieza sola cuando termine el tiempo para responder y dura ${minVoto()}.` : "La votación está cerrada.")),
     fac ? null : h("div", { class: "chips", "aria-label": mv ? "Ya votaste" : "Aún no votas" }, h("span", { class: "chip" + (mv ? " used" + (S.pulse ? " new" : "") : "") }, mv ? svgCheck() : "1")))));
   if (!props.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay respuestas para votar"), "Las respuestas del grupo aparecerán aquí.")); return out; }
   const list = h("div", { class: "vlist" });
@@ -1948,8 +1949,8 @@ function downloadCSV() {
     }
     const P = S.room.plenario;
     if (P && P.q === p.id) {
-      const rk = plenTallyFor(P).ranked;
-      rk.forEach((r, i) => rows.push([pi + 1, p.t, "Plenario", i + 1, `[Grupo ${r.g}] ${r.t.replace(/\s+/g, " ")}`, r.n, i === 0 && r.n > 0 ? "Ganadora del plenario" : "", "", ""].map(c).join(";")));
+      const rk = plenTallyFor(P).ranked, pw = ganadoras(rk);
+      rk.forEach((r, i) => rows.push([pi + 1, p.t, "Plenario", i + 1, `[Grupo ${r.g}] ${r.t.replace(/\s+/g, " ")}`, r.n, pw.includes(r) ? (pw.length > 1 ? "Empate en el plenario" : "Ganadora del plenario") : "", "", ""].map(c).join(";")));
       rows.push([pi + 1, p.t, "Plenario", "", "TOTAL PLENARIO", rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
     }
     for (let g = 1; g <= nGrupos(); g++) {
@@ -2049,7 +2050,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021165519";
+const BUILD = "20261021165923";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
