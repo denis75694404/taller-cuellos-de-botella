@@ -749,7 +749,7 @@ function screen(...cards) {
   img.addEventListener("error", () => hero.remove());
   root.replaceChildren(h("div", { class: "screen" }, h("div", { class: "inner split" }, hero, h("div", { class: "col" },
     h("div", { class: "brand" }, h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
-      h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, S.code ? "Sala " + S.code : "Respuestas, votación y prioridades por grupo")), a11yBtn("a11y-pill")),
+      h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, S.code && ROLE === "admin" ? "Sala " + S.code : "Respuestas, votación y prioridades por grupo")), a11yBtn("a11y-pill")),
     ...cards))));
 }
 function loading(msg) { S.mode = "loading"; screen(h("div", { class: "scard", style: "align-items:center;text-align:center" }, h("div", { class: "spinner" }), h("p", {}, msg))); }
@@ -812,12 +812,20 @@ function adminCodeScreen(err) {
   setTimeout(() => inp.focus(), 60);
 }
 function joinScreen() {
+  loading("Buscando el taller…");
   S.mode = "home";
-  const inp = h("input", { id: "codeIn", class: "code-in", maxlength: 6, placeholder: "CÓDIGO", autocomplete: "off", "aria-label": "Código de la sala" });
-  const go = () => { const c = inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (c.length < 4) return toast("Escribe el código de 6 letras que te dio el facilitador."); openSala(c); };
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
-  screen(h("div", { class: "scard" }, h("h2", {}, "Entrar al taller"), h("p", {}, "Escribe el código que aparece en la pantalla del facilitador."), inp, h("button", { class: "btn block", onclick: go }, "Entrar")));
-  setTimeout(() => inp.focus(), 60);
+  S.badSalas = S.badSalas || new Set();
+  let un = null, done = false;
+  un = S.db.collection("salas").orderBy("ts", "desc").limit(5).onSnapshot({ includeMetadataChanges: true }, q => {
+    if (done || S.mode !== "home") return;
+    const d = q.docs.find(x => !S.badSalas.has(x.id));
+    if (d) { done = true; un?.(); return openSala(d.id); }
+    if (q.metadata?.fromCache) return;
+    screen(h("div", { class: "scard" }, h("h2", {}, "El taller aún no empieza"),
+      h("p", {}, "Deja esta página abierta: se conectará sola en cuanto el facilitador abra el taller."),
+      h("div", { class: "spinner", style: "margin:0 auto" })));
+  }, e => { fbError(e); screen(h("div", { class: "scard" }, h("h2", {}, "No se pudo buscar el taller"), h("p", {}, "Revisa tu conexión y vuelve a intentarlo."), h("button", { class: "btn block", onclick: joinScreen }, "Intentar de nuevo"))); });
+  S.joinUnsub = () => { done = true; un?.(); };
 }
 
 function nameScreen() {
@@ -874,9 +882,10 @@ async function crearSala(titulo, pregunta, n) {
   } catch (e) { fbError(e); homeScreen(); }
 }
 function openSala(code) {
+  S.joinUnsub?.(); S.joinUnsub = null;
   S.code = code; S.roomReady = false; S.miembrosReady = false; S.room = null;
   history.replaceState(null, "", "?sala=" + code + location.hash);
-  loading("Entrando a la sala " + code + "…");
+  loading(ROLE === "admin" ? "Entrando a la sala " + code + "…" : "Entrando al taller…");
   S.unsub.forEach(u => u()); S.unsub = [];
   S.unsub.push(salaRef().onSnapshot(d => {
     if (!d.exists) {
@@ -885,7 +894,8 @@ function openSala(code) {
       S.unsub.forEach(u => u()); S.unsub = [];
       for (const [, us] of S.gsubs) us.forEach(u => u());
       S.gsubs.clear(); S.G.clear(); S.room = null; S.roomReady = false; S.qSeen = null; S.faseSeen = null; S.sig = "";
-      toast(habia ? "El facilitador cerró esta sala. Pide el código de la sala nueva." : "No existe una sala con el código " + code + ".", 5000);
+      if (ROLE === "admin") toast(habia ? "Esta sala se cerró." : "No existe una sala con el código " + code + ".", 5000);
+      else { (S.badSalas = S.badSalas || new Set()).add(code); toast(habia ? "El facilitador reinició el taller. Entrando al nuevo…" : "Ese enlace ya no está activo. Entrando al taller actual…", 4000); }
       history.replaceState(null, "", location.pathname); S.code = null; return homeScreen();
     }
     const v = d.data();
@@ -1003,13 +1013,11 @@ function shareOverlay() {
   const link = shareLink(), qr = h("div", { class: "qr", "aria-label": "Código QR para entrar a la sala" });
   let close;
   close = overlay(h("div", { class: "ocard" },
-    h("div", { class: "eyebrow" }, "Entra a la sala"), h("div", { class: "bigcode" }, S.code),
-    h("p", {}, "Escanea el código QR o abre el enlace en tu celular y elige tu grupo."), qr, h("div", { class: "linkbox" }, link),
-    h("div", { class: "row", style: "justify-content:center" },
-      h("button", { class: "btn", onclick: () => copy(link, "Enlace copiado. Pégalo en el WhatsApp del grupo.") }, "Copiar enlace"),
-      h("button", { class: "btn ghost", onclick: () => close() }, "Cerrar"))), 0);
+    h("div", { class: "eyebrow" }, "Entra al taller"),
+    h("p", {}, "Escanea el código QR con la cámara de tu celular y elige tu grupo."), qr,
+    h("div", { class: "row", style: "justify-content:center" }, h("button", { class: "btn", onclick: () => close() }, "Cerrar"))), 0);
   try { new QRCode(qr, { text: link, width: 440, height: 440, correctLevel: QRCode.CorrectLevel.L }); }
-  catch { qr.replaceWith(h("p", { class: "note" }, "No se pudo generar el QR. Comparte el enlace.")); }
+  catch { qr.replaceWith(h("p", { class: "note" }, "No se pudo generar el QR. Recarga la página e inténtalo otra vez.")); }
 }
 async function copy(txt, ok) {
   try { await navigator.clipboard.writeText(txt); toast(ok); }
@@ -1028,7 +1036,7 @@ function buildApp() {
       h("div", { class: "htext" }, h("h1", { id: "title" }, ""), h("p", { id: "sub" }, "")),
       h("div", { class: "timer", id: "timer", hidden: true, role: "timer", "aria-live": "off" }, svgClock(), h("span", { id: "timerTxt" }, "")),
       a11yBtn(),
-      h("button", { class: "codechip", id: "codeBtn", onclick: () => shareOverlay(), "aria-label": "Compartir la sala " + S.code }, svgShare(), h("span", { class: "cc-code" }, S.code)),
+      h("button", { class: "codechip", id: "codeBtn", onclick: () => shareOverlay(), "aria-label": "Mostrar el QR para entrar" }, svgShare(), h("span", { class: "cc-code" }, "QR")),
       h("button", { class: "hbtn", id: "menuBtn", hidden: true, "aria-label": "Más opciones", "aria-haspopup": "true", "aria-expanded": "false", onclick: e => { e.stopPropagation(); toggleMenu(); } },
         svg("0 0 24 24", '<circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/>')),
       h("div", { class: "menu", id: "menu", role: "menu", hidden: true }))),
@@ -1578,8 +1586,8 @@ function paintProj() {
   if (stage === "espera") {
     const qr = h("div", { class: "qr pj-qr" });
     body = h("div", { class: "pj-join" },
-      h("div", {}, h("span", { class: "pj-lbl" }, "Entra desde tu celular con el código"), h("div", { class: "pj-code" }, S.code),
-        h("div", { class: "pj-link" }, shareLink().replace(/^https?:\/\//, "")), h("p", { class: "pj-foot", style: "text-align:left" }, `${S.miembros.size} ${S.miembros.size === 1 ? "persona ya está" : "personas ya están"} en sus grupos`)),
+      h("div", {}, h("span", { class: "pj-lbl" }, "Entra desde tu celular"), h("div", { class: "pj-ft", style: "text-align:left" }, "Escanea el código QR con la cámara y elige tu grupo"),
+        h("p", { class: "pj-foot", style: "text-align:left" }, `${S.miembros.size} ${S.miembros.size === 1 ? "persona ya está" : "personas ya están"} en sus grupos`)),
       qr);
     setTimeout(() => { try { new QRCode(qr, { text: shareLink(), width: 520, height: 520, correctLevel: QRCode.CorrectLevel.L }); } catch {} }, 0);
   } else if (stage === "respuestas" || stage === "votacion") {
@@ -1612,7 +1620,7 @@ function paintProj() {
       ...(win.length ? win.map(w => h("div", { class: "pj-ft" }, w.t, h("small", {}, `Grupo ${w.g} · ${w.n} ${w.n === 1 ? "voto" : "votos"} de ${voters}`))) : [h("div", { class: "pj-ft" }, "Sin votos")]));
   }
   el.replaceChildren(
-    h("div", { class: "pj-top" }, h("div", { class: "pj-brand" }, h("img", { src: "img/administrador-icono.jpg", alt: "" }), h("span", {}, (r.titulo || "Taller") + " · Sala " + S.code)),
+    h("div", { class: "pj-top" }, h("div", { class: "pj-brand" }, h("img", { src: "img/administrador-icono.jpg", alt: "" }), h("span", {}, r.titulo || "Taller")),
       h("button", { class: "pj-x", onclick: closeProj, "aria-label": "Salir del modo proyección" }, "✕ Salir")),
     h("div", { class: "pj-q" }, h("span", { class: "pj-lbl" }, (bloque2() ? "Bloque 2 · " : p ? "Plenario · " : "") + "Pregunta " + qNum(q)), h("h1", {}, qTexto(q))),
     h("div", { class: "pj-stage" }, body));
@@ -1657,7 +1665,7 @@ function render() {
   S.esperaSeen = S.room.espera;
   checkPlenario(); checkEncuesta();
   const tab = currentTab(), g = curG(), fac = isFac(), p = plen();
-  document.title = (S.room.titulo || "Taller") + " · " + S.code;
+  document.title = (S.room.titulo || "Taller") + (ROLE === "admin" ? " · " + S.code : "");
   $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
   const nm = g ? miembrosDe(g).length : S.miembros.size;
   const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
@@ -1817,7 +1825,7 @@ function toggleMenu(force) {
     const item = (txt, fn, cls) => h("button", { role: "menuitem", class: cls || null, onclick: () => { toggleMenu(false); fn(); } }, txt);
     m.replaceChildren(
       item("Modo proyección (pantalla grande)", openProj),
-      item("Mostrar código y QR de la sala", () => shareOverlay()),
+      item("Mostrar el QR para entrar", () => shareOverlay()),
       h("hr"),
       item("📄 Informe final (imprimir o PDF)", informe),
       item("Descargar resultados (Excel/CSV)", downloadCSV),
@@ -1865,7 +1873,7 @@ function viewSummary(tab) {
   }
   out.push(h("div", { class: "ggrid", style: "margin-top:10px" }, ...cards));
   out.push(h("div", { class: "ractions" },
-    h("button", { class: "btn ghost", onclick: () => shareOverlay() }, "Mostrar código y QR para que entren"),
+    h("button", { class: "btn ghost", onclick: () => shareOverlay() }, "Mostrar el QR para que entren"),
     h("button", { class: "btn ghost", onclick: openProj }, "Modo proyección")));
   return out;
 }
