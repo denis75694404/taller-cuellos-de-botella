@@ -7,12 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
 <style>
-/* Layout: una columna tipo app de mensajería para proyectar — cabecera, pestañas de etapa, panel con scroll, barra de escritura */
+/* Layout: una columna tipo app de mensajería — cabecera con sala, pestañas de etapa, barra del facilitador, panel con scroll, barra de escritura */
 :root{
   --wall:#efeae2; --wall-dot:#e2dbd0; --panel:#ffffff; --bar:#f0f2f5; --line:#e2ddd5;
   --head:#0d5e4f; --head-fg:#ffffff; --head-muted:#cfe6df;
   --fg:#111b21; --muted:#5f6f78; --accent:#128c5e; --accent-fg:#ffffff; --accent-soft:#d8f3e6;
-  --theirs:#ffffff; --sys:#fdf4c5; --sys-fg:#5a5230; --warn:#b4540a;
+  --mine:#d9fdd3; --theirs:#ffffff; --tick:#2d9bdb; --sys:#fdf4c5; --sys-fg:#5a5230; --warn:#b4540a;
   --gold:#d79b00; --silver:#8a96a3; --bronze:#b0683a; --scrim:rgba(11,20,26,.45);
   --shadow:0 1px .5px rgba(11,20,26,.13); --lift:0 14px 30px -12px rgba(11,20,26,.35);
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -23,14 +23,14 @@
   --wall:#0b141a; --wall-dot:#15212a; --panel:#111b21; --bar:#1f2c34; --line:#26353e;
   --head:#1f2c34; --head-fg:#e9edef; --head-muted:#8fa3ad;
   --fg:#e9edef; --muted:#93a4ad; --accent:#21c07a; --accent-fg:#06281a; --accent-soft:#103a2b;
-  --theirs:#202c33; --sys:#2a2a1c; --sys-fg:#f2d98a; --warn:#f0a35b;
+  --mine:#005c4b; --theirs:#202c33; --tick:#53bdeb; --sys:#2a2a1c; --sys-fg:#f2d98a; --warn:#f0a35b;
   --gold:#e6b422; --silver:#a9b4bf; --bronze:#d08a5a; --scrim:rgba(0,0,0,.6);
   --shadow:0 1px .5px rgba(0,0,0,.4); --lift:0 14px 30px -12px rgba(0,0,0,.7); color-scheme:dark}}
 :root[data-theme="dark"]{
   --wall:#0b141a; --wall-dot:#15212a; --panel:#111b21; --bar:#1f2c34; --line:#26353e;
   --head:#1f2c34; --head-fg:#e9edef; --head-muted:#8fa3ad;
   --fg:#e9edef; --muted:#93a4ad; --accent:#21c07a; --accent-fg:#06281a; --accent-soft:#103a2b;
-  --theirs:#202c33; --sys:#2a2a1c; --sys-fg:#f2d98a; --warn:#f0a35b;
+  --mine:#005c4b; --theirs:#202c33; --tick:#53bdeb; --sys:#2a2a1c; --sys-fg:#f2d98a; --warn:#f0a35b;
   --gold:#e6b422; --silver:#a9b4bf; --bronze:#d08a5a; --scrim:rgba(0,0,0,.6);
   --shadow:0 1px .5px rgba(0,0,0,.4); --lift:0 14px 30px -12px rgba(0,0,0,.7); color-scheme:dark}
 
@@ -38,13 +38,31 @@
 html,body{height:100%;margin:0}
 body{background:var(--wall);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.4}
 [hidden]{display:none!important}
-.app{height:100%;display:grid;grid-template-rows:auto auto 1fr auto;min-height:0}
+.app{height:100%;display:grid;grid-template-rows:auto auto auto 1fr auto;min-height:0}
 .inner{max-width:820px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,textarea{font:inherit;color:var(--fg)}
+
+/* pantallas de inicio */
+.screen{min-height:100%;display:grid;place-items:center;padding-block:24px;background-color:var(--wall);background-image:radial-gradient(var(--wall-dot) 1.2px,transparent 1.3px),radial-gradient(var(--wall-dot) 1.2px,transparent 1.3px);background-size:26px 26px;background-position:0 0,13px 13px}
+.screen .inner{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.brand h1{margin:0;font-family:var(--f-disp);font-weight:800;font-size:28px;letter-spacing:-.01em;text-wrap:balance}
+.brand p{margin:2px 0 0;color:var(--muted)}
+.scard{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:10px;animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both}
+.scard:nth-child(3){animation-delay:.08s}
+.scard h2{margin:0;font-size:18px;font-family:var(--f-disp);font-weight:800}
+.scard p{margin:0;color:var(--muted);font-size:14px}
+.scard input,.scard textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bar);padding:11px 12px}
+.scard textarea{min-height:170px;font-family:ui-monospace,Consolas,monospace;font-size:13px;resize:vertical}
+.code-in{text-transform:uppercase;letter-spacing:.3em;font-family:var(--f-disp)!important;font-weight:800;font-size:22px!important;text-align:center}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.err{color:var(--warn);font-size:13.5px}
+.steps{margin:0;padding-left:20px;color:var(--fg);font-size:14px;display:flex;flex-direction:column;gap:4px}
 
 /* cabecera */
-header{background:var(--head);color:var(--head-fg)}
+header{background:var(--head);color:var(--head-fg);position:relative}
 header .inner{display:flex;align-items:center;gap:12px;padding-block:10px}
 .gavatar{flex:none;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;perspective:160px}
 .gavatar svg{width:22px;height:22px;animation:hg 5s cubic-bezier(.7,0,.3,1) infinite}
@@ -52,22 +70,37 @@ header .inner{display:flex;align-items:center;gap:12px;padding-block:10px}
 .htext{min-width:0;flex:1}
 .htext h1{margin:0;font-size:16.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .htext p{margin:0;font-size:13px;color:var(--head-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hbtn{flex:none;background:transparent;border:0;color:var(--head-fg);width:38px;height:38px;border-radius:50%;display:grid;place-items:center;transition:background .2s}
-.hbtn:hover{background:rgba(255,255,255,.12)}
-.hbtn svg{width:21px;height:21px}
-.menu{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:58px;background:var(--panel);color:var(--fg);border-radius:12px;box-shadow:var(--lift);padding:6px;z-index:25;min-width:220px;animation:menuIn .2s ease;transform-origin:top right}
-@keyframes menuIn{from{opacity:0;transform:scale(.9)}}
-.menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;font-size:14.5px}
-.menu button:hover{background:var(--bar)}
-.menu .danger{color:var(--warn)}
-header{position:relative}
+.codechip{flex:none;background:rgba(255,255,255,.14);color:var(--head-fg);border:0;border-radius:999px;padding:6px 12px;font-family:var(--f-disp);font-weight:800;letter-spacing:.12em;font-size:14px;display:flex;align-items:center;gap:6px;transition:background .2s,transform .15s}
+.codechip:hover{background:rgba(255,255,255,.24)}
+.codechip:active{transform:scale(.95)}
+.codechip svg{width:16px;height:16px}
 
 /* pestañas */
 nav{background:var(--head)}
 nav .inner{display:flex;gap:4px;position:relative}
-.tab{flex:1;background:none;border:0;color:var(--head-muted);padding:10px 4px 12px;font-weight:600;font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.tab{flex:1;background:none;border:0;color:var(--head-muted);padding:10px 4px 12px;font-weight:600;font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
 .tab[aria-selected="true"]{color:var(--head-fg)}
+.tab:disabled{opacity:.45;cursor:not-allowed}
+.tab .live{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:ping 2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 70%,transparent)}80%,100%{box-shadow:0 0 0 8px transparent}}
 .ink{position:absolute;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--accent);transition:left .35s cubic-bezier(.3,1.4,.5,1),width .35s cubic-bezier(.3,1.4,.5,1)}
+
+/* barra del facilitador */
+.fac{background:var(--bar);border-bottom:1px solid var(--line)}
+.fac .inner{padding-block:10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.fac .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;border-radius:999px;padding:5px 12px;font-size:13.5px;font-weight:600;color:var(--muted);transition:background .25s,color .25s,transform .15s}
+.seg button:active{transform:scale(.94)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.switch{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;background:none;border:0;padding:4px 0}
+.switch .knob{width:38px;height:22px;border-radius:99px;background:var(--line);position:relative;transition:background .25s}
+.switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--panel);box-shadow:var(--shadow);transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.switch[aria-checked="true"] .knob{background:var(--accent)}
+.switch[aria-checked="true"] .knob::after{transform:translateX(16px)}
+.fac .spacer{flex:1}
+.lnk{background:none;border:0;color:var(--accent);font-weight:600;font-size:13.5px;padding:4px 2px}
+.lnk.danger{color:var(--warn)}
 
 /* zona principal */
 main{min-height:0;overflow-y:auto;overflow-x:hidden;background-color:var(--wall);background-image:radial-gradient(var(--wall-dot) 1.2px,transparent 1.3px),radial-gradient(var(--wall-dot) 1.2px,transparent 1.3px);background-size:26px 26px;background-position:0 0,13px 13px}
@@ -76,34 +109,39 @@ main .inner{padding-block:14px 18px;display:flex;flex-direction:column;gap:3px}
 @keyframes viewIn{from{opacity:0;transform:perspective(900px) rotateX(9deg) translateY(16px)}}
 .sys{align-self:center;background:var(--sys);color:var(--sys-fg);font-size:12.5px;border-radius:8px;padding:5px 12px;margin:6px 0;text-align:center;max-width:90%;box-shadow:var(--shadow)}
 .day{align-self:center;background:var(--panel);color:var(--muted);font-size:12px;font-weight:600;border-radius:8px;padding:4px 12px;margin:8px 0;box-shadow:var(--shadow);text-transform:uppercase;letter-spacing:.05em}
+.hidden-box{align-self:stretch;background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:16px;margin:8px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hidden-box .big{font-family:var(--f-disp);font-weight:800;font-size:44px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.hidden-box .big.bump{animation:bump .45s cubic-bezier(.3,1.8,.5,1)}
+@keyframes bump{40%{transform:scale(1.4) rotateX(30deg)}}
+.hidden-box p{margin:0;flex:1;min-width:180px;color:var(--muted)}
+.hidden-box b{color:var(--fg)}
 
-.msg{align-self:flex-start;max-width:min(80%,560px);background:var(--theirs);border-radius:9px;border-top-left-radius:0;padding:6px 9px 6px 10px;box-shadow:var(--shadow);position:relative;overflow-wrap:anywhere;transform-origin:0 100%;margin-top:6px}
+.msg{max-width:min(78%,540px);border-radius:9px;padding:6px 9px 6px 10px;box-shadow:var(--shadow);position:relative;overflow-wrap:anywhere;margin-top:6px;transition:filter .5s}
+.msg.theirs{align-self:flex-start;background:var(--theirs);border-top-left-radius:0;transform-origin:0 100%}
+.msg.mine{align-self:flex-end;background:var(--mine);border-top-right-radius:0;transform-origin:100% 100%}
+.msg.blur .txt{filter:blur(7px);user-select:none}
 .msg.enter{animation:pop .42s cubic-bezier(.3,1.5,.5,1) both;animation-delay:var(--d,0s)}
 @keyframes pop{from{opacity:0;transform:scale(.55) translateY(14px)}}
 .msg .who{font-size:13px;font-weight:600;margin-bottom:1px}
-.msg .txt{white-space:pre-wrap}
-.msg .meta{float:right;display:flex;align-items:center;gap:6px;margin:6px 0 -3px 12px;font-size:11px;color:var(--muted)}
+.msg .txt{white-space:pre-wrap;transition:filter .6s}
+.msg .meta{float:right;display:flex;align-items:center;gap:5px;margin:6px 0 -3px 12px;font-size:11px;color:var(--muted)}
+.msg .meta svg{width:16px;height:11px;color:var(--tick)}
+.msg.enter .meta svg path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s .3s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
 .msg .del{background:none;border:0;padding:0 2px;color:var(--muted);font-size:11px;text-decoration:underline;opacity:.75}
-.msg .del:hover{opacity:1}
-.msg.q{border-left:4px solid var(--accent);margin-top:2px}
+.msg.q{align-self:flex-start;background:var(--theirs);border-radius:9px;border-top-left-radius:0;border-left:4px solid var(--accent)}
 .msg.q .who{color:var(--accent)}
 .msg.q .txt{font-weight:600;font-size:17px}
-.msg.q .edit{background:none;border:0;color:var(--accent);font-size:12px;font-weight:600;padding:0;margin-top:4px}
 .msg.out{animation:out .3s ease forwards}
 @keyframes out{to{opacity:0;transform:scale(.6) rotate(-4deg)}}
 .lottie-empty{width:120px;height:80px;align-self:center}
 
 /* barra de escritura */
 .composer{background:var(--bar);border-top:1px solid var(--line)}
-.composer .inner{padding-block:8px calc(8px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px}
-.crow{display:flex;align-items:flex-end;gap:8px}
-.who-in{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.who-in label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.who-in input{flex:1 1 180px;min-width:0;max-width:280px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px}
-.who-in .lnk{margin-left:auto}
+.composer .inner{padding-block:8px calc(8px + env(safe-area-inset-bottom,0px));display:flex;align-items:flex-end;gap:8px}
 .field{flex:1;min-width:0;background:var(--panel);border-radius:22px;display:flex;align-items:flex-end;padding:4px 6px 4px 14px;transition:box-shadow .2s}
 .field:focus-within{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
-.field textarea{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--fg);font:inherit;resize:none;padding:7px 0;max-height:140px;line-height:1.35}
+.field textarea{flex:1;min-width:0;border:0;outline:0;background:transparent;resize:none;padding:7px 0;max-height:140px;line-height:1.35}
 .send{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;transition:transform .2s cubic-bezier(.3,1.6,.5,1),opacity .2s;overflow:hidden}
 .send:not(:disabled):hover{transform:scale(1.07)}
 .send:active{transform:scale(.88)}
@@ -112,53 +150,41 @@ main .inner{padding-block:14px 18px;display:flex;flex-direction:column;gap:3px}
 .send.fly svg{animation:fly .55s ease}
 @keyframes fly{40%{transform:translate(26px,-26px) rotate(-20deg);opacity:0}41%{transform:translate(-26px,26px);opacity:0}100%{transform:none;opacity:1}}
 
-.lnk{background:none;border:0;color:var(--accent);font-weight:600;font-size:13.5px;padding:4px 2px}
-.btn{border:0;border-radius:999px;padding:9px 18px;font-weight:600;background:var(--accent);color:var(--accent-fg);transition:transform .15s,box-shadow .2s,opacity .2s}
+.btn{border:0;border-radius:999px;padding:10px 18px;font-weight:600;background:var(--accent);color:var(--accent-fg);transition:transform .15s,box-shadow .2s,opacity .2s}
 .btn:not(:disabled):hover{box-shadow:var(--lift)}
 .btn:active{transform:scale(.95)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
 .btn.warn{background:var(--warn);color:var(--panel)}
+.btn.block{width:100%}
 
-/* tarjetas */
+/* votación */
 .card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px}
 .vhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
 .vhead h2,.rhead h2,.sec-t{margin:0;font-family:var(--f-disp);font-weight:800;font-size:22px;text-wrap:balance;letter-spacing:-.01em}
 .vhead p,.rhead p{margin:2px 0 0;color:var(--muted);font-size:14px;max-width:60ch}
-.seg{display:inline-flex;background:var(--bar);border-radius:999px;padding:3px;margin-top:10px}
-.seg button{border:0;background:none;border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:600;color:var(--muted);transition:background .25s,color .25s}
-.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
-.chips{display:flex;gap:8px;margin-left:auto;perspective:300px;align-items:center}
+.chips{display:flex;gap:8px;margin-left:auto;perspective:300px}
 .chip{width:34px;height:34px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)}
 .chip.used{border:2px solid var(--accent);background:var(--accent);color:var(--accent-fg)}
 .chip.new{animation:chipFlip .7s cubic-bezier(.3,1.4,.5,1)}
 @keyframes chipFlip{from{transform:rotateY(-360deg) scale(.5)}60%{transform:rotateY(20deg) scale(1.2)}}
 .chip svg{width:17px;height:17px}
-.turn{font-family:var(--f-disp);font-weight:800;font-size:15px;color:var(--accent);margin-right:6px}
 .vlist{display:flex;flex-direction:column;gap:9px;perspective:1000px;margin-top:10px}
-.vitem{--rx:0deg;--ry:0deg;display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--panel);border:2px solid transparent;border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;transform:rotateX(var(--rx)) rotateY(var(--ry));transition:transform .18s ease-out,box-shadow .25s,border-color .25s,background .25s}
-button.vitem:hover{box-shadow:var(--lift)}
+.vitem{--rx:0deg;--ry:0deg;display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:var(--panel);border:2px solid transparent;border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;transform:rotateX(var(--rx)) rotateY(var(--ry));transition:transform .18s ease-out,box-shadow .25s,border-color .25s,background .25s}
+.vitem:not(:disabled):hover{box-shadow:var(--lift)}
+.vitem:disabled{cursor:default}
 .vitem.enter{animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:var(--d,0s)}
 @keyframes cardIn{from{opacity:0;transform:rotateX(-35deg) translateY(24px)}}
 .vitem[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 .vitem.pulse{animation:flipPop .55s cubic-bezier(.3,1.4,.5,1)}
 @keyframes flipPop{40%{transform:rotateX(14deg) scale(.97)}}
-.vitem .box{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);display:grid;place-items:center;transition:background .2s,border-color .2s,transform .35s cubic-bezier(.3,1.8,.5,1)}
+.vitem .box{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);display:grid;place-items:center;margin-top:1px;transition:background .2s,border-color .2s,transform .35s cubic-bezier(.3,1.8,.5,1)}
 .vitem[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);transform:scale(1.12)}
 .vitem .box svg{width:16px;height:16px}
 .vitem.pulse[aria-pressed="true"] .box svg path{stroke-dasharray:24;stroke-dashoffset:24;animation:draw .35s .1s ease forwards}
-@keyframes draw{to{stroke-dashoffset:0}}
 .vitem .body{min-width:0;flex:1}
 .vitem .who{font-size:12.5px;font-weight:600;color:var(--muted)}
 .vitem .txt{white-space:pre-wrap;overflow-wrap:anywhere}
-.counter{flex:none;display:flex;align-items:center;gap:6px}
-.counter button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--bar);font-size:20px;font-weight:700;line-height:1;display:grid;place-items:center;transition:transform .15s,background .2s}
-.counter button:active{transform:scale(.85)}
-.counter .plus{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.counter b{min-width:36px;text-align:center;font-family:var(--f-disp);font-weight:800;font-size:24px;font-variant-numeric:tabular-nums}
-.counter b.bump{animation:bump .4s cubic-bezier(.3,1.8,.5,1)}
-@keyframes bump{40%{transform:scale(1.5) rotateX(30deg);color:var(--accent)}}
-.vfoot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
 .note{font-size:13px;color:var(--muted)}
 
 /* resultados: podio 3D */
@@ -169,7 +195,7 @@ button.vitem:hover{box-shadow:var(--lift)}
 .podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:10px;padding:22px 4px 0;perspective:900px}
 .pcol{display:flex;flex-direction:column;gap:8px;min-width:0}
 .pcol.r1{order:2}.pcol.r2{order:1}.pcol.r3{order:3}
-.ptxt{background:var(--panel);border-radius:12px;box-shadow:var(--shadow);padding:9px 10px;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ptxt{background:var(--panel);border-radius:12px;box-shadow:var(--shadow);padding:9px 10px;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:5;line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .r1 .ptxt{font-weight:600;box-shadow:var(--lift)}
 .pstep{position:relative;border-radius:4px 4px 0 0;display:flex;flex-direction:column;align-items:center;padding-top:12px;color:#14110a;transform-origin:50% 100%;transform:rotateX(8deg)}
 .pstep::before{content:"";position:absolute;left:0;right:0;top:-12px;height:12px;background:inherit;filter:brightness(1.25);clip-path:polygon(7% 0,93% 0,100% 100%,0 100%)}
@@ -207,96 +233,64 @@ button.vitem:hover{box-shadow:var(--lift)}
 .empty b{display:block;color:var(--fg);font-size:16px;margin-bottom:4px}
 
 /* capas emergentes */
-.overlay{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--scrim);perspective:1000px;animation:fadeIn .25s ease;padding:16px}
+.overlay{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--scrim);perspective:1000px;animation:fadeIn .25s ease;padding:16px;overflow-y:auto}
 .overlay.bye{animation:fadeOut .35s ease forwards}
 @keyframes fadeIn{from{opacity:0}}
 @keyframes fadeOut{to{opacity:0}}
-.ocard{background:var(--panel);color:var(--fg);border-radius:22px;box-shadow:var(--lift);padding:22px 26px 24px;text-align:center;max-width:380px;width:100%;animation:flipIn .7s cubic-bezier(.2,1.3,.4,1)}
-.ocard.wide{max-width:560px;text-align:left}
+.ocard{background:var(--panel);color:var(--fg);border-radius:22px;box-shadow:var(--lift);padding:22px 26px 24px;text-align:center;max-width:400px;width:100%;animation:flipIn .7s cubic-bezier(.2,1.3,.4,1)}
+.ocard.left{text-align:left;max-width:520px}
 @keyframes flipIn{from{opacity:0;transform:rotateX(-80deg) translateY(-30px) scale(.8)}}
 .ocard .lot{width:120px;height:120px;margin:0 auto}
 .ocard .eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
 .ocard h3{margin:4px 0 6px;font-family:var(--f-disp);font-weight:800;font-size:28px;letter-spacing:-.01em}
 .ocard p{margin:0;color:var(--muted)}
-.ocard textarea,.ocard input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bar);color:var(--fg);font:inherit;padding:10px;margin:10px 0}
-.ocard textarea{min-height:180px;resize:vertical;font-size:14px}
-.ocard .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.ocard textarea,.ocard input{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bar);padding:10px;margin:10px 0}
+.ocard .row{justify-content:flex-end}
 .bignum{font-family:var(--f-disp);font-weight:800;font-size:84px;line-height:1;color:var(--accent);display:inline-block;animation:spin3d 1s cubic-bezier(.2,1.2,.4,1)}
 @keyframes spin3d{from{transform:rotateY(-540deg) scale(.4);opacity:0}}
-.toast{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--panel);padding:9px 16px;border-radius:999px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100% - 32px);text-align:center;z-index:40;transform:translateX(-50%);animation:toastIn .35s cubic-bezier(.3,1.5,.5,1)}
+.bigcode{font-family:var(--f-disp);font-weight:800;font-size:54px;letter-spacing:.14em;color:var(--accent);line-height:1.1;margin:6px 0}
+.qr{background:#fff;padding:12px;border-radius:14px;display:inline-block;margin:8px auto;box-shadow:var(--shadow)}
+.qr img,.qr canvas{display:block;width:220px!important;height:220px!important;max-width:100%}
+.linkbox{font-size:12.5px;word-break:break-all;background:var(--bar);border-radius:10px;padding:8px 10px;margin:8px 0;color:var(--muted);user-select:all}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--panel);padding:9px 16px;border-radius:999px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:calc(100% - 32px);text-align:center;z-index:40;transform:translateX(-50%);animation:toastIn .35s cubic-bezier(.3,1.5,.5,1)}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,20px) scale(.9)}}
+.spinner{width:34px;height:34px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-@media (max-width:560px){.tab{font-size:12px;letter-spacing:.02em}.stats{margin-left:0;width:100%}.chips{margin-left:0}.msg{max-width:90%}.r1 .pstep{height:120px}.r2 .pstep{height:92px}.r3 .pstep{height:70px}.pstep .pn{font-size:26px}.ptxt{font-size:12.5px}.vitem{flex-wrap:wrap}.counter{margin-left:auto}}
+@media (max-width:560px){.tab{font-size:12px;letter-spacing:.02em}.stats{margin-left:0;width:100%}.chips{margin-left:0}.msg{max-width:88%}.r1 .pstep{height:120px}.r2 .pstep{height:92px}.r3 .pstep{height:70px}.pstep .pn{font-size:26px}.ptxt{font-size:12.5px}.bigcode{font-size:42px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
-@media print{
-  header .hbtn,nav,.composer,.ractions,.menu{display:none!important}
-  .app{display:block;height:auto}main{overflow:visible;background:none}
-  .podium .pstep{animation:none!important}
-}
 </style>
 </head>
 <body>
-<div class="app">
-  <header><div class="inner">
-    <div class="gavatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 3h16v3.5c0 2.4-2.6 4.1-5 5.5 2.4 1.4 5 3.1 5 5.5V21H4v-3.5c0-2.4 2.6-4.1 5-5.5-2.4-1.4-5-3.1-5-5.5V3Zm3 2v1.5c0 1 1.9 2.4 5 4.2 3.1-1.8 5-3.2 5-4.2V5H7Zm2.5 13.5h5c-.5-1.2-1.6-2-2.5-2.6-.9.6-2 1.4-2.5 2.6Z"/></svg></div>
-    <div class="htext"><h1 id="title">Taller: cuellos de botella</h1><p id="sub"></p></div>
-    <button class="hbtn" id="fsBtn" aria-label="Pantalla completa" title="Pantalla completa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-    <button class="hbtn" id="menuBtn" aria-label="Más opciones" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
-    <div class="menu" id="menu" hidden role="menu">
-      <button role="menuitem" data-act="titulo">Cambiar nombre del taller</button>
-      <button role="menuitem" data-act="pregunta">Editar la pregunta</button>
-      <button role="menuitem" data-act="pegar">Pegar respuestas del WhatsApp</button>
-      <button role="menuitem" data-act="csv">Descargar resultados (Excel/CSV)</button>
-      <button role="menuitem" data-act="print">Imprimir o guardar en PDF</button>
-      <button role="menuitem" data-act="ejemplo">Cargar datos de ejemplo</button>
-      <button role="menuitem" class="danger" data-act="reset">Borrar todo y empezar de nuevo</button>
-    </div>
-  </div></header>
-  <nav><div class="inner" role="tablist" aria-label="Etapas del taller">
-    <button class="tab" role="tab" data-tab="respuestas">1 · Responder</button>
-    <button class="tab" role="tab" data-tab="votacion">2 · Votar</button>
-    <button class="tab" role="tab" data-tab="resultados">3 · Resultados</button>
-    <span class="ink" id="ink"></span>
-  </div></nav>
-  <main id="main"><div class="inner" id="view"></div></main>
-  <footer class="composer" id="composer"><div class="inner">
-    <div class="who-in">
-      <label for="autor">Autor o grupo</label>
-      <input id="autor" list="autores" maxlength="60" placeholder="Ej.: Grupo 1, Rosa (opcional)">
-      <datalist id="autores"></datalist>
-      <button class="lnk" id="pasteBtn" type="button">Pegar del WhatsApp</button>
-    </div>
-    <div class="crow">
-      <div class="field"><textarea id="input" rows="1" maxlength="400" placeholder="Escribe una respuesta y pulsa Enter"></textarea></div>
-      <button class="send" id="send" aria-label="Agregar respuesta" disabled><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10.1 15 12 3.4 13.9z"/></svg></button>
-    </div>
-  </div></footer>
-</div>
+<div id="root" style="height:100%"></div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
 <script>
+/* ======================================================================
+   CONFIGURACIÓN DE FIREBASE
+   Pega aquí la configuración de tu proyecto (Consola de Firebase →
+   Configuración del proyecto → Tus apps → Web). Si la dejas en null,
+   la página la pedirá en pantalla la primera vez.
+   ====================================================================== */
+const FIREBASE_CONFIG = null;
+
 const DEFAULT_Q = "¿Cuál es el cuello de botella que impide un flujo óptimo de los procesos?";
 const FASES = ["respuestas", "votacion", "resultados"];
 const FASE_NOMBRE = { respuestas: "Respuestas", votacion: "Votación", resultados: "Resultados" };
 const FASE_TXT = {
-  respuestas: "Cada persona comparte el cuello de botella que ve en los procesos.",
-  votacion: "Cada persona tiene 2 votos y los da a dos propuestas distintas.",
-  resultados: "Las 3 propuestas más votadas son las prioridades del grupo."
+  respuestas: "Escribe en el chat el cuello de botella que ves en los procesos.",
+  votacion: "Tienes 2 votos. Dalos a dos propuestas distintas.",
+  resultados: "Estas son las prioridades del grupo."
 };
-const MAX_VOTOS = 2, TOP = 3, KEY = "taller-cuellos-v1";
+const MAX_VOTOS = 2, MAX_MSG = 5, TOP = 3;
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/* ---------- estado (se guarda en este navegador) ---------- */
-function blank() { return { titulo: "Taller: cuellos de botella", pregunta: DEFAULT_Q, msgs: [], manual: {}, turns: [], modo: "turnos", tab: "respuestas" }; }
-function load() {
-  try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && Array.isArray(d.msgs)) return { ...blank(), ...d }; } catch {}
-  return blank();
-}
-let D = load();
-function save() { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch {} }
-const V = { sel: [], seen: new Set(), seenVote: new Set(), seenRes: new Set(), prevW: new Map(), prevStats: {}, pulse: null, chipNew: null, bump: null, stick: false, first: true };
+const LS = { cfg: "taller-fb-config", name: "taller-fb-nombre" };
 
 const $ = id => document.getElementById(id);
 function h(tag, attrs, ...kids) {
@@ -313,18 +307,22 @@ function h(tag, attrs, ...kids) {
 }
 function svg(viewBox, inner, cls) { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("viewBox", viewBox); s.setAttribute("aria-hidden", "true"); if (cls) s.setAttribute("class", cls); s.innerHTML = inner; return s; }
 const svgCheck = () => svg("0 0 24 24", '<path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/>');
+const svgTicks = () => svg("0 0 16 11", '<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="m1 6 3 3 6-7.5M7 8.4 7.7 9l6-7.5"/>');
 const svgCrown = () => svg("0 0 30 24", '<path fill="currentColor" d="M2 6l7 6 6-10 6 10 7-6-3 15H5z"/><rect x="5" y="20" width="20" height="3" rx="1.5" fill="currentColor"/>', "crown");
+const svgHourglass = () => svg("0 0 24 24", '<path fill="currentColor" d="M4 3h16v3.5c0 2.4-2.6 4.1-5 5.5 2.4 1.4 5 3.1 5 5.5V21H4v-3.5c0-2.4 2.6-4.1 5-5.5-2.4-1.4-5-3.1-5-5.5V3Zm3 2v1.5c0 1 1.9 2.4 5 4.2 3.1-1.8 5-3.2 5-4.2V5H7Zm2.5 13.5h5c-.5-1.2-1.6-2-2.5-2.6-.9.6-2 1.4-2.5 2.6Z"/>');
+const svgShare = () => svg("0 0 24 24", '<path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/>');
 const hora = ts => ts ? new Date(ts).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }) : "";
-const rid = () => Math.random().toString(36).slice(2, 10);
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 function rgb01(hex) { const m = /^#?([0-9a-f]{6})$/i.exec(hex); if (!m) return [0.07, 0.55, 0.37, 1]; const n = parseInt(m[1], 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255, 1]; }
 const PALETA = ["#c2410c", "#7c3aed", "#0369a1", "#be185d", "#4d7c0f", "#b45309", "#0f766e", "#6d28d9"];
-function colorOf(name) { let x = 0; for (const c of name || "") x = (x * 31 + c.charCodeAt(0)) >>> 0; return PALETA[x % PALETA.length]; }
+function colorOf(s) { let x = 0; for (const c of s || "") x = (x * 31 + c.charCodeAt(0)) >>> 0; return PALETA[x % PALETA.length]; }
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 
 let toastT;
-function toast(msg) { const t = $("toast"); t.hidden = true; void t.offsetWidth; t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3000); }
+function toast(msg, ms) { const t = $("toast"); t.hidden = true; void t.offsetWidth; t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms || 3200); }
 
-/* ---------- Lottie (animaciones en línea) ---------- */
+/* ---------- Lottie en línea ---------- */
 const K = v => ({ a: 0, k: v });
 const TR = { ty: "tr", p: K([0, 0]), a: K([0, 0]), s: K([100, 100]), r: K(0), o: K(100) };
 const ez = n => ({ i: { x: Array(n).fill(0.3), y: Array(n).fill(1.4) }, o: { x: Array(n).fill(0.5), y: Array(n).fill(0) } });
@@ -363,7 +361,7 @@ function playLottie(container, data, loop) {
 /* ---------- efectos ---------- */
 function burst(opts) {
   if (REDUCED || typeof confetti !== "function") return;
-  const colors = [css("--accent"), css("--gold"), css("--bronze"), "#2d9bdb", "#ffffff"];
+  const colors = [css("--accent"), css("--gold"), css("--bronze"), css("--tick"), "#ffffff"];
   try { confetti({ particleCount: 120, spread: 75, startVelocity: 42, origin: { y: .65 }, colors, zIndex: 50, ...opts }); } catch {}
 }
 function bigBurst() { burst({ angle: 60, origin: { x: 0, y: .75 } }); burst({ angle: 120, origin: { x: 1, y: .75 } }); setTimeout(() => burst({ particleCount: 160, spread: 110, origin: { y: .4 } }), 350); }
@@ -377,8 +375,14 @@ function overlay(content, ms) {
 }
 function stageOverlay(fase) {
   const i = FASES.indexOf(fase) + 1;
-  overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Etapa " + i + " de 3"), h("div", { class: "bignum" }, i), h("h3", {}, FASE_NOMBRE[fase]), h("p", {}, FASE_TXT[fase])), 2400);
+  overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Etapa " + i + " de 3"), h("div", { class: "bignum" }, i), h("h3", {}, FASE_NOMBRE[fase]), h("p", {}, FASE_TXT[fase])), 2600);
   if (fase === "resultados") setTimeout(bigBurst, 500);
+}
+function votesDoneOverlay() {
+  const lot = h("div", { class: "lot" });
+  overlay(h("div", { class: "ocard" }, lot, h("h3", {}, "Votos registrados"), h("p", {}, "Puedes cambiarlos hasta que cierre la votación.")), 2300);
+  playLottie(lot, lottieCheck(), false);
+  setTimeout(() => burst({ particleCount: 70, spread: 60, origin: { y: .55 } }), 380);
 }
 function countUp(el, from, to) {
   if (REDUCED || from === to) { el.textContent = to; return; }
@@ -395,205 +399,398 @@ function tilt(el) {
   el.addEventListener("pointerleave", () => { el.style.setProperty("--rx", "0deg"); el.style.setProperty("--ry", "0deg"); });
 }
 
-/* ---------- datos derivados ---------- */
-function counts() {
-  const c = new Map(), ids = new Set(D.msgs.map(m => m.id));
-  for (const [k, n] of Object.entries(D.manual)) if (ids.has(k)) c.set(k, (c.get(k) || 0) + Math.max(0, n | 0));
-  for (const t of D.turns) for (const k of t) if (ids.has(k)) c.set(k, (c.get(k) || 0) + 1);
+/* ---------- configuración ---------- */
+function b64enc(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/=+$/, ""); }
+function b64dec(s) { return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+function parseConfig(raw) {
+  const a = raw.indexOf("{"), b = raw.lastIndexOf("}");
+  if (a < 0 || b < a) throw new Error("No encontré las llaves { } de la configuración.");
+  let s = raw.slice(a, b + 1)
+    .replace(/(^|\s)\/\/.*$/gm, "$1")
+    .replace(/([{,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":')
+    .replace(/'([^']*)'/g, '"$1"')
+    .replace(/,\s*}/g, "}");
+  const c = JSON.parse(s);
+  if (!c.apiKey || !c.projectId) throw new Error("Faltan apiKey o projectId.");
   return c;
 }
-function tally() {
-  const c = counts();
-  const ranked = D.msgs.map(m => ({ ...m, n: c.get(m.id) || 0 })).sort((a, b) => b.n - a.n || a.ts - b.ts);
-  return { ranked, votos: [...c.values()].reduce((a, b) => a + b, 0), votantes: D.turns.length };
+function getConfig() {
+  if (FIREBASE_CONFIG) return { cfg: FIREBASE_CONFIG, embedded: true };
+  const m = /(?:^|[#&])c=([^&]+)/.exec(location.hash);
+  if (m) { try { const c = b64dec(m[1]); if (c.apiKey) { lsSet(LS.cfg, JSON.stringify(c)); return { cfg: c, embedded: false }; } } catch {} }
+  try { const c = JSON.parse(lsGet(LS.cfg)); if (c?.apiKey) return { cfg: c, embedded: false }; } catch {}
+  return null;
 }
-const autorDe = m => m.a || "Participante";
+
+/* ---------- estado ---------- */
+const S = {
+  cfg: null, embedded: false, db: null, uid: null, nombre: lsGet(LS.name) || "",
+  code: null, room: null, resp: [], votos: new Map(), roomReady: false,
+  tab: null, faseSeen: null, sel: null, pulse: null, chipNew: null, stick: false,
+  seen: new Set(), seenVote: new Set(), seenRes: new Set(), prevW: new Map(), prevStats: {}, sig: "", lastHiddenN: -1,
+  unsub: []
+};
+const isFac = () => !!(S.room && S.uid && S.room.creador === S.uid);
+const salaRef = () => S.db.collection("salas").doc(S.code);
+
+/* ---------- pantallas ---------- */
+const root = $("root");
+function screen(...cards) {
+  root.replaceChildren(h("div", { class: "screen" }, h("div", { class: "inner" },
+    h("div", { class: "brand" }, h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
+      h("div", {}, h("h1", {}, "Taller: cuellos de botella"), h("p", {}, "Respuestas, votación y prioridades en vivo"))),
+    ...cards)));
+}
+function loading(msg) { screen(h("div", { class: "scard", style: "align-items:center;text-align:center" }, h("div", { class: "spinner" }), h("p", {}, msg))); }
+
+function setupScreen(err) {
+  const ta = h("textarea", { id: "cfgIn", placeholder: 'const firebaseConfig = {\n  apiKey: "AIza...",\n  authDomain: "mi-taller.firebaseapp.com",\n  projectId: "mi-taller",\n  ...\n};' });
+  const e = h("div", { class: "err" }, err || "");
+  screen(h("div", { class: "scard" },
+    h("h2", {}, "Conectar con Firebase"),
+    h("p", {}, "Solo se hace una vez, en la laptop del facilitador. Los participantes reciben la conexión dentro del enlace de la sala."),
+    h("ol", { class: "steps" },
+      h("li", {}, "En console.firebase.google.com abre tu proyecto."),
+      h("li", {}, "Ve a Configuración del proyecto → Tus apps → Web."),
+      h("li", {}, "Copia el bloque firebaseConfig y pégalo aquí.")),
+    ta, e,
+    h("button", { class: "btn block", onclick: () => {
+      try { const c = parseConfig(ta.value); lsSet(LS.cfg, JSON.stringify(c)); start(); }
+      catch (x) { e.textContent = "No pude leer la configuración: " + x.message; }
+    } }, "Guardar y continuar")));
+}
+
+function homeScreen() {
+  const inp = h("input", { id: "codeIn", class: "code-in", maxlength: 6, placeholder: "CÓDIGO", autocomplete: "off", "aria-label": "Código de la sala" });
+  const go = () => { const c = inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (c.length < 4) return toast("Escribe el código de 6 letras que te dio el facilitador."); openSala(c); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  const tit = h("input", { id: "titIn", maxlength: 80, value: "Taller: cuellos de botella", "aria-label": "Nombre del taller" });
+  screen(
+    h("div", { class: "scard" }, h("h2", {}, "Unirme a una sala"), h("p", {}, "Escribe el código que aparece en la pantalla del facilitador."), inp, h("button", { class: "btn block", onclick: go }, "Entrar")),
+    h("div", { class: "scard" }, h("h2", {}, "Crear una sala (facilitador)"), h("p", {}, "Tendrás el control de las etapas y un código QR para que los participantes entren."), tit,
+      h("button", { class: "btn ghost block", onclick: () => crearSala(tit.value) }, "Crear sala")));
+}
+
+function nameScreen(then) {
+  const inp = h("input", { id: "nameIn", maxlength: 50, placeholder: "Ej.: Rosa – Logística", value: S.nombre });
+  const go = () => { const v = inp.value.trim(); if (!v) return toast("Escribe tu nombre o el de tu grupo."); S.nombre = v; lsSet(LS.name, v); then(); };
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  screen(h("div", { class: "scard" }, h("h2", {}, "¿Cómo te llamas?"), h("p", {}, "Tu nombre aparecerá junto a tus respuestas. Puedes poner el nombre de tu grupo."), inp, h("button", { class: "btn block", onclick: go }, "Continuar")));
+  setTimeout(() => inp.focus(), 60);
+}
+
+/* ---------- salas ---------- */
+function nuevoCodigo() { const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; const r = crypto.getRandomValues(new Uint8Array(6)); for (const x of r) s += A[x % A.length]; return s; }
+async function crearSala(titulo) {
+  loading("Creando la sala…");
+  try {
+    let code;
+    for (let i = 0; i < 5; i++) { code = nuevoCodigo(); const d = await S.db.collection("salas").doc(code).get(); if (!d.exists) break; }
+    await S.db.collection("salas").doc(code).set({ creador: S.uid, titulo: (titulo || "").trim().slice(0, 80) || "Taller: cuellos de botella", pregunta: DEFAULT_Q, fase: "respuestas", ocultas: false, ts: Date.now() });
+    if (!S.nombre) { S.nombre = "Facilitación"; lsSet(LS.name, S.nombre); }
+    history.replaceState(null, "", "?sala=" + code + location.hash);
+    openSala(code, true);
+  } catch (e) { fbError(e); homeScreen(); }
+}
+function openSala(code, created) {
+  S.code = code;
+  if (location.search !== "?sala=" + code) history.replaceState(null, "", "?sala=" + code + location.hash);
+  if (!S.nombre && !created) return nameScreen(() => openSala(code));
+  buildApp();
+  S.unsub.forEach(u => u()); S.unsub = [];
+  S.unsub.push(salaRef().onSnapshot(d => {
+    if (!d.exists) { S.unsub.forEach(u => u()); toast("No existe una sala con el código " + code + ".", 4000); history.replaceState(null, "", location.pathname + location.hash); return homeScreen(); }
+    const v = d.data();
+    S.room = { ...v, fase: FASES.includes(v.fase) ? v.fase : "respuestas", pregunta: v.pregunta || DEFAULT_Q };
+    S.roomReady = true; render();
+    if (created) { created = false; setTimeout(shareOverlay, 400); }
+  }, fbError));
+  S.unsub.push(salaRef().collection("respuestas").orderBy("ts").onSnapshot(q => { S.resp = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => typeof r.t === "string"); render(); }, fbError));
+  S.unsub.push(salaRef().collection("votos").onSnapshot(q => { S.votos = new Map(q.docs.map(d => [d.id, d.data()])); render(); }, fbError));
+}
+function fbError(e) {
+  console.error(e);
+  const c = e?.code || "";
+  if (c.includes("permission-denied")) toast("Firebase rechazó la operación. Revisa las reglas de Firestore o la etapa actual.", 5000);
+  else if (c.includes("operation-not-allowed") || c.includes("admin-restricted")) toast("Activa el acceso Anónimo en Firebase → Authentication → Método de acceso.", 6000);
+  else if (c.includes("unavailable")) toast("Sin conexión con Firebase. Revisa el internet.", 4000);
+  else if (c.includes("failed-precondition")) toast("Firestore no está creado en tu proyecto. Créalo en la consola de Firebase.", 6000);
+  else toast("Error de Firebase: " + (e?.message || c), 5000);
+}
+
+/* ---------- datos derivados ---------- */
+function proposals() { return S.resp.map(r => ({ key: r.id, uid: r.uid, a: r.nombre || "Participante", t: String(r.t).slice(0, 400), ts: +r.ts || 0 })); }
+const myProps = () => S.resp.filter(r => r.uid === S.uid);
+function myVotes() { const d = S.votos.get(S.uid); return (Array.isArray(d?.ids) ? d.ids : []).filter(k => typeof k === "string"); }
+function tally() {
+  const props = proposals(), valid = new Set(props.map(p => p.key)), c = new Map();
+  let voters = 0;
+  for (const [, d] of S.votos) {
+    const ids = [...new Set((Array.isArray(d?.ids) ? d.ids : []).filter(k => valid.has(k)))].slice(0, MAX_VOTOS);
+    if (ids.length) voters++;
+    ids.forEach(k => c.set(k, (c.get(k) || 0) + 1));
+  }
+  const ranked = props.map(p => ({ ...p, n: c.get(p.key) || 0 })).sort((a, b) => b.n - a.n || a.ts - b.ts);
+  return { ranked, voters, votos: [...c.values()].reduce((a, b) => a + b, 0), props };
+}
 
 /* ---------- acciones ---------- */
-function addMsg(text, autor, ts) {
-  D.msgs.push({ id: rid(), a: (autor || "").trim().slice(0, 60), t: text.trim().slice(0, 400), ts: ts || Date.now() });
-}
-function sendMsg() {
+const canWrite = () => S.room?.fase === "respuestas" && myProps().length < MAX_MSG;
+async function sendMsg() {
   const ta = $("input"), text = ta.value.trim();
-  if (!text) return;
-  addMsg(text, $("autor").value);
+  if (!text || !canWrite()) return;
   ta.value = ""; autosize(); updateComposer();
   const b = $("send"); b.classList.remove("fly"); void b.offsetWidth; b.classList.add("fly");
-  V.stick = true; save(); render();
+  S.stick = true;
+  try { await salaRef().collection("respuestas").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), t: text.slice(0, 400), ts: Date.now() }); }
+  catch (e) { ta.value = text; updateComposer(); fbError(e); }
 }
 function deleteMsg(id, el) {
   el?.classList.add("out");
-  setTimeout(() => {
-    D.msgs = D.msgs.filter(m => m.id !== id);
-    delete D.manual[id];
-    D.turns = D.turns.map(t => t.filter(k => k !== id));
-    V.sel = V.sel.filter(k => k !== id);
-    save(); render();
-  }, REDUCED ? 0 : 280);
+  setTimeout(() => salaRef().collection("respuestas").doc(id).delete().catch(fbError), REDUCED ? 0 : 280);
 }
-function goTab(t, animate) {
-  if (D.tab === t) return;
-  const forward = FASES.indexOf(t) > FASES.indexOf(D.tab);
-  D.tab = t; save(); render();
-  if (animate && forward) stageOverlay(t);
-}
-function toggleSel(id) {
-  const adding = !V.sel.includes(id);
-  if (!adding) V.sel = V.sel.filter(k => k !== id);
+let voteQ = Promise.resolve();
+function toggleVote(key) {
+  if (S.room.fase !== "votacion") return;
+  let ids = myVotes();
+  const adding = !ids.includes(key);
+  if (!adding) ids = ids.filter(k => k !== key);
   else {
-    if (V.sel.length >= MAX_VOTOS) { toast("Ya marcaste 2 propuestas. Quita una para cambiarla."); shakeChips(); return; }
-    V.sel = [...V.sel, id];
+    if (ids.length >= MAX_VOTOS) { toast("Ya usaste tus 2 votos. Quita uno para cambiarlo."); shakeChips(); return; }
+    ids = [...ids, key];
   }
-  V.pulse = id; V.chipNew = adding ? V.sel.length - 1 : null; render();
-}
-function confirmTurn() {
-  const need = Math.min(MAX_VOTOS, D.msgs.length);
-  if (V.sel.length < need) { toast(`Marca ${need} propuestas distintas antes de confirmar.`); shakeChips(); return; }
-  D.turns.push([...V.sel]); V.sel = []; save(); render();
-  const lot = h("div", { class: "lot" });
-  overlay(h("div", { class: "ocard" }, lot, h("div", { class: "eyebrow" }, "Votante " + D.turns.length), h("h3", {}, "Voto registrado"), h("p", {}, "Pasa la laptop a la siguiente persona.")), 2000);
-  playLottie(lot, lottieCheck(), false);
-  setTimeout(() => burst({ particleCount: 60, spread: 60, origin: { y: .55 } }), 380);
-}
-function undoTurn() { if (!D.turns.length) return; D.turns.pop(); save(); render(); toast("Se deshizo el último voto."); }
-function bumpManual(id, d) {
-  const n = Math.max(0, (D.manual[id] | 0) + d);
-  if (n === (D.manual[id] | 0)) return;
-  D.manual[id] = n; V.bump = id; save(); render();
+  S.votos.set(S.uid, { ids, nombre: S.nombre });
+  S.pulse = key; S.chipNew = adding ? ids.length - 1 : null; render();
+  if (adding && ids.length === MAX_VOTOS) setTimeout(votesDoneOverlay, 250);
+  voteQ = voteQ.then(() => salaRef().collection("votos").doc(S.uid).set({ ids, nombre: S.nombre.slice(0, 50), ts: Date.now() })).catch(fbError);
 }
 function shakeChips() { const c = document.querySelector(".chips"); if (!c || REDUCED) return; c.animate([{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "translateX(-3px)" }, { transform: "translateX(0)" }], { duration: 380 }); }
-
-/* ---------- render ---------- */
-function moveInk() {
-  const sel = document.querySelector('.tab[aria-selected="true"]'), ink = $("ink");
-  if (sel) { ink.style.left = sel.offsetLeft + 12 + "px"; ink.style.width = sel.offsetWidth - 24 + "px"; }
+const setRoom = patch => salaRef().update(patch).catch(fbError);
+async function resetSala() {
+  try {
+    const [r, v] = await Promise.all([salaRef().collection("respuestas").get(), salaRef().collection("votos").get()]);
+    const docs = [...r.docs, ...v.docs];
+    for (let i = 0; i < docs.length; i += 400) { const b = S.db.batch(); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
+    await setRoom({ fase: "respuestas", ocultas: false });
+    S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
+    toast("Sala reiniciada.");
+  } catch (e) { fbError(e); }
 }
-function render() {
-  const tab = D.tab, autores = new Set(D.msgs.map(m => m.a || "·")).size;
-  $("title").textContent = D.titulo; document.title = D.titulo.replace(/^Taller:\s*/i, "Taller ") || "Taller Cuellos de Botella";
-  $("sub").textContent = `${FASE_NOMBRE[tab]} · ${D.msgs.length} ${D.msgs.length === 1 ? "propuesta" : "propuestas"}` + (D.turns.length ? ` · ${D.turns.length} ${D.turns.length === 1 ? "votante" : "votantes"}` : "");
-  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
-  moveInk();
-  $("autores").replaceChildren(...[...new Set(D.msgs.map(m => m.a).filter(Boolean))].map(a => h("option", { value: a })));
 
+/* ---------- compartir ---------- */
+function shareLink() {
+  const base = location.origin + location.pathname + "?sala=" + S.code;
+  return S.embedded ? base : base + "#c=" + b64enc(S.cfg);
+}
+function shareOverlay() {
+  const link = shareLink(), qr = h("div", { class: "qr", "aria-label": "Código QR para entrar a la sala" });
+  let close;
+  close = overlay(h("div", { class: "ocard" },
+    h("div", { class: "eyebrow" }, "Entra a la sala"),
+    h("div", { class: "bigcode" }, S.code),
+    h("p", {}, "Escanea el código QR o abre el enlace en tu celular."),
+    qr,
+    h("div", { class: "linkbox" }, link),
+    h("div", { class: "row", style: "justify-content:center" },
+      h("button", { class: "btn", onclick: () => copy(link, "Enlace copiado. Pégalo en el WhatsApp del grupo.") }, "Copiar enlace"),
+      h("button", { class: "btn ghost", onclick: () => close() }, "Cerrar"))), 0);
+  try { new QRCode(qr, { text: link, width: 440, height: 440, correctLevel: QRCode.CorrectLevel.L }); }
+  catch { qr.replaceWith(h("p", { class: "note" }, "No se pudo generar el QR sin internet. Comparte el enlace.")); }
+}
+async function copy(txt, ok) {
+  try { await navigator.clipboard.writeText(txt); toast(ok); }
+  catch {
+    const ta = h("textarea", { style: "position:fixed;opacity:0" }); ta.value = txt; document.body.append(ta); ta.select();
+    try { document.execCommand("copy"); toast(ok); } catch { toast("Selecciona el texto y cópialo manualmente."); }
+    ta.remove();
+  }
+}
+
+/* ---------- interfaz de la sala ---------- */
+function buildApp() {
+  root.replaceChildren(h("div", { class: "app" },
+    h("header", {}, h("div", { class: "inner" },
+      h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
+      h("div", { class: "htext" }, h("h1", { id: "title" }, "Cargando sala…"), h("p", { id: "sub" }, "")),
+      h("button", { class: "codechip", id: "codeBtn", onclick: shareOverlay, "aria-label": "Compartir la sala" }, svgShare(), S.code))),
+    h("nav", {}, h("div", { class: "inner", role: "tablist", "aria-label": "Etapas del taller" },
+      ...FASES.map((f, i) => h("button", { class: "tab", role: "tab", "data-tab": f, onclick: () => { if (tabAllowed(f)) { S.tab = f; S.sig = ""; render(); } } }, (i + 1) + " · " + ["Responder", "Votar", "Resultados"][i])),
+      h("span", { class: "ink", id: "ink" }))),
+    h("section", { class: "fac", id: "fac", hidden: true }, h("div", { class: "inner", id: "facIn" })),
+    h("main", { id: "main" }, h("div", { class: "inner", id: "view" })),
+    h("footer", { class: "composer", id: "composer" }, h("div", { class: "inner" },
+      h("div", { class: "field" }, h("textarea", { id: "input", rows: 1, maxlength: 400, placeholder: "Escribe tu respuesta" })),
+      h("button", { class: "send", id: "send", "aria-label": "Enviar respuesta", disabled: true, onclick: sendMsg }, svg("0 0 24 24", '<path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10.1 15 12 3.4 13.9z"/>'))))));
+  const ta = $("input");
+  ta.addEventListener("input", () => { autosize(); updateComposer(); });
+  ta.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMsg(); } });
+  S.sig = ""; S.faseSeen = null;
+}
+function autosize() { const ta = $("input"); if (!ta) return; ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 140) + "px"; }
+function updateComposer() {
+  const ta = $("input"); if (!ta || !S.room) return;
+  const ok = canWrite();
+  ta.disabled = !ok;
+  ta.placeholder = S.room.fase !== "respuestas" ? "La etapa de respuestas está cerrada" : myProps().length >= MAX_MSG ? `Llegaste al máximo de ${MAX_MSG} respuestas` : "Escribe tu respuesta";
+  $("send").disabled = !ok || !ta.value.trim();
+}
+const currentTab = () => S.tab || S.room?.fase || "respuestas";
+const tabAllowed = t => isFac() || FASES.indexOf(t) <= FASES.indexOf(S.room?.fase || "respuestas");
+function moveInk() { const sel = document.querySelector('.tab[aria-selected="true"]'), ink = $("ink"); if (sel && ink) { ink.style.left = sel.offsetLeft + 12 + "px"; ink.style.width = sel.offsetWidth - 24 + "px"; } }
+addEventListener("resize", moveInk);
+
+function render() {
+  if (!S.roomReady || !$("view")) return;
+  if (S.room.fase !== S.faseSeen) { const had = S.faseSeen; S.faseSeen = S.room.fase; S.tab = null; if (had !== null) stageOverlay(S.room.fase); }
+  const tab = currentTab(), props = proposals();
+  document.title = (S.room.titulo || "Taller") + " · " + S.code;
+  $("title").textContent = S.room.titulo || "Taller: cuellos de botella";
+  const autores = new Set(props.map(p => p.uid)).size;
+  $("sub").textContent = `Etapa: ${FASE_NOMBRE[S.room.fase]} · ${autores} ${autores === 1 ? "participante" : "participantes"} · ${props.length} ${props.length === 1 ? "respuesta" : "respuestas"}` + (isFac() ? " · Eres el facilitador" : "");
+  document.querySelectorAll(".tab").forEach(b => {
+    const t = b.dataset.tab;
+    b.setAttribute("aria-selected", t === tab); b.disabled = !tabAllowed(t);
+    b.querySelector(".live")?.remove();
+    if (t === S.room.fase) b.prepend(h("span", { class: "live", "aria-label": "etapa actual" }));
+  });
+  moveInk(); paintFac();
+
+  const sig = JSON.stringify([tab, S.room.fase, S.room.ocultas, S.room.pregunta, isFac(),
+    tab === "respuestas" ? props.map(p => p.key + p.a) : tab === "votacion" ? [props.map(p => p.key), myVotes()] : tally().ranked.map(r => r.key + ":" + r.n)]);
   const view = $("view"), main = $("main"), prevTab = view.dataset.tab;
-  const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 80;
-  view.replaceChildren(...(tab === "respuestas" ? viewChat() : tab === "votacion" ? viewVote() : viewResults(prevTab !== tab)));
-  if (prevTab && prevTab !== tab) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
-  view.dataset.tab = tab;
-  if (tab === "respuestas" && (V.stick || nearBottom || prevTab !== tab)) main.scrollTop = main.scrollHeight;
-  else if (prevTab !== tab) main.scrollTop = 0;
-  V.stick = false; V.pulse = null; V.chipNew = null; V.bump = null; V.first = false;
+  if (sig !== S.sig) {
+    S.sig = sig;
+    const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 80;
+    view.replaceChildren(...(tab === "respuestas" ? viewChat(props) : tab === "votacion" ? viewVote(props) : viewResults(prevTab !== tab)));
+    if (prevTab && prevTab !== tab) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
+    view.dataset.tab = tab;
+    if (tab === "respuestas" && (S.stick || nearBottom || prevTab !== tab)) main.scrollTop = main.scrollHeight;
+    else if (prevTab !== tab) main.scrollTop = 0;
+  }
+  S.stick = false; S.pulse = null; S.chipNew = null;
   $("composer").hidden = tab !== "respuestas";
   updateComposer();
 }
 
-function viewChat() {
+function paintFac() {
+  const sec = $("fac"); sec.hidden = !isFac(); if (sec.hidden) return;
+  const r = S.room;
+  $("facIn").replaceChildren(
+    h("span", { class: "lbl" }, "Facilitador"),
+    h("div", { class: "seg", role: "group", "aria-label": "Cambiar etapa para todos" },
+      ...FASES.map(f => h("button", { "aria-pressed": r.fase === f, onclick: () => r.fase !== f && setRoom({ fase: f }) }, FASE_NOMBRE[f]))),
+    h("button", { class: "switch", role: "switch", "aria-checked": !!r.ocultas, onclick: () => setRoom({ ocultas: !r.ocultas }) }, h("span", { class: "knob" }), "Ocultar respuestas"),
+    h("span", { class: "spacer" }),
+    h("button", { class: "lnk", onclick: editPregunta }, "Editar pregunta"),
+    h("button", { class: "lnk danger", onclick: confirmReset }, "Reiniciar"));
+}
+function editPregunta() {
+  const inp = h("textarea", { id: "qIn", rows: 3, maxlength: 300 }); inp.value = S.room.pregunta;
+  let close;
+  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Editar la pregunta"), inp,
+    h("div", { class: "row" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
+      h("button", { class: "btn", onclick: () => { const v = inp.value.trim(); if (!v) return toast("La pregunta no puede quedar vacía."); setRoom({ pregunta: v.slice(0, 300) }); close(); toast("Pregunta actualizada para todos."); } }, "Guardar"))), 0);
+  setTimeout(() => inp.focus(), 50);
+}
+function confirmReset() {
+  let close;
+  close = overlay(h("div", { class: "ocard" }, h("h3", {}, "¿Reiniciar la sala?"), h("p", {}, "Se borrarán todas las respuestas y votos de esta sala para todos. No se puede deshacer."),
+    h("div", { class: "row", style: "justify-content:center;margin-top:14px" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
+      h("button", { class: "btn warn", onclick: () => { close(); resetSala(); } }, "Borrar todo"))), 0);
+}
+
+function viewChat(props) {
   const out = [h("div", { class: "day" }, "Hoy")];
-  out.push(h("div", { class: "msg q" }, h("div", { class: "who" }, "Pregunta"), h("div", { class: "txt" }, D.pregunta),
-    h("button", { class: "edit", onclick: editPregunta }, "Editar pregunta")));
+  out.push(h("div", { class: "msg q" }, h("div", { class: "who" }, "Pregunta del facilitador"), h("div", { class: "txt" }, S.room.pregunta)));
+  const ocultas = !!S.room.ocultas, fac = isFac();
+  if (ocultas) {
+    const n = props.length, big = h("span", { class: "big" + (n !== S.lastHiddenN && S.lastHiddenN >= 0 ? " bump" : "") }, n);
+    S.lastHiddenN = n;
+    out.push(h("div", { class: "hidden-box" }, big,
+      h("p", {}, h("b", {}, n === 1 ? "respuesta recibida. " : "respuestas recibidas. "),
+        fac ? "Los participantes no ven las respuestas de los demás. Revélalas cuando todos terminen." : "Las respuestas de los demás están ocultas. El facilitador las mostrará al terminar."),
+      fac ? h("button", { class: "btn", onclick: () => { setRoom({ ocultas: false }); setTimeout(() => burst({ particleCount: 80, spread: 90 }), 300); } }, "Revelar respuestas") : null));
+  }
   let stagger = 0;
-  for (const m of D.msgs) {
-    const fresh = !V.seen.has(m.id); V.seen.add(m.id);
-    const el = h("div", { class: "msg" + (fresh ? " enter" : "") });
+  for (const p of props) {
+    const mine = p.uid === S.uid;
+    if (ocultas && !mine && !fac) continue;
+    const fresh = !S.seen.has(p.key); S.seen.add(p.key);
+    const el = h("div", { class: `msg ${mine ? "mine" : "theirs"}${fresh ? " enter" : ""}${ocultas && fac && !mine ? " blur" : ""}` });
     if (fresh) el.style.setProperty("--d", Math.min(stagger++, 10) * 0.05 + "s");
-    el.append(
-      h("div", { class: "who", style: `color:${m.a ? colorOf(m.a) : "var(--accent)"}` }, autorDe(m)),
-      h("span", { class: "txt" }, m.t),
-      h("span", { class: "meta" }, h("button", { class: "del", onclick: () => deleteMsg(m.id, el), "aria-label": "Borrar esta respuesta" }, "borrar"), hora(m.ts)));
+    if (!mine) el.append(h("div", { class: "who", style: `color:${colorOf(p.uid)}` }, p.a));
+    el.append(h("span", { class: "txt" }, p.t),
+      h("span", { class: "meta" },
+        (mine && S.room.fase === "respuestas") || fac ? h("button", { class: "del", onclick: () => deleteMsg(p.key, el), "aria-label": "Borrar esta respuesta" }, "borrar") : null,
+        hora(p.ts), mine ? svgTicks() : null));
     out.push(el);
   }
-  if (!D.msgs.length) {
+  if (!props.length) {
     const lot = h("div", { class: "lottie-empty", "aria-hidden": "true" });
-    out.push(lot, h("div", { class: "sys" }, "Aún no hay respuestas. Escríbelas abajo o pégalas del WhatsApp."));
+    out.push(lot, h("div", { class: "sys" }, "Aún no hay respuestas. " + (S.room.fase === "respuestas" ? "Escribe la primera abajo." : "")));
     requestAnimationFrame(() => playLottie(lot, lottieDots(), true));
-  } else out.push(h("div", { class: "sys" }, "Cuando terminen, pasa a la pestaña Votar."));
+  }
+  if (S.room.fase !== "respuestas") out.push(h("div", { class: "sys" }, "La etapa de respuestas está cerrada. Pasa a la pestaña Votar."));
+  else if (!fac) out.push(h("div", { class: "sys" }, `Puedes enviar hasta ${MAX_MSG} respuestas. Te quedan ${Math.max(0, MAX_MSG - myProps().length)}.`));
   return out;
 }
 
-function viewVote() {
+function viewVote(props) {
   const out = [];
-  const turnos = D.modo === "turnos", c = counts();
-  const head = h("div", { class: "card" },
-    h("div", { class: "vhead" },
-      h("div", {}, h("h2", {}, turnos ? "Votación por turnos" : "Contar post-it"),
-        h("p", {}, turnos
-          ? "Cada persona marca 2 propuestas distintas y pulsa «Confirmar mi voto». Luego pasa la laptop a la siguiente."
-          : "Registra los post-it pegados en cada propuesta con los botones + y −.")),
-      turnos ? h("div", { class: "chips", "aria-label": `Marcadas ${V.sel.length} de ${MAX_VOTOS}` },
-        h("span", { class: "turn" }, "Votante " + (D.turns.length + 1)),
-        ...Array.from({ length: MAX_VOTOS }, (_, i) => h("span", { class: "chip" + (i < V.sel.length ? " used" : "") + (i === V.chipNew ? " new" : "") }, i < V.sel.length ? svgCheck() : String(i + 1)))) : null),
-    h("div", { class: "seg", role: "group", "aria-label": "Forma de votar" },
-      h("button", { "aria-pressed": turnos, onclick: () => { D.modo = "turnos"; save(); render(); } }, "Por turnos"),
-      h("button", { "aria-pressed": !turnos, onclick: () => { D.modo = "postit"; V.sel = []; save(); render(); } }, "Contar post-it")));
-  out.push(head);
-  if (!D.msgs.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay propuestas para votar"), "Primero agrega las respuestas en la pestaña Responder.")); return out; }
+  const mv = myVotes().filter(k => props.some(p => p.key === k));
+  const open = S.room.fase === "votacion";
+  out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
+    h("div", {}, h("h2", {}, "Elige 2 propuestas"),
+      h("p", {}, open ? "Toca dos propuestas distintas. Puedes cambiar tus votos hasta que cierre la votación."
+        : S.room.fase === "respuestas" ? "La votación todavía no empieza. El facilitador la abrirá." : "La votación está cerrada.")),
+    h("div", { class: "chips", "aria-label": `Votos usados: ${mv.length} de ${MAX_VOTOS}` },
+      ...Array.from({ length: MAX_VOTOS }, (_, i) => h("span", { class: "chip" + (i < mv.length ? " used" : "") + (i === S.chipNew ? " new" : "") }, i < mv.length ? svgCheck() : String(i + 1)))))));
+  if (!props.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay propuestas para votar"), "Las respuestas del chat aparecerán aquí.")); return out; }
   const list = h("div", { class: "vlist" });
   let stagger = 0;
-  for (const m of D.msgs) {
-    const fresh = !V.seenVote.has(m.id); V.seenVote.add(m.id);
-    const body = h("span", { class: "body" }, h("div", { class: "who" }, autorDe(m)), h("div", { class: "txt" }, m.t));
-    let el;
-    if (turnos) {
-      const on = V.sel.includes(m.id);
-      el = h("button", { class: "vitem" + (fresh ? " enter" : "") + (V.pulse === m.id ? " pulse" : ""), "aria-pressed": on, onclick: () => toggleSel(m.id) },
-        h("span", { class: "box" }, on ? svgCheck() : null), body);
-      tilt(el);
-    } else {
-      const n = D.manual[m.id] | 0;
-      el = h("div", { class: "vitem" + (fresh ? " enter" : "") }, body,
-        h("div", { class: "counter" },
-          h("button", { onclick: () => bumpManual(m.id, -1), "aria-label": "Quitar un post-it" }, "−"),
-          h("b", { class: V.bump === m.id ? "bump" : "", "aria-live": "polite" }, n),
-          h("button", { class: "plus", onclick: () => bumpManual(m.id, 1), "aria-label": "Agregar un post-it" }, "+")));
-    }
-    if (fresh) el.style.setProperty("--d", Math.min(stagger++, 12) * 0.06 + "s");
-    list.append(el);
+  for (const p of props) {
+    const on = mv.includes(p.key), fresh = !S.seenVote.has(p.key); S.seenVote.add(p.key);
+    const b = h("button", { class: "vitem" + (fresh ? " enter" : "") + (S.pulse === p.key ? " pulse" : ""), "aria-pressed": on, disabled: !open, onclick: () => toggleVote(p.key) },
+      h("span", { class: "box" }, on ? svgCheck() : null),
+      h("span", { class: "body" }, h("div", { class: "who" }, p.uid === S.uid ? "Tú" : p.a), h("div", { class: "txt" }, p.t)));
+    if (fresh) b.style.setProperty("--d", Math.min(stagger++, 12) * 0.06 + "s");
+    if (open) tilt(b);
+    list.append(b);
   }
   out.push(list);
-  if (turnos) {
-    const need = Math.min(MAX_VOTOS, D.msgs.length);
-    out.push(h("div", { class: "vfoot" },
-      h("span", { class: "note" }, D.turns.length ? `${D.turns.length} ${D.turns.length === 1 ? "persona ya votó" : "personas ya votaron"}. Los votos quedan ocultos hasta Resultados.` : "Nadie ha votado todavía."),
-      h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
-        D.turns.length ? h("button", { class: "btn ghost", onclick: undoTurn }, "Deshacer último") : null,
-        h("button", { class: "btn", disabled: V.sel.length < need, onclick: confirmTurn }, "Confirmar mi voto"))));
-  } else {
-    const total = [...c.values()].reduce((a, b) => a + b, 0);
-    out.push(h("div", { class: "vfoot" }, h("span", { class: "note" }, `${total} ${total === 1 ? "voto registrado" : "votos registrados"} en total.`),
-      h("button", { class: "btn", onclick: () => goTab("resultados", true) }, "Ver resultados")));
-  }
+  if (open) out.push(h("div", { class: "sys" }, mv.length === MAX_VOTOS ? "Listo: tus 2 votos están guardados." : `Te ${MAX_VOTOS - mv.length === 1 ? "queda 1 voto" : "quedan 2 votos"}.`));
+  if (isFac()) out.push(h("div", { class: "sys" }, `${tally().voters} ${tally().voters === 1 ? "persona ha votado" : "personas han votado"}.`));
   return out;
 }
 
 function viewResults(entering) {
   const out = [];
-  const { ranked, votos, votantes } = tally();
+  const { ranked, voters, votos, props } = tally();
   const max = Math.max(1, ...ranked.map(r => r.n));
-  const statEls = { p: h("b", {}, 0), v: h("b", {}, 0), t: h("b", {}, 0) };
-  const now = { p: D.msgs.length, v: votantes, t: votos };
-  requestAnimationFrame(() => { for (const k in now) countUp(statEls[k], entering ? 0 : (V.prevStats[k] ?? 0), now[k]); V.prevStats = now; });
-  out.push(h("div", { class: "card" },
-    h("div", { class: "rhead" },
-      h("div", {}, h("h2", {}, "Cuellos de botella priorizados"), h("p", {}, `Las ${TOP} propuestas con más votos pasan al bloque de propuestas de solución.`)),
-      h("div", { class: "stats" },
-        h("div", { class: "stat" }, statEls.p, h("span", {}, "Propuestas")),
-        h("div", { class: "stat" }, statEls.v, h("span", {}, "Votantes")),
-        h("div", { class: "stat" }, statEls.t, h("span", {}, "Votos"))))));
+  const autores = new Set(props.map(p => p.uid)).size;
+  const preview = S.room.fase !== "resultados";
+  const statEls = { a: h("b", {}, 0), v: h("b", {}, 0), t: h("b", {}, 0) };
+  const now = { a: autores, v: voters, t: votos };
+  requestAnimationFrame(() => { for (const k in now) countUp(statEls[k], entering ? 0 : (S.prevStats[k] ?? 0), now[k]); S.prevStats = now; });
+  out.push(h("div", { class: "card" }, h("div", { class: "rhead" },
+    h("div", {}, h("h2", {}, "Cuellos de botella priorizados"),
+      h("p", {}, preview ? "Vista previa del facilitador: los participantes aún no la ven." : `Las ${TOP} propuestas con más votos pasan al bloque de soluciones.`)),
+    h("div", { class: "stats" },
+      h("div", { class: "stat" }, statEls.a, h("span", {}, "Participantes")),
+      h("div", { class: "stat" }, statEls.v, h("span", {}, "Votaron")),
+      h("div", { class: "stat" }, statEls.t, h("span", {}, "Votos"))))));
   if (!ranked.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "Sin resultados todavía"), "Primero se escriben las respuestas y luego se vota.")); return out; }
   const podio = ranked.slice(0, TOP).filter(r => r.n > 0);
   if (podio.length) out.push(h("div", { class: "podium" + (entering && !REDUCED ? " rise" : ""), role: "list", "aria-label": "Podio de prioridades" },
     ...podio.map((r, i) => h("div", { class: "pcol r" + (i + 1), role: "listitem" },
-      i === 0 ? svgCrown() : null,
-      h("div", { class: "ptxt" }, r.t),
+      i === 0 ? svgCrown() : null, h("div", { class: "ptxt" }, r.t),
       h("div", { class: "pstep" }, h("span", { class: "pn" }, i + 1), h("span", { class: "pv" }, r.n + (r.n === 1 ? " voto" : " votos")))))));
   out.push(h("h3", { class: "sec-t" }, "Todas las propuestas"));
   const list = h("div", { class: "rlist" }), bars = [];
   ranked.forEach((r, i) => {
-    const top = i < TOP && r.n > 0, fresh = !V.seenRes.has(r.id); V.seenRes.add(r.id);
-    const target = (r.n / max) * 100, from = entering ? 0 : (V.prevW.get(r.id) ?? 0);
-    const bar = h("div", { class: "bar", style: `width:${from}%` });
-    bars.push([bar, target]); V.prevW.set(r.id, target);
+    const top = i < TOP && r.n > 0, fresh = !S.seenRes.has(r.key); S.seenRes.add(r.key);
+    const target = (r.n / max) * 100, from = entering ? 0 : (S.prevW.get(r.key) ?? 0);
+    const bar = h("div", { class: "bar", style: `width:${from}%` }); bars.push([bar, target]); S.prevW.set(r.key, target);
     const it = h("div", { class: `ritem ${top ? "top p" + (i + 1) : ""}${fresh || entering ? " enter" : ""}` },
       h("span", { class: "pos" }, i + 1),
       h("div", { class: "txt" }, top ? h("span", { class: "prio" }, "Prioridad " + (i + 1)) : null, r.t),
@@ -606,128 +803,48 @@ function viewResults(entering) {
   out.push(list);
   const tie = ranked.length > TOP && ranked[TOP - 1].n > 0 && ranked[TOP].n === ranked[TOP - 1].n;
   out.push(h("div", { class: "ractions" },
-    h("button", { class: "btn", onclick: copyResults }, "Copiar resultados"),
-    h("button", { class: "btn ghost", onclick: downloadCSV }, "Descargar CSV"),
-    h("button", { class: "btn ghost", onclick: () => window.print() }, "Imprimir / PDF"),
-    h("button", { class: "btn ghost", onclick: bigBurst }, "Celebrar"),
+    h("button", { class: "btn", onclick: () => copy(resultsText(), "Resultados copiados.") }, "Copiar resultados"),
+    isFac() ? h("button", { class: "btn ghost", onclick: downloadCSV }, "Descargar CSV") : null,
+    isFac() ? h("button", { class: "btn ghost", onclick: bigBurst }, "Celebrar") : null,
     tie ? h("span", { class: "note" }, `Hay empate en el puesto ${TOP}: el plenario decide cuál pasa.`) : null));
   return out;
 }
-
-/* ---------- exportar ---------- */
 function resultsText() {
-  const { ranked, votantes } = tally();
-  const lines = [D.titulo, D.pregunta, "", "Cuellos de botella priorizados"];
+  const { ranked, voters } = tally();
+  const lines = [S.room.titulo || "Taller", S.room.pregunta, "", "Cuellos de botella priorizados"];
   ranked.forEach((r, i) => lines.push(`${i + 1}. ${r.t.replace(/\s+/g, " ")} (${r.n} ${r.n === 1 ? "voto" : "votos"})${i < TOP && r.n > 0 ? " · Prioridad " + (i + 1) : ""}`));
-  lines.push("", `Votantes por turnos: ${votantes}`);
+  lines.push("", `Personas que votaron: ${voters}`);
   return lines.join("\n");
-}
-async function copyResults() {
-  const txt = resultsText();
-  try { await navigator.clipboard.writeText(txt); toast("Resultados copiados."); }
-  catch {
-    const ta = h("textarea", { style: "position:fixed;opacity:0" }); ta.value = txt; document.body.append(ta); ta.select();
-    try { document.execCommand("copy"); toast("Resultados copiados."); } catch { toast("No se pudo copiar. Usa Descargar CSV."); }
-    ta.remove();
-  }
 }
 function downloadCSV() {
   const q = s => '"' + String(s).replace(/"/g, '""') + '"';
-  const { ranked } = tally();
   const rows = [["Puesto", "Cuello de botella", "Autor o grupo", "Votos", "Prioridad", "Propuesta de solución", "Responsable"].map(q).join(";")];
-  ranked.forEach((r, i) => rows.push([i + 1, r.t.replace(/\s+/g, " "), r.a || "", r.n, i < TOP && r.n > 0 ? i + 1 : "", "", ""].map(q).join(";")));
-  const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
-  const a = h("a", { href: URL.createObjectURL(blob), download: "cuellos-de-botella-resultados.csv" });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  toast("Descargado: cuellos-de-botella-resultados.csv");
+  tally().ranked.forEach((r, i) => rows.push([i + 1, r.t.replace(/\s+/g, " "), r.a, r.n, i < TOP && r.n > 0 ? i + 1 : "", "", ""].map(q).join(";")));
+  const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" })), download: `resultados-sala-${S.code}.csv` });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-/* ---------- diálogos ---------- */
-function dialog(titulo, texto, campo, onOk, okLabel) {
-  const inp = campo.multi ? h("textarea", { id: "dlgIn", placeholder: campo.ph || "" }) : h("input", { type: "text", id: "dlgIn", maxlength: campo.max || 300 });
-  inp.value = campo.value || "";
-  let close;
-  const card = h("div", { class: "ocard wide" },
-    h("h3", {}, titulo), texto ? h("p", {}, texto) : null, inp,
-    h("div", { class: "row" },
-      h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
-      h("button", { class: "btn", onclick: () => { if (onOk(inp.value) !== false) close(); } }, okLabel || "Guardar")));
-  close = overlay(card, 0);
-  setTimeout(() => inp.focus(), 50);
-}
-function editPregunta() {
-  dialog("Editar la pregunta", null, { value: D.pregunta, max: 300 }, v => { if (!v.trim()) { toast("La pregunta no puede quedar vacía."); return false; } D.pregunta = v.trim(); save(); render(); });
-}
-function editTitulo() {
-  dialog("Nombre del taller", "Aparece arriba en la pantalla y en los resultados.", { value: D.titulo, max: 80 }, v => { if (!v.trim()) return false; D.titulo = v.trim(); save(); render(); });
-}
-const WA = /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4}),?\s+(\d{1,2}:\d{2})(?::\d{2})?\s*([ap]\.?\s?m\.?)?\]?\s*[-–]?\s*([^:]{1,60}):\s?(.*)$/i;
-function parseWhatsApp(raw) {
-  const out = []; let cur = null;
-  for (const line of raw.split(/\r?\n/)) {
-    const l = line.replace(/[‎‏]/g, "");
-    const m = WA.exec(l);
-    if (m) { cur = { a: m[4].trim(), t: m[5].trim() }; out.push(cur); }
-    else if (l.trim()) { if (cur) cur.t += "\n" + l.trim(); else out.push(cur = { a: "", t: l.trim() }); }
-    else cur = null;
+/* ---------- arranque ---------- */
+async function start() {
+  const got = getConfig();
+  if (!got) return setupScreen();
+  if (!window.firebase) return screen(h("div", { class: "scard" }, h("h2", {}, "Sin conexión"), h("p", {}, "No se pudo cargar Firebase. Revisa tu conexión a internet y recarga la página.")));
+  S.cfg = got.cfg; S.embedded = got.embedded;
+  loading("Conectando…");
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(S.cfg);
+    S.db = firebase.firestore();
+    const cred = firebase.auth().currentUser || (await new Promise(res => { const u = firebase.auth().onAuthStateChanged(x => { u(); res(x); }); }));
+    S.uid = (cred || (await firebase.auth().signInAnonymously()).user).uid;
+  } catch (e) {
+    fbError(e);
+    return got.embedded ? screen(h("div", { class: "scard" }, h("h2", {}, "No se pudo conectar"), h("p", {}, e.message || String(e)))) : setupScreen("No se pudo conectar: " + (e.message || e.code) + ". Revisa la configuración.");
   }
-  return out.filter(x => x.t && !/^<.*(omitid|omitted|multimedia|eliminó|deleted).*>$/i.test(x.t) && !/^(se eliminó este mensaje|este mensaje fue eliminado)$/i.test(x.t));
+  const code = new URLSearchParams(location.search).get("sala");
+  if (code) openSala(code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
+  else homeScreen();
 }
-function pasteDialog() {
-  dialog("Pegar respuestas del WhatsApp",
-    "Copia los mensajes del chat y pégalos aquí. Se reconoce el nombre de cada persona. Si pegas texto sin formato, cada párrafo será una respuesta.",
-    { multi: true, ph: "[21/10/26, 10:15] Rosa: Demora en el visto bueno de Osinergmin\n[21/10/26, 10:16] Jorge: La directiva duplica revisiones" },
-    v => {
-      const items = parseWhatsApp(v);
-      if (!items.length) { toast("No encontré respuestas en el texto pegado."); return false; }
-      const t0 = Date.now();
-      items.forEach((it, i) => addMsg(it.t, it.a, t0 + i));
-      save(); D.tab = "respuestas"; V.stick = true; render();
-      toast(`Se agregaron ${items.length} ${items.length === 1 ? "respuesta" : "respuestas"}.`);
-    }, "Agregar");
-}
-function resetDialog() {
-  let close;
-  close = overlay(h("div", { class: "ocard" },
-    h("h3", {}, "¿Borrar todo?"), h("p", {}, "Se eliminarán todas las respuestas y votos de esta laptop. No se puede deshacer."),
-    h("div", { class: "row", style: "justify-content:center;margin-top:14px" },
-      h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
-      h("button", { class: "btn warn", onclick: () => { D = { ...blank(), titulo: D.titulo, pregunta: D.pregunta }; V.sel = []; V.seen.clear(); V.seenVote.clear(); V.seenRes.clear(); V.prevW.clear(); save(); render(); close(); toast("Taller reiniciado."); } }, "Borrar todo"))), 0);
-}
-function loadExample() {
-  const t = Date.now() - 9 * 60e3;
-  const ej = [["Ejemplo · Grupo 1", "Demora excesiva en el visto bueno de Osinergmin."], ["Ejemplo · Grupo 2", "La directiva vigente exige pasos que no aportan valor y duplican revisiones."],
-    ["Ejemplo · Grupo 2", "Falta un sistema para hacer seguimiento a los expedientes."], ["Ejemplo · Grupo 3", "Pocas personas en el área para atender la carga de expedientes."]];
-  ej.forEach(([a, x], i) => addMsg(x, a, t + i * 60e3));
-  save(); render(); toast("Se cargaron 4 respuestas de ejemplo.");
-}
-
-/* ---------- eventos ---------- */
-const ta = $("input");
-function autosize() { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 140) + "px"; }
-function updateComposer() { $("send").disabled = !ta.value.trim(); }
-ta.addEventListener("input", () => { autosize(); updateComposer(); });
-ta.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMsg(); } });
-$("send").addEventListener("click", sendMsg);
-$("pasteBtn").addEventListener("click", pasteDialog);
-document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => goTab(b.dataset.tab, true)));
-addEventListener("resize", moveInk);
-$("fsBtn").addEventListener("click", () => {
-  try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => toast("Tu navegador no permitió la pantalla completa. Usa F11.")); }
-  catch { toast("Usa F11 para pantalla completa."); }
-});
-const menu = $("menu"), menuBtn = $("menuBtn");
-menuBtn.addEventListener("click", e => { e.stopPropagation(); menu.hidden = !menu.hidden; menuBtn.setAttribute("aria-expanded", !menu.hidden); });
-document.addEventListener("click", e => { if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); } });
-menu.addEventListener("click", e => {
-  const act = e.target.closest("button")?.dataset.act; if (!act) return;
-  menu.hidden = true; menuBtn.setAttribute("aria-expanded", "false");
-  ({ titulo: editTitulo, pregunta: editPregunta, pegar: pasteDialog, csv: downloadCSV, print: () => window.print(), ejemplo: loadExample, reset: resetDialog })[act]();
-});
-addEventListener("storage", e => { if (e.key === KEY) { D = load(); render(); } });
-
-render();
+start();
 </script>
 </body>
 </html>
