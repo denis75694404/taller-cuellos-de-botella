@@ -307,6 +307,55 @@ button.gcard:disabled{opacity:.55;cursor:not-allowed}
 .stepper b{font-family:var(--f-disp);font-weight:800;font-size:28px;min-width:40px;text-align:center;font-variant-numeric:tabular-nums}
 .scard label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .scard textarea.q{min-height:80px;font-family:var(--f-body);font-size:15px}
+/* portada de las pantallas de acceso: imagen a la izquierda, tarjetas a la derecha */
+.screen .inner.split{max-width:1060px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,500px);gap:28px;align-items:center}
+.screen .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.hero{margin:0;position:relative;border-radius:26px;overflow:hidden;box-shadow:var(--lift);height:min(640px,calc(100dvh - 48px));min-height:460px;background:var(--head);animation:heroIn .8s cubic-bezier(.2,.8,.2,1) both}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:kenburns 20s ease-in-out infinite alternate}
+.hero.contain{background:#c4dfef}
+.hero.contain img{object-fit:contain;object-position:center top;padding:20px 20px 96px;animation:floaty 7s ease-in-out infinite}
+.hero figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 24px;display:flex;flex-direction:column;gap:4px;color:#fff;background:linear-gradient(180deg,transparent,rgba(4,24,18,.82))}
+.hero.contain figcaption{background:linear-gradient(180deg,rgba(8,40,62,0),rgba(8,40,62,.86) 45%)}
+.hero b{font-family:var(--f-disp);font-weight:800;font-size:27px;letter-spacing:-.01em;line-height:1.1;text-wrap:balance}
+.hero span{font-size:14.5px;opacity:.92;max-width:44ch}
+@keyframes heroIn{from{opacity:0;transform:perspective(1000px) rotateY(8deg) scale(.96)}}
+@keyframes kenburns{to{transform:scale(1.08) translate(-1%,-1%)}}
+@keyframes floaty{50%{transform:translateY(-6px)}}
+.gavatar.photo{padding:0;overflow:hidden;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.gavatar.photo img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:860px){
+  .screen .inner.split{grid-template-columns:minmax(0,1fr);max-width:520px;gap:14px}
+  .hero{height:210px;min-height:0;border-radius:20px}
+  .hero.contain{height:290px}
+  .hero.contain img{padding:8px 8px 64px}
+  .hero b{font-size:21px}
+  .hero span{font-size:13.5px}
+  .hero figcaption{padding:14px 16px}
+}
+/* chat anclado abajo y tarjeta de siguiente paso */
+.app > header{grid-row:1}.app > nav{grid-row:2}.app > .ctl{grid-row:3}.app > main{grid-row:4}.app > .composer{grid-row:5}
+main{display:flex;flex-direction:column}
+main > .inner{flex:1 0 auto;width:100%}
+#view.bottom{justify-content:flex-end}
+.nextcard{align-self:stretch;background:var(--panel);border-radius:16px;box-shadow:var(--lift);padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px;animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both}
+.nextcard .ic{flex:none;width:54px;height:54px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-family:var(--f-disp);font-weight:800;font-size:22px}
+.nextcard .ic svg{width:26px;height:26px}
+.nextcard .tx{flex:1 1 200px;min-width:0}
+.nextcard h4{margin:0 0 2px;font-family:var(--f-disp);font-weight:800;font-size:19px;text-wrap:balance}
+.nextcard p{margin:0;color:var(--muted);font-size:14px}
+.nextcard .btn{flex:1 1 100%}
+.nextcard .lottie-mini{width:54px;height:40px;flex:none}
+/* bienvenida */
+.ocard.welcome{padding:0;overflow:hidden;max-width:440px;text-align:left}
+.welcome .wimg{height:210px;background-size:cover;background-position:center;position:relative}
+.welcome .wimg.contain{background-color:#c4dfef;background-size:contain;background-repeat:no-repeat;background-position:center 10px;height:230px}
+.welcome .wimg::after{content:"";position:absolute;inset:auto 0 0 0;height:60px;background:linear-gradient(180deg,transparent,var(--panel))}
+.welcome .wbody{padding:6px 24px 24px;display:flex;flex-direction:column;gap:10px}
+.welcome .wbody > *{animation:fadeUp .55s ease both}
+.welcome .wbody > :nth-child(2){animation-delay:.12s}.welcome .wbody > :nth-child(3){animation-delay:.24s}.welcome .wbody > :nth-child(4){animation-delay:.38s}
+.welcome h3{margin:0;font-size:27px;line-height:1.12;text-wrap:balance}
+.welcome p{color:var(--fg);opacity:.85;font-size:15px;line-height:1.5}
+.welcome .btn{padding:13px 18px;font-size:16px}
 /* panel del facilitador: pregunta | ronda, y debajo los grupos */
 .ctl{background:var(--bar);border-bottom:1px solid var(--line)}
 .ctl .inner{padding-block:12px 10px;display:flex;flex-direction:column;gap:10px}
@@ -533,11 +582,17 @@ const qOf = r => r?.q || "p1";
 
 /* ---------- pantallas de inicio ---------- */
 const root = $("root");
+const HERO = ROLE === "admin"
+  ? { src: "img/administrador.jpg", cls: "hero", t: "Panel del facilitador", p: "Crea la sala, envía las preguntas a todos los grupos y sigue cada ronda en vivo." }
+  : { src: "img/grupo.jpg", cls: "hero contain", t: "Tu voz construye soluciones", p: "Responde con tu grupo, vota y descubre juntos las prioridades." };
 function screen(...cards) {
-  root.replaceChildren(h("div", { class: "screen" }, h("div", { class: "inner" },
+  const img = h("img", { src: HERO.src, alt: "", decoding: "async" });
+  const hero = h("figure", { class: HERO.cls }, img, h("figcaption", {}, h("b", {}, HERO.t), h("span", {}, HERO.p)));
+  img.addEventListener("error", () => hero.remove());
+  root.replaceChildren(h("div", { class: "screen" }, h("div", { class: "inner split" }, hero, h("div", { class: "col" },
     h("div", { class: "brand" }, h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
       h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, S.code ? "Sala " + S.code : "Respuestas, votación y prioridades por grupo"))),
-    ...cards)));
+    ...cards))));
 }
 function loading(msg) { S.mode = "loading"; screen(h("div", { class: "scard", style: "align-items:center;text-align:center" }, h("div", { class: "spinner" }), h("p", {}, msg))); }
 
@@ -637,8 +692,10 @@ async function unirme(g) {
   if (miembrosDe(g).filter(([u]) => u !== S.uid).length >= CUPO) { toast(`El Grupo ${g} ya está completo. Elige otro.`, 4000); return groupScreen(); }
   try {
     await salaRef().collection("miembros").doc(S.uid).set({ nombre: S.nombre.slice(0, 50), grupo: g, ts: Date.now() });
+    const nuevo = me()?.grupo !== g;
     S.changing = false; S.mode = "joining"; S.sig = ""; S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
     route();
+    if (nuevo) setTimeout(() => joinedOverlay(g), 250);
   } catch (e) { fbError(e); groupScreen(); }
 }
 
@@ -819,7 +876,7 @@ async function copy(txt, ok) {
 function buildApp() {
   root.replaceChildren(h("div", { class: "app" },
     h("header", {}, h("div", { class: "inner" },
-      h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
+      ROLE === "admin" ? h("div", { class: "gavatar photo", "aria-hidden": "true" }, h("img", { src: "img/administrador-icono.jpg", alt: "" })) : h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
       h("div", { class: "htext" }, h("h1", { id: "title" }, ""), h("p", { id: "sub" }, "")),
       h("div", { class: "timer", id: "timer", hidden: true, role: "timer", "aria-live": "off" }, svgClock(), h("span", { id: "timerTxt" }, "")),
       h("button", { class: "codechip", id: "codeBtn", onclick: () => shareOverlay(), "aria-label": "Compartir la sala" }, svgShare(), S.code),
@@ -912,11 +969,12 @@ function render() {
     view.replaceChildren(...(!g ? viewSummary(tab) : tab === "respuestas" ? viewChat(g) : tab === "votacion" ? viewVote(g) : viewResults(g, prevKey !== key)));
     if (prevKey && prevKey !== key) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
     view.dataset.key = key;
+    view.classList.toggle("bottom", tab === "respuestas" && !!g);
     if (tab === "respuestas" && g && (S.stick || nearBottom || prevKey !== key)) main.scrollTop = main.scrollHeight;
     else if (prevKey !== key) main.scrollTop = 0;
   }
   S.stick = false; S.pulse = null;
-  $("composer").hidden = fac || tab !== "respuestas";
+  $("composer").hidden = fac || tab !== "respuestas" || !abierto();
   updateComposer();
 }
 
@@ -1105,12 +1163,23 @@ function viewChat(g) {
   }
   if (!props.length) {
     const lot = h("div", { class: "lottie-empty", "aria-hidden": "true" });
-    out.push(lot, h("div", { class: "sys" }, fac ? "Este grupo aún no ha respondido." : abierto() ? "Aún no hay respuestas en tu grupo. Escribe la primera abajo." : "Tu grupo no envió respuestas."));
-    requestAnimationFrame(() => playLottie(lot, lottieDots(), true));
+    if (abierto()) { out.push(lot, h("div", { class: "sys" }, fac ? "Este grupo aún no ha respondido." : "Aún no hay respuestas en tu grupo. Escribe la primera abajo.")); requestAnimationFrame(() => playLottie(lot, lottieDots(), true)); }
+    else if (!S.room.espera) out.push(h("div", { class: "sys" }, fac ? "Este grupo no envió respuestas." : "Tu grupo no envió respuestas."));
   }
-  if (S.room.espera) out.push(h("div", { class: "sys" }, fac ? "Inicia el tiempo para que los grupos empiecen a responder." : "Lee la pregunta. Podrás responder cuando el facilitador inicie el tiempo."));
-  else if (S.room.fase !== "respuestas") out.push(h("div", { class: "sys" }, "La etapa de respuestas está cerrada. Pasa a la pestaña Votar."));
-  else if (!abierto()) out.push(h("div", { class: "sys" }, "Se acabó el tiempo para responder."));
+  const next = (ic, t, p, btn, fn) => h("div", { class: "nextcard", role: "status" }, ic, h("div", { class: "tx" }, h("h4", {}, t), h("p", {}, p)),
+    btn ? h("button", { class: "btn", onclick: fn }, btn) : null);
+  const ir = t => () => { S.tab = t; S.sig = ""; S.facSig = ""; render(); };
+  if (S.room.espera) {
+    const lot = h("div", { class: "lottie-mini", "aria-hidden": "true" });
+    requestAnimationFrame(() => playLottie(lot, lottieDots(), true));
+    out.push(next(h("div", { class: "ic" }, lot), fac ? "Todo listo para empezar" : "Prepárate para responder",
+      fac ? "Inicia la ronda en el panel de arriba y los grupos podrán escribir." : "Lee la pregunta y piensa tu respuesta. Podrás escribir en cuanto el facilitador inicie el tiempo."));
+  } else if (S.room.fase === "votacion") {
+    out.push(next(h("div", { class: "ic" }, "2"), "¡La votación está abierta!", fac ? "Los grupos están eligiendo su respuesta." : "Elige la respuesta de tu grupo que mejor describe el problema. Tienes 3 minutos.",
+      fac ? "Ver la votación →" : "Ir a votar →", ir("votacion")));
+  } else if (S.room.fase === "resultados") {
+    out.push(next(h("div", { class: "ic" }, "3"), "¡Ya están los resultados!", fac ? "Cada grupo ya ve sus prioridades." : "Descubre qué priorizó tu grupo.", "Ver resultados →", ir("resultados")));
+  } else if (!abierto()) out.push(h("div", { class: "sys" }, "Se acabó el tiempo para responder."));
   else if (!fac) out.push(h("div", { class: "sys" }, `Puedes enviar hasta ${MAX_MSG} respuestas. Te quedan ${Math.max(0, MAX_MSG - myProps().length)}.`));
   if (!fac && !myProps().length && S.room.fase === "respuestas")
     out.push(h("button", { class: "lnk", style: "align-self:center", onclick: () => { S.changing = true; route(); } }, "¿Te equivocaste de grupo? Cambiar de grupo"));
@@ -1208,6 +1277,41 @@ function downloadCSV() {
   toast("Descargado: resultados-sala-" + S.code + ".csv");
 }
 
+/* ---------- bienvenida ---------- */
+const BIENVENIDA = ROLE === "admin" ? {
+  img: "img/administrador.jpg", contain: false, eyebrow: "Taller DESEM · Te damos la bienvenida",
+  t: "Hoy, cada idea puede destrabar un proceso",
+  p: "Tienes en tus manos la conversación que muchos equipos esperaban. Lanza la pregunta, cuida el tiempo y escucha cada voz: de aquí saldrán las soluciones que harán avanzar a DESEM.",
+  cta: "Empezar a facilitar →"
+} : {
+  img: "img/grupo.jpg", contain: true, eyebrow: "Taller DESEM · Te damos la bienvenida",
+  t: "Tu experiencia vale. Tu voz cuenta.",
+  p: "Nadie conoce mejor los procesos que quienes los viven cada día. Comparte lo que ves, escucha a tu equipo y vota por lo que de verdad importa: juntos vamos a destrabar lo que nos frena.",
+  cta: "¡Quiero participar! →"
+};
+function welcome() {
+  try { if (sessionStorage.getItem("taller-bienvenida-" + ROLE)) return; sessionStorage.setItem("taller-bienvenida-" + ROLE, "1"); } catch {}
+  const B = BIENVENIDA;
+  let close;
+  const go = h("button", { class: "btn block", onclick: () => { close(); setTimeout(() => burst({ particleCount: 90, spread: 80, origin: { y: .7 } }), 150); } }, B.cta);
+  close = overlay(h("div", { class: "ocard welcome", "aria-labelledby": "wTitle" },
+    h("div", { class: "wimg" + (B.contain ? " contain" : ""), style: `background-image:url('${B.img}')`, role: "img", "aria-label": "" }),
+    h("div", { class: "wbody" },
+      h("div", { class: "eyebrow" }, B.eyebrow),
+      h("h3", { id: "wTitle" }, B.t),
+      h("p", {}, B.p),
+      go)), 0);
+  setTimeout(() => go.focus(), 300);
+}
+function joinedOverlay(g) {
+  const lot = h("div", { class: "lot" });
+  overlay(h("div", { class: "ocard" }, lot, h("div", { class: "eyebrow" }, "Ya eres parte del equipo"),
+    h("h3", {}, `¡Bienvenido/a al Grupo ${g}, ${S.nombre.split(" ")[0]}!`),
+    h("p", {}, "Lo que compartas hoy puede cambiar la forma en que trabajamos. Lee la pregunta y prepárate para responder.")), 3200);
+  playLottie(lot, lottieCheck(), false);
+  setTimeout(() => burst({ particleCount: 80, spread: 70, origin: { y: .6 } }), 400);
+}
+
 /* ---------- arranque ---------- */
 async function start() {
   const cfg = getConfig();
@@ -1235,6 +1339,7 @@ function afterAuth() {
   if (code) openSala(code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
   else homeScreen();
 }
+welcome();
 start();
 </script>
 </body>
