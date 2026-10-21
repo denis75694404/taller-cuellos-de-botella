@@ -79,16 +79,26 @@ service cloud.firestore {
         allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       }
 
-      // Bloque 2: cada participante escribe propuestas de solución para los 2 cuellos de botella priorizados, dentro del tiempo.
+      // Bloque 2: cada participante agrega filas y escribe su propuesta de solución, dentro del tiempo.
+      // Solo se eliminan filas vacías: el autor siempre; los demás, si nadie escribió en ella en los últimos 15 s.
       match /b2prop/{id} {
         allow read: if signedIn();
         allow create: if signedIn() && exists(miembro(s))
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.q == sala(s).b2.q
           && request.resource.data.tema in ['t1', 't2']
-          && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 400
+          && request.resource.data.t is string && request.resource.data.t.size() <= 400
           && request.time.toMillis() < sala(s).b2.fin + 15000;
-        allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+        allow update: if signedIn() && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.q == resource.data.q
+          && request.resource.data.tema == resource.data.tema
+          && request.resource.data.t is string && request.resource.data.t.size() <= 400
+          && request.time.toMillis() < sala(s).b2.fin + 15000;
+        allow delete: if isAdmin()
+          || (signedIn() && resource.data.t == '' && resource.data.uid == request.auth.uid)
+          || (signedIn() && exists(miembro(s)) && resource.data.t == ''
+              && request.time.toMillis() > resource.data.get('ed', 0) + 15000);
       }
 
       // Bloque 2: prioridad. Un documento por participante (<uid>_<pregunta>) con hasta 2 marcas por cuello de botella.
