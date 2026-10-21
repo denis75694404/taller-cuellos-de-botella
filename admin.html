@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-cache">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Panel del Facilitador</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
@@ -542,6 +542,8 @@ html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
 .b2table.big thead th,.b2table.big thead .num{font-size:clamp(14px,1.3vw,20px)}
 .proj .b2table tbody th{background:#d8f3e6;color:#111b21}
 html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
+/* teclado del celular: la app ocupa solo el alto que queda visible */
+.app{height:var(--appH,100%)}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -2247,7 +2249,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021174743";
+const BUILD = "20261021182833";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
@@ -2264,6 +2266,23 @@ setTimeout(checkVersion, 2500);
 setInterval(checkVersion, 60000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkVersion(); });
 addEventListener("pageshow", e => { if (e.persisted) checkVersion(); });
+
+/* ---------- teclado del celular: la caja de respuesta queda justo encima ---------- */
+function ajustarAlto() {
+  const vv = window.visualViewport, alto = Math.round(vv ? vv.height : innerHeight);
+  document.documentElement.style.setProperty("--appH", alto + "px");
+  const ae = document.activeElement;
+  if (ae && /^(TEXTAREA|INPUT)$/.test(ae.tagName)) {
+    if (!document.querySelector(".app.facmode")) window.scrollTo(0, 0); // iOS desplaza la página al abrir el teclado
+    if (ae.id === "input") { const m = $("main"); if (m) m.scrollTop = m.scrollHeight; }
+    else ae.scrollIntoView({ block: "nearest" });
+  }
+}
+window.visualViewport?.addEventListener("resize", ajustarAlto);
+window.visualViewport?.addEventListener("scroll", () => { if (document.activeElement?.id === "input" && !document.querySelector(".app.facmode")) window.scrollTo(0, 0); });
+addEventListener("resize", ajustarAlto);
+document.addEventListener("focusin", e => { if (/^(TEXTAREA|INPUT)$/.test(e.target.tagName)) { setTimeout(ajustarAlto, 120); setTimeout(ajustarAlto, 450); } });
+ajustarAlto();
 
 /* ---------- bienvenida ---------- */
 function banner(fac) {
