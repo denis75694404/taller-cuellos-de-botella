@@ -490,6 +490,7 @@ html.hc :focus-visible{outline:3px solid #000;outline-offset:3px}
 @media (max-width:420px){.fl{font-size:11.5px}.fs{font-size:11px}.fdot{width:32px;height:32px;font-size:14px}.fstep::before{top:15px}.ntitle{font-size:17.5px}}
 html.fs1 .ntext,html.fs1 .ncount{font-size:17px}html.fs2 .ntext,html.fs2 .ncount{font-size:20px}
 html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
+.btn .ico{width:18px;height:18px;vertical-align:-4px}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -1018,7 +1019,9 @@ function shareOverlay() {
   close = overlay(h("div", { class: "ocard" },
     h("div", { class: "eyebrow" }, "Entra al taller"),
     h("p", {}, "Escanea el código QR con la cámara de tu celular y elige tu grupo."), qr,
-    h("div", { class: "row", style: "justify-content:center" }, h("button", { class: "btn", onclick: () => close() }, "Cerrar"))), 0);
+    h("div", { class: "row", style: "justify-content:center" },
+      ROLE === "admin" ? h("button", { class: "btn", onclick: () => { close(); openProjQR(); } }, svgScreen(), " Proyectar") : null,
+      h("button", { class: ROLE === "admin" ? "btn ghost" : "btn", onclick: () => close() }, "Cerrar"))), 0);
   try { new QRCode(qr, { text: link, width: 440, height: 440, correctLevel: QRCode.CorrectLevel.L }); }
   catch { qr.replaceWith(h("p", { class: "note" }, "No se pudo generar el QR. Recarga la página e inténtalo otra vez.")); }
 }
@@ -1570,18 +1573,20 @@ function openProj() {
   S.projSig = ""; paintProj();
   try { document.documentElement.requestFullscreen?.()?.catch(() => {}); } catch {}
 }
-function closeProj() { $("proj")?.remove(); try { if (document.fullscreenElement) document.exitFullscreen(); } catch {} }
+// proyectar solo el QR para que todos entren, sin importar la etapa
+function openProjQR() { S.projQR = true; if ($("proj")) { S.projSig = ""; paintProj(); } else openProj(); }
+function closeProj() { S.projQR = false; $("proj")?.remove(); try { if (document.fullscreenElement) document.exitFullscreen(); } catch {} }
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("proj")) closeProj(); });
 const relojMs = () => plenFase() === "votacion" ? plen().fin - Date.now() : (restante() || 0);
 function paintProj() {
   const el = $("proj"); if (!el || !S.room) return;
   const r = S.room, q = qActiva(), p = plen(), pf = plenFase();
-  const stage = bloque2() ? "bloque2" : p ? "plen-" + pf : r.espera ? "espera" : r.fase;
+  const real = bloque2() ? "bloque2" : p ? "plen-" + pf : r.espera ? "espera" : r.fase, stage = S.projQR ? "espera" : real;
   const per = Array.from({ length: nGrupos() }, (_, i) => {
     const g = i + 1, ms = miembrosDe(g).length;
     return { g, ms, resp: ms - faltanResponder(g, q).length, vot: ms - faltanVotar(g, q).length, win: ganadoras(tally(g, q).ranked) };
   });
-  const sig = JSON.stringify([stage, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size, p?.fin || 0]);
+  const sig = JSON.stringify([stage, real, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size, p?.fin || 0]);
   if (sig === S.projSig) return;
   S.projSig = sig;
   const clock = lbl => h("div", { class: "pj-clock" }, h("span", { class: "pj-lbl" }, lbl), h("b", { id: "pjClock" }, mmss(Math.max(0, relojMs()))));
@@ -1624,7 +1629,9 @@ function paintProj() {
   }
   el.replaceChildren(
     h("div", { class: "pj-top" }, h("div", { class: "pj-brand" }, h("img", { src: "img/administrador-icono.jpg", alt: "" }), h("span", {}, r.titulo || "Taller")),
-      h("button", { class: "pj-x", onclick: closeProj, "aria-label": "Salir del modo proyección" }, "✕ Salir")),
+      h("div", { style: "display:flex;gap:8px;flex:none" },
+        S.projQR && real !== "espera" ? h("button", { class: "pj-x", onclick: () => { S.projQR = false; S.projSig = ""; paintProj(); } }, "Ver la ronda") : null,
+        h("button", { class: "pj-x", onclick: closeProj, "aria-label": "Salir del modo proyección" }, "✕ Salir"))),
     h("div", { class: "pj-q" }, h("span", { class: "pj-lbl" }, (bloque2() ? "Bloque 2 · " : p ? "Plenario · " : "") + "Pregunta " + qNum(q)), h("h1", {}, qTexto(q))),
     h("div", { class: "pj-stage" }, body));
 }
