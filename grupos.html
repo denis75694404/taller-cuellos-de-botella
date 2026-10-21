@@ -831,9 +831,9 @@ function joinScreen() {
 function nameScreen() {
   S.mode = "name";
   const inp = h("input", { id: "nameIn", maxlength: 50, placeholder: "Ej.: Rosa – Logística", value: S.nombre });
-  const go = () => { const v = inp.value.trim(); if (!v) return toast("Escribe tu nombre."); S.nombre = v; lsSet(LS.name, v); S.mode = "group"; route(); };
+  const go = () => { const v = inp.value.trim(); if (!v) return toast("Escribe tu nombre."); S.nombre = v; S.nameOk = S.code; lsSet(LS.name, v); S.mode = "group"; route(); };
   inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
-  screen(h("div", { class: "scard" }, h("h2", {}, "¿Cómo te llamas?"), h("p", {}, "Tu nombre aparecerá junto a tus respuestas, solo dentro de tu grupo."), inp, h("button", { class: "btn block", onclick: go }, "Continuar")));
+  screen(h("div", { class: "scard" }, h("h2", {}, "¿Cómo te llamas?"), h("p", {}, "Escríbelo antes de empezar: aparecerá junto a tus respuestas, solo dentro de tu grupo, y se mantiene aunque cambies de grupo."), inp, h("button", { class: "btn block", onclick: go }, "Continuar")));
   setTimeout(() => inp.focus(), 60);
 }
 
@@ -852,7 +852,8 @@ function groupScreen() {
     h("h2", {}, S.changing ? "Cambiar de grupo" : "Elige tu grupo"),
     h("p", {}, `Hola, ${S.nombre}. Cada grupo tiene hasta ${CUPO} integrantes. Solo verás las respuestas y resultados de tu grupo.`),
     h("div", { class: "ggrid" }, ...cards),
-    S.changing ? h("button", { class: "btn ghost", onclick: () => { S.changing = false; S.mode = "joining"; route(); } }, "Volver a mi grupo") : null));
+    S.changing ? h("button", { class: "btn ghost", onclick: () => { S.changing = false; S.mode = "joining"; route(); } }, "Volver a mi grupo")
+      : h("button", { class: "lnk", style: "align-self:center", onclick: () => { S.nameOk = null; nameScreen(); } }, `¿No eres ${S.nombre}? Cambiar mi nombre`)));
 }
 async function unirme(g) {
   if (miembrosDe(g).filter(([u]) => u !== S.uid).length >= CUPO) { toast(`El Grupo ${g} ya está completo. Elige otro.`, 4000); return groupScreen(); }
@@ -937,7 +938,9 @@ function route() {
     return;
   }
   if (S.mode === "name") return;
-  if (!S.nombre) return nameScreen();
+  // ya está en un grupo de esta sala: conserva su nombre (también al cambiar de grupo)
+  if (me()?.nombre) { S.nombre = me().nombre; S.nameOk = S.code; }
+  if (!S.nombre || S.nameOk !== S.code) return nameScreen();
   if (!me() || S.changing) { ensureGroupSubs(); return groupScreen(); }
   if (S.mode !== "app") { S.mode = "app"; buildApp(); }
   ensureGroupSubs(); render();
