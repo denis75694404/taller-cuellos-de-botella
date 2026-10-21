@@ -905,17 +905,32 @@ function joinScreen() {
   loading("Buscando el taller…");
   S.mode = "home";
   S.badSalas = S.badSalas || new Set();
-  let un = null, done = false;
-  un = S.db.collection("salas").orderBy("ts", "desc").limit(5).onSnapshot({ includeMetadataChanges: true }, q => {
-    if (done || S.mode !== "home") return;
+  let un = null, done = false, esperando = false, poll = null;
+  const consulta = () => S.db.collection("salas").orderBy("ts", "desc").limit(5);
+  const entrar = q => {
+    if (done || S.mode !== "home") return true;
     const d = q.docs.find(x => !S.badSalas.has(x.id));
-    if (d) { done = true; un?.(); return openSala(d.id); }
-    if (q.metadata?.fromCache) return;
+    if (d) { S.joinUnsub?.(); openSala(d.id); return true; }
+    return false;
+  };
+  const buscar = () => { if (!done) consulta().get({ source: "server" }).then(entrar).catch(() => {}); };
+  const alVolver = () => { if (document.visibilityState === "visible") buscar(); };
+  const pantallaEspera = () => {
+    if (esperando) return; esperando = true;
     screen(h("div", { class: "scard" }, h("h2", {}, "El taller aún no empieza"),
       h("p", {}, "Deja esta página abierta: se conectará sola en cuanto el facilitador abra el taller."),
-      h("div", { class: "spinner", style: "margin:0 auto" })));
-  }, e => { fbError(e); screen(h("div", { class: "scard" }, h("h2", {}, "No se pudo buscar el taller"), h("p", {}, "Revisa tu conexión y vuelve a intentarlo."), h("button", { class: "btn block", onclick: joinScreen }, "Intentar de nuevo"))); });
-  S.joinUnsub = () => { done = true; un?.(); };
+      h("div", { class: "spinner", style: "margin:0 auto" }),
+      h("button", { class: "btn ghost block", onclick: () => { toast("Buscando el taller…", 1500); buscar(); } }, "Buscar ahora")));
+  };
+  un = consulta().onSnapshot({ includeMetadataChanges: true }, q => {
+    if (entrar(q) || q.metadata?.fromCache) return;
+    pantallaEspera();
+  }, e => { fbError(e); pantallaEspera(); });
+  poll = setInterval(buscar, 5000);
+  document.addEventListener("visibilitychange", alVolver);
+  addEventListener("online", buscar);
+  setTimeout(() => { if (!done) { buscar(); setTimeout(() => { if (!done && S.mode === "home") pantallaEspera(); }, 2500); } }, 3000);
+  S.joinUnsub = () => { done = true; un?.(); clearInterval(poll); document.removeEventListener("visibilitychange", alVolver); removeEventListener("online", buscar); };
 }
 
 function nameScreen() {
@@ -990,6 +1005,7 @@ function openSala(code) {
       history.replaceState(null, "", location.pathname); S.code = null; return homeScreen(ROLE === "admin");
     }
     const v = d.data();
+    S.roomRaw = estable(v); S.roomVisto = Date.now();
     const pre = (Array.isArray(v.preguntas) ? v.preguntas : []).filter(p => p && typeof p.id === "string" && typeof p.t === "string");
     if (!pre.length) pre.push({ id: "p1", t: v.pregunta || DEFAULT_Q });
     const qid = pre.some(p => p.id === v.qid) ? v.qid : pre[pre.length - 1].id;
@@ -2308,8 +2324,30 @@ async function empezarDeCero() {
   homeScreen(true);
 }
 
+/* ---------- conexión: si la escucha en tiempo real se queda dormida, se reconecta sola ---------- */
+const estable = o => JSON.stringify(o, (k, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(x => [x, v[x]])) : v);
+let reconectando = false;
+async function reconectar(motivo) {
+  if (!S.db || reconectando) return;
+  reconectando = true;
+  try { await S.db.disableNetwork(); await S.db.enableNetwork(); } catch {}
+  setTimeout(() => { reconectando = false; }, 3000);
+  console.log("reconexión:", motivo);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.code) reconectar("pantalla activa"); });
+addEventListener("online", () => reconectar("volvió el internet"));
+// vigilante: compara lo que muestra la página con lo que tiene Firebase
+setInterval(async () => {
+  if (!S.db || !S.code || !S.roomReady || document.visibilityState !== "visible" || S.wiping) return;
+  try {
+    const d = await salaRef().get({ source: "server" });
+    if (!d.exists) return reconectar("el taller cambió");
+    if (estable(d.data()) !== S.roomRaw) reconectar("datos desactualizados");
+  } catch {}
+}, 15000);
+
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021183903";
+const BUILD = "20261021184712";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
@@ -2398,6 +2436,7 @@ async function start() {
   try {
     if (!firebase.apps.length) firebase.initializeApp(S.cfg);
     S.db = firebase.firestore();
+    try { S.db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch {}
     try { await S.db.enablePersistence({ synchronizeTabs: true }); } catch {}
     const cur = await new Promise(res => { const u = firebase.auth().onAuthStateChanged(x => { u(); res(x); }); });
     S.uid = (cur || (await firebase.auth().signInAnonymously()).user).uid;
