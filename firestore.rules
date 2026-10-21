@@ -5,6 +5,11 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
     function sala(s) { return get(/databases/$(database)/documents/salas/$(s)).data; }
     function miembro(s) { return /databases/$(database)/documents/salas/$(s)/miembros/$(request.auth.uid); }
+    // Las etapas dependen de la hora: respuestas hasta "fin"; votación durante "voto" ms después.
+    function fin(s) { return sala(s).get('fin', null); }
+    function voto(s) { return sala(s).get('voto', 180000); }
+    function enRespuestas(s) { return fin(s) != null && request.time.toMillis() < fin(s) + 15000; }
+    function enVotacion(s) { return fin(s) != null && request.time.toMillis() >= fin(s) - 5000 && request.time.toMillis() < fin(s) + voto(s) + 15000; }
     function miembroEn(s, g) { return signedIn() && exists(miembro(s)) && string(get(miembro(s)).data.grupo) == g; }
 
     // Código del facilitador: documento config/admin con el campo "codigo". Nadie lo puede leer.
@@ -38,8 +43,7 @@ service cloud.firestore {
           && request.resource.data.t is string
           && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 400
           && request.resource.data.q == sala(s).qid
-          && sala(s).fase == 'respuestas'
-          && (sala(s).fin == null || request.time.toMillis() < sala(s).fin + 15000);
+          && enRespuestas(s);
         allow delete: if isAdmin() || (miembroEn(s, g) && resource.data.uid == request.auth.uid);
       }
 
@@ -51,7 +55,7 @@ service cloud.firestore {
           && request.resource.data.q == sala(s).qid
           && vid == request.auth.uid + '_' + request.resource.data.q
           && request.resource.data.id is string
-          && sala(s).fase == 'votacion';
+          && enVotacion(s);
         allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       }
     }

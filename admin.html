@@ -331,10 +331,10 @@ const FASES = ["respuestas", "votacion", "resultados"];
 const FASE_NOMBRE = { respuestas: "Respuestas", votacion: "Votación", resultados: "Resultados" };
 const FASE_TXT = {
   respuestas: "Escribe en el chat de tu grupo el cuello de botella que ves en los procesos.",
-  votacion: "Tienes 1 voto. Elige la respuesta de tu grupo que mejor describe el problema.",
+  votacion: "Tienes 3 minutos y 1 voto. Elige la respuesta de tu grupo que mejor describe el problema.",
   resultados: "Estas son las prioridades de tu grupo."
 };
-const CUPO = 5, MAX_MSG = 3, TOP = 3, GRACIA = 15000;
+const CUPO = 5, MAX_MSG = 3, TOP = 3, GRACIA = 15000, VOTO_MS = 3 * 60000;
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LS = { name: "taller-fb-nombre" };
 
@@ -474,8 +474,20 @@ const nGrupos = () => Math.max(1, S.room?.grupos | 0);
 const curG = () => isFac() ? S.viewG : (me()?.grupo | 0);
 const gdata = g => S.G.get(g) || { resp: [], votos: new Map() };
 const miembrosDe = g => [...S.miembros.entries()].filter(([, m]) => m.grupo === g).sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
-const restante = () => S.room?.fin ? S.room.fin - Date.now() : null;
-const abierto = () => S.room?.fase === "respuestas" && (S.room.fin == null || restante() > 0);
+/* las etapas avanzan solas: respuestas hasta "fin", votación durante "voto" ms, luego resultados */
+const durVoto = r => (r && r.voto > 0 ? r.voto : VOTO_MS);
+function etapa(r) {
+  if (!r || !r.fin) return { fase: "respuestas", espera: true };
+  const now = Date.now();
+  if (now < r.fin) return { fase: "respuestas", espera: false };
+  if (now < r.fin + durVoto(r)) return { fase: "votacion", espera: false };
+  return { fase: "resultados", espera: false };
+}
+const restante = () => {
+  const r = S.room; if (!r?.fin) return null;
+  return r.fase === "respuestas" ? r.fin - Date.now() : r.fase === "votacion" ? r.fin + durVoto(r) - Date.now() : null;
+};
+const abierto = () => S.room?.fase === "respuestas" && !S.room.espera && restante() > 0;
 /* preguntas: la activa la reciben todos los grupos; el facilitador puede revisar las anteriores */
 const preguntas = () => S.room?.preguntas || [];
 const qActiva = () => S.room?.qid;
@@ -605,7 +617,7 @@ async function crearSala(titulo, pregunta, n) {
     await S.db.collection("salas").doc(code).set({
       creador: S.uid, titulo: (titulo || "").trim().slice(0, 80) || "Taller: cuellos de botella",
       preguntas: [{ id: "p1", t: (pregunta || "").trim().slice(0, 300) || DEFAULT_Q }], qid: "p1",
-      fase: "respuestas", fin: null, grupos: n, ts: Date.now()
+      fin: null, voto: VOTO_MS, grupos: n, ts: Date.now()
     });
     S.justCreated = true;
     openSala(code);
@@ -630,9 +642,10 @@ function openSala(code) {
     const pre = (Array.isArray(v.preguntas) ? v.preguntas : []).filter(p => p && typeof p.id === "string" && typeof p.t === "string");
     if (!pre.length) pre.push({ id: "p1", t: v.pregunta || DEFAULT_Q });
     const qid = pre.some(p => p.id === v.qid) ? v.qid : pre[pre.length - 1].id;
-    S.room = { ...v, fase: FASES.includes(v.fase) ? v.fase : "respuestas", preguntas: pre, qid, fin: typeof v.fin === "number" ? v.fin : null };
+    S.room = { ...v, preguntas: pre, qid, fin: typeof v.fin === "number" ? v.fin : null };
+    Object.assign(S.room, etapa(S.room));
     // salas creadas antes de tener varias preguntas: el facilitador las actualiza al abrirlas
-    if (ROLE === "admin" && S.isAdmin && (!Array.isArray(v.preguntas) || !v.qid)) salaRef().update({ preguntas: pre, qid }).catch(() => {});
+    if (ROLE === "admin" && S.isAdmin && (!Array.isArray(v.preguntas) || !v.qid || !v.voto)) salaRef().update({ preguntas: pre, qid, voto: durVoto(v) }).catch(() => {});
     S.roomReady = true; route();
   }, fbError));
   S.unsub.push(salaRef().collection("miembros").onSnapshot(q => {
@@ -725,7 +738,10 @@ function vote(key) {
     });
 }
 const setRoom = patch => salaRef().update(patch).catch(fbError);
-function setTimer(min) { const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos."); setRoom({ fin: Date.now() + Math.round(m * 60000), fase: "respuestas" }); toast(`Tiempo iniciado: ${m} min para todos los grupos.`); }
+function setTimer(min) { const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos."); setRoom({ fin: Date.now() + Math.round(m * 60000), voto: VOTO_MS }); toast(`Tiempo iniciado: ${m} min para responder y luego 3 min de votación.`); }
+function extendVoto(min) { setRoom({ voto: durVoto(S.room) + min * 60000 }); toast(`Se agregaron ${min} min a la votación.`); }
+function pasarAVotacion() { setRoom({ fin: Date.now() - 1000, voto: VOTO_MS }); }
+function pasarAResultados() { setRoom({ voto: Math.max(0, Date.now() - S.room.fin - 1000) }); }
 function extend(min) { const base = Math.max(S.room.fin || Date.now(), Date.now()); setRoom({ fin: base + min * 60000 }); toast(`Se agregaron ${min} min.`); }
 async function resetSala() {
   try {
@@ -735,7 +751,7 @@ async function resetSala() {
       docs.push(...r.docs, ...v.docs);
     }
     for (let i = 0; i < docs.length; i += 400) { const b = S.db.batch(); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
-    await setRoom({ fase: "respuestas", fin: null });
+    await setRoom({ fin: null, voto: VOTO_MS });
     S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear(); S.sig = "";
     toast("Se borraron las respuestas y votos de todos los grupos.");
   } catch (e) { fbError(e); }
@@ -790,7 +806,7 @@ function updateComposer() {
   const ta = $("input"); if (!ta || !S.room) return;
   const ok = canWrite();
   ta.disabled = !ok;
-  ta.placeholder = S.room.fase !== "respuestas" ? "La etapa de respuestas está cerrada" : !abierto() ? "Se acabó el tiempo para responder" :
+  ta.placeholder = S.room.espera ? "Espera: el facilitador iniciará el tiempo" : S.room.fase !== "respuestas" ? "La etapa de respuestas está cerrada" : !abierto() ? "Se acabó el tiempo para responder" :
     myProps().length >= MAX_MSG ? `Llegaste al máximo de ${MAX_MSG} respuestas` : "Escribe tu respuesta";
   $("send").disabled = !ok || !ta.value.trim();
 }
@@ -803,6 +819,8 @@ addEventListener("resize", moveInk);
 let wasOpen = null;
 setInterval(() => {
   if (S.mode !== "app" || !S.room) return;
+  const e = etapa(S.room);
+  if (e.fase !== S.room.fase || e.espera !== S.room.espera) { Object.assign(S.room, e); S.sig = ""; S.facSig = ""; render(); }
   paintTimer();
   const o = abierto();
   if (wasOpen !== null && o !== wasOpen) { S.sig = ""; render(); }
@@ -810,13 +828,11 @@ setInterval(() => {
 }, 250);
 function paintTimer() {
   const t = $("timer"); if (!t) return;
-  const r = restante(), show = S.room.fase === "respuestas" && r != null;
+  const f = S.room.fase, r = restante(), show = r != null && r > 0 && (f === "respuestas" || f === "votacion");
   t.hidden = !show; if (!show) return;
-  $("timerTxt").textContent = r > 0 ? mmss(r) : "Tiempo";
-  t.classList.toggle("low", r > 0 && r <= 30000);
-  t.classList.toggle("over", r <= 0);
-  if (r <= 0 && S.endedFor !== S.room.fin) { if (S.endedFor !== null || r > -5000) timeUpOverlay(); S.endedFor = S.room.fin; }
-  if (r > 0 && S.endedFor === S.room.fin) S.endedFor = null;
+  $("timerTxt").textContent = (f === "votacion" ? "Votar " : "Responder ") + mmss(r);
+  t.classList.toggle("low", r <= 30000);
+  t.classList.remove("over");
 }
 
 function render() {
@@ -825,7 +841,8 @@ function render() {
     const had = S.qSeen; S.qSeen = S.room.qid; S.faseSeen = S.room.fase; S.tab = null; S.viewQ = null;
     if (had != null) questionOverlay();
   } else if (S.room.fase !== S.faseSeen) { const had = S.faseSeen; S.faseSeen = S.room.fase; S.tab = null; if (had !== null) stageOverlay(S.room.fase); }
-  if (S.endedFor === null && S.room.fin && restante() <= 0) S.endedFor = S.room.fin;
+  else if (S.esperaSeen === true && !S.room.espera) stageOverlay("respuestas");
+  S.esperaSeen = S.room.espera;
   const tab = currentTab(), g = curG(), fac = isFac();
   document.title = (S.room.titulo || "Taller") + " · " + S.code;
   $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
@@ -866,21 +883,27 @@ function paintFac() {
   const sec = $("fac"); sec.hidden = !isFac(); if (sec.hidden) return;
   const r = S.room;
   const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
-  const facSig = JSON.stringify([r.fase, r.fin != null, S.viewG, counts, nGrupos(), preguntas().map(p => p.id), qActiva(), curQ()]);
+  const facSig = JSON.stringify([r.fase, r.espera, S.viewG, counts, nGrupos(), preguntas().map(p => p.id), qActiva(), curQ()]);
   if (facSig === S.facSig && document.activeElement?.closest?.("#fac")) return;
   S.facSig = facSig;
   const minIn = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: S.lastMin || 5, "aria-label": "Minutos para responder" });
   minIn.addEventListener("change", () => S.lastMin = minIn.value);
   $("facIn").replaceChildren(
     h("span", { class: "lbl" }, "Etapa"),
-    h("div", { class: "seg", role: "group", "aria-label": "Cambiar etapa para todos los grupos" },
-      ...FASES.map(f => h("button", { "aria-pressed": r.fase === f, onclick: () => r.fase !== f && setRoom({ fase: f }) }, FASE_NOMBRE[f]))),
+    h("span", { class: "pill ok" }, r.espera ? "Esperando inicio" : FASE_NOMBRE[r.fase]),
     h("div", { class: "tctl" },
-      h("span", { class: "lbl" }, "Tiempo"), minIn, h("span", { class: "note" }, "min"),
-      h("button", { class: "tbtn go", onclick: () => setTimer(minIn.value) }, r.fin ? "Reiniciar" : "Iniciar"),
-      r.fin ? h("button", { class: "tbtn", onclick: () => extend(1) }, "+1 min") : null,
-      r.fin ? h("button", { class: "tbtn", onclick: () => extend(5) }, "+5 min") : null,
-      r.fin ? h("button", { class: "tbtn", onclick: () => { setRoom({ fin: null }); toast("Sin límite de tiempo."); } }, "Sin límite") : null),
+      ...(r.espera || r.fase === "resultados" ? [
+        h("span", { class: "lbl" }, "Tiempo para responder"), minIn, h("span", { class: "note" }, "min"),
+        h("button", { class: "tbtn go", onclick: () => setTimer(minIn.value) }, r.espera ? "Iniciar" : "Repetir ronda")
+      ] : r.fase === "respuestas" ? [
+        h("button", { class: "tbtn", onclick: () => extend(1) }, "+1 min"),
+        h("button", { class: "tbtn", onclick: () => extend(5) }, "+5 min"),
+        h("button", { class: "tbtn go", onclick: pasarAVotacion }, "Pasar a votación ahora")
+      ] : [
+        h("button", { class: "tbtn", onclick: () => extendVoto(1) }, "+1 min de votación"),
+        h("button", { class: "tbtn go", onclick: pasarAResultados }, "Mostrar resultados ahora")
+      ]),
+      r.espera ? h("span", { class: "note" }, "Luego: 3 min de votación y resultados automáticos.") : null),
     h("span", { class: "spacer" }),
     h("button", { class: "lnk danger", onclick: confirmReset }, "Reiniciar respuestas"),
     h("button", { class: "tbtn", style: "border-color:var(--warn);color:var(--warn)", onclick: confirmEmpezarDeCero }, "Empezar de cero"),
@@ -913,7 +936,7 @@ function newPregunta() {
   const send = () => {
     const v = inp.value.trim(); if (!v) return toast("Escribe la pregunta.");
     const id = "p" + Date.now().toString(36);
-    setRoom({ preguntas: [...preguntas(), { id, t: v.slice(0, 300) }], qid: id, fase: "respuestas", fin: null });
+    setRoom({ preguntas: [...preguntas(), { id, t: v.slice(0, 300) }], qid: id, fin: null, voto: VOTO_MS });
     S.viewQ = null; close(); toast(`Pregunta ${preguntas().length + 1} enviada a todos los grupos.`);
   };
   close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Nueva pregunta"),
@@ -922,7 +945,7 @@ function newPregunta() {
   setTimeout(() => inp.focus(), 50);
 }
 function activarPregunta(q) {
-  setRoom({ qid: q, fase: "respuestas", fin: null });
+  setRoom({ qid: q, fin: null, voto: VOTO_MS });
   S.viewQ = null; toast(`Pregunta ${qNum(q)} enviada a todos los grupos.`);
 }
 function questionOverlay() {
@@ -1013,7 +1036,8 @@ function viewChat(g) {
     out.push(lot, h("div", { class: "sys" }, fac ? "Este grupo aún no ha respondido." : abierto() ? "Aún no hay respuestas en tu grupo. Escribe la primera abajo." : "Tu grupo no envió respuestas."));
     requestAnimationFrame(() => playLottie(lot, lottieDots(), true));
   }
-  if (S.room.fase !== "respuestas") out.push(h("div", { class: "sys" }, "La etapa de respuestas está cerrada. Pasa a la pestaña Votar."));
+  if (S.room.espera) out.push(h("div", { class: "sys" }, fac ? "Inicia el tiempo para que los grupos empiecen a responder." : "Lee la pregunta. Podrás responder cuando el facilitador inicie el tiempo."));
+  else if (S.room.fase !== "respuestas") out.push(h("div", { class: "sys" }, "La etapa de respuestas está cerrada. Pasa a la pestaña Votar."));
   else if (!abierto()) out.push(h("div", { class: "sys" }, "Se acabó el tiempo para responder."));
   else if (!fac) out.push(h("div", { class: "sys" }, `Puedes enviar hasta ${MAX_MSG} respuestas. Te quedan ${Math.max(0, MAX_MSG - myProps().length)}.`));
   if (!fac && !myProps().length && S.room.fase === "respuestas")
@@ -1028,8 +1052,8 @@ function viewVote(g) {
   out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
     h("div", {}, h("h2", {}, fac ? `Votación del Grupo ${g}` : "Elige 1 respuesta"),
       h("p", {}, fac ? `${t.voters} de ${nm} integrantes ya votaron. Los votos se muestran en Resultados.`
-        : S.room.fase === "votacion" ? "Toca la respuesta de tu grupo que mejor describe el cuello de botella. Puedes cambiar tu voto hasta que cierre la votación."
-        : S.room.fase === "respuestas" ? "La votación todavía no empieza. El facilitador la abrirá." : "La votación está cerrada.")),
+        : S.room.fase === "votacion" ? "Toca la respuesta de tu grupo que mejor describe el cuello de botella. Tienes 3 minutos; puedes cambiar tu voto hasta que termine el tiempo."
+        : S.room.fase === "respuestas" ? "La votación empieza sola cuando termine el tiempo para responder y dura 3 minutos." : "La votación está cerrada.")),
     fac ? null : h("div", { class: "chips", "aria-label": mv ? "Ya votaste" : "Aún no votas" }, h("span", { class: "chip" + (mv ? " used" + (S.pulse ? " new" : "") : "") }, mv ? svgCheck() : "1")))));
   if (!props.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay respuestas para votar"), "Las respuestas del grupo aparecerán aquí.")); return out; }
   const list = h("div", { class: "vlist" });
@@ -1058,7 +1082,7 @@ function viewResults(g, entering) {
   requestAnimationFrame(() => { for (const k in now) countUp(statEls[k], entering ? 0 : (S.prevStats[k] ?? 0), now[k]); S.prevStats = now; });
   out.push(h("div", { class: "card" }, h("div", { class: "rhead" },
     h("div", {}, h("h2", {}, `Prioridades del Grupo ${g}`),
-      h("p", {}, fac && S.room.fase !== "resultados" ? "Vista previa del facilitador: el grupo aún no la ve." : `Las ${TOP} respuestas más votadas del grupo pasan al bloque de soluciones.`)),
+      h("p", {}, fac && S.room.fase !== "resultados" ? "Vista previa del facilitador: el grupo la verá al terminar la votación." : `Las ${TOP} respuestas más votadas del grupo pasan al bloque de soluciones.`)),
     h("div", { class: "stats" },
       h("div", { class: "stat" }, statEls.a, h("span", {}, "Integrantes")),
       h("div", { class: "stat" }, statEls.v, h("span", {}, "Votaron")),
