@@ -901,7 +901,7 @@ function updateComposer() {
   const ta = $("input"); if (!ta || !S.room) return;
   const ok = canWrite();
   ta.disabled = !ok;
-  ta.placeholder = S.room.espera ? "Espera: el facilitador iniciará el tiempo" : S.room.fase !== "respuestas" ? "La etapa de respuestas está cerrada" : !abierto() ? "Se acabó el tiempo para responder" :
+  ta.placeholder = isFac() ? `Aquí escriben los integrantes del Grupo ${curG()} (vista del facilitador)` : S.room.espera ? "Espera: el facilitador iniciará el tiempo" : S.room.fase !== "respuestas" ? "La etapa de respuestas está cerrada" : !abierto() ? "Se acabó el tiempo para responder" :
     myProps().length >= MAX_MSG ? `Llegaste al máximo de ${MAX_MSG} respuestas` : "Escribe tu respuesta";
   $("send").disabled = !ok || !ta.value.trim();
 }
@@ -974,7 +974,7 @@ function render() {
     else if (prevKey !== key) main.scrollTop = 0;
   }
   S.stick = false; S.pulse = null;
-  $("composer").hidden = fac || tab !== "respuestas";
+  $("composer").hidden = tab !== "respuestas" || !g;
   updateComposer();
 }
 
