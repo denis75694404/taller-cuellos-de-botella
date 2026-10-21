@@ -510,6 +510,38 @@ html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
 .app.facmode > main{overflow:visible;min-height:60vh}
 .app.facmode > .composer{position:sticky;bottom:0;z-index:15}
 .menu{max-height:calc(100dvh - 80px);overflow-y:auto}
+/* Bloque 2 por participante */
+.b2tema{align-self:stretch;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:8px;margin-top:10px;animation:cardIn .5s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:var(--d,0s)}
+.b2head{display:flex;gap:12px;align-items:flex-start}
+.b2head h3{margin:2px 0 0;font-family:var(--f-disp);font-weight:800;font-size:18px;line-height:1.25;text-wrap:balance;overflow-wrap:anywhere}
+.b2n{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-family:var(--f-disp);font-weight:800;font-size:15px;margin-right:8px;vertical-align:middle}
+.b2head .b2n{margin:0}
+.b2prop{background:var(--bar);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:3px}
+.b2prop.mine{background:var(--mine)}
+.b2prop .txt{overflow-wrap:anywhere}
+.b2prop .who{font-size:12.5px;color:var(--muted);font-weight:600;display:flex;gap:10px;align-items:center}
+.b2form{display:flex;gap:8px;align-items:flex-end}
+.b2form textarea{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--bar);padding:10px 12px;font:inherit;color:var(--fg);resize:vertical}
+.b2count{align-self:flex-start;font-size:13px;font-weight:800;border-radius:999px;padding:4px 12px;background:var(--accent-soft);color:var(--accent)}
+.b2count.full{background:var(--accent);color:var(--accent-fg)}
+.b2tema .vitem .box{border-radius:6px}
+.b2mini{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;font-weight:700;color:var(--fg)}
+.b2tablewrap{align-self:stretch;overflow-x:auto;margin-top:10px;border-radius:16px;box-shadow:var(--shadow);background:var(--panel)}
+.b2table{width:100%;border-collapse:collapse;font-size:14.5px}
+.b2table th,.b2table td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.b2table thead th{background:var(--head);color:var(--head-fg);font-size:13px;font-weight:800;overflow-wrap:normal;word-break:normal;hyphens:manual}
+.b2table tbody th{width:34%;background:var(--accent-soft);font-weight:700;border-right:1px solid var(--line)}
+.b2table tr.first > *{border-top:2px solid var(--accent)}
+.b2table tr.top td{font-weight:700}
+.b2table .num{text-align:right;width:70px;font-variant-numeric:tabular-nums;font-family:var(--f-disp);font-weight:800;font-size:17px}
+.b2table thead .num{font-size:12.5px}
+.b2table .muted{color:var(--muted)}
+.proj .b2tablewrap{background:rgba(255,255,255,.96);color:#111b21;margin-top:12px}
+.b2table.big{font-size:clamp(15px,1.6vw,24px)}
+.b2table.big .num{font-size:clamp(18px,2vw,30px);width:auto}
+.b2table.big thead th,.b2table.big thead .num{font-size:clamp(14px,1.3vw,20px)}
+.proj .b2table tbody th{background:#d8f3e6;color:#111b21}
+html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -740,7 +772,7 @@ const S = {
   code: null, room: null, roomReady: false, miembros: new Map(), miembrosReady: false,
   G: new Map(), gsubs: new Map(), mode: "loading", changing: false,
   viewG: 0, tab: null, faseSeen: null, pulse: null, stick: false, endedFor: null,
-  plen: new Map(), enc: new Map(), mute: false, encDone: false,
+  plen: new Map(), enc: new Map(), b2p: new Map(), b2v: new Map(), b2ver: 0, mute: false, encDone: false,
   seen: new Set(), seenVote: new Set(), seenRes: new Set(), prevW: new Map(), prevStats: {}, sig: "", unsub: []
 };
 const isFac = () => ROLE === "admin" && S.isAdmin && !!S.room;
@@ -948,6 +980,8 @@ function openSala(code) {
     S.miembros = new Map(q.docs.map(d => [d.id, d.data()])); S.miembrosReady = true; route();
   }, fbError));
   S.unsub.push(salaRef().collection("plenario").onSnapshot(q => { S.plen = new Map(q.docs.map(d => [d.id, d.data()])); render(); }, () => {}));
+  S.unsub.push(salaRef().collection("b2prop").onSnapshot(q => { S.b2p = new Map(q.docs.map(d => [d.id, { id: d.id, ...d.data() }])); S.b2ver++; S.facSig = ""; render(); }, () => {}));
+  S.unsub.push(salaRef().collection("b2voto").onSnapshot(q => { S.b2v = new Map(q.docs.map(d => [d.id, d.data()])); S.b2ver++; S.facSig = ""; render(); }, () => {}));
   if (ROLE === "admin" && S.isAdmin) S.unsub.push(salaRef().collection("encuesta").onSnapshot(q => { S.enc = new Map(q.docs.map(d => [d.id, d.data()])); }, () => {}));
 }
 function ensureGroupSubs() {
@@ -1288,10 +1322,10 @@ function viewResults(g, entering) {
   } else out.push(h("div", { class: "card empty" }, h("b", {}, "Aún no hay votos"), "La ganadora será la respuesta con más votos."));
   if (win.length && nGrupos() === 1) out.push(solCard(g, curQ()));
   else if (win.length && curQ() === qActiva()) out.push(bloque2()
-    ? h("div", { class: "nextcard" }, h("div", { class: "ic" }, "5"), h("div", { class: "tx" }, h("h4", {}, "El plenario ya eligió"), h("p", {}, "Ahora tu grupo propone la solución en el Bloque 2.")),
+    ? h("div", { class: "nextcard" }, h("div", { class: "ic" }, "5"), h("div", { class: "tx" }, h("h4", {}, "El plenario ya eligió"), h("p", {}, "Ahora todos proponen soluciones en el Bloque 2.")),
         h("button", { class: "btn", onclick: () => { S.tab = "bloque2"; S.sig = ""; render(); } }, "Ir al Bloque 2"))
     : h("div", { class: "nextcard" }, h("div", { class: "ic" }, "4"), h("div", { class: "tx" }, h("h4", {}, "Lo que sigue: el plenario"),
-        h("p", {}, "La ganadora de tu grupo compite con las de los demás. Todo el taller elegirá una y luego cada grupo pasará al Bloque 2 a proponer su solución."))));
+        h("p", {}, "La ganadora de tu grupo compite con las de los demás. Todo el taller elegirá las 2 prioritarias y luego todos propondrán soluciones en el Bloque 2."))));
   if (!fac && S.room.encuesta && !S.encDone) out.push(h("div", { class: "nextcard" }, h("div", { class: "ic" }, "★"),
     h("div", { class: "tx" }, h("h4", {}, "Cuéntanos qué te pareció"), h("p", {}, "La encuesta de cierre es anónima y toma 30 segundos.")),
     h("button", { class: "btn", onclick: encuestaOverlay }, "Responder la encuesta")));
@@ -1415,7 +1449,8 @@ async function votarPlenario() {
     const old = await salaRef().collection("plenario").where("q", "==", p.q).get();
     if (!old.empty) { const b = S.db.batch(); old.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
   } catch {}
-  setRoom({ "plenario.fin": nowMs() + VOTO_MS });
+  if (b2(p.q)) await borrarB2(p.q);
+  setRoom({ "plenario.fin": nowMs() + VOTO_MS, b2: null });
 }
 let plenQ = Promise.resolve();
 function votePlen(id) {
@@ -1526,22 +1561,135 @@ const plenWin = () => plenFase() === "resultados" ? ganadoras(plenTally().ranked
 const bloque2 = () => plenWin().length > 0;
 const temaB2 = () => plenWin().map(w => w.t).join(" / ");
 const solHechas = () => { const q = qActiva(); let n = 0; for (let g = 1; g <= nGrupos(); g++) if (gdata(g).sol.get(q)) n++; return n; };
+/* Bloque 2 por participante: los 2 cuellos de botella más votados del plenario */
+const B2_MAX = 3; // propuestas por participante y por cuello de botella
+const B2_SEL = 2; // marcas de prioridad por participante y por cuello de botella
+const b2 = (q = qActiva()) => { const x = S.room?.b2; return x && x.q === q && Array.isArray(x.temas) && x.temas.length ? x : null; };
+const temasB2 = () => { const x = b2(); if (x) return x.temas; return plenTally().ranked.filter(r => r.n > 0).slice(0, 2).map((r, i) => ({ id: "t" + (i + 1), t: r.t, g: r.g })); };
+const b2Fase = () => {
+  if (!bloque2()) return null;
+  const x = b2(); if (!x || !x.fin) return "prep";
+  const n = nowMs(); return n < x.fin ? "escribir" : n < x.fin + (x.voto || VOTO_MS) ? "votar" : "resultados";
+};
+const b2Restante = () => { const x = b2(), f = b2Fase(); return f === "escribir" ? x.fin - nowMs() : f === "votar" ? x.fin + (x.voto || VOTO_MS) - nowMs() : null; };
+const b2Props = (tema, q = qActiva()) => [...S.b2p.values()].filter(p => p.q === q && p.tema === tema && typeof p.t === "string").sort((a, b) => a.ts - b.ts);
+const misPropsB2 = tema => b2Props(tema).filter(p => p.uid === S.uid);
+const miSelB2 = () => S.b2v.get(S.uid + "_" + qActiva())?.sel || {};
+const autoresB2 = () => new Set([...S.b2p.values()].filter(p => p.q === qActiva()).map(p => p.uid)).size;
+const votantesB2 = () => [...S.b2v.values()].filter(v => v.q === qActiva() && Object.values(v.sel || {}).some(l => l?.length)).length;
+function tallyB2(tema, q = qActiva()) {
+  const props = b2Props(tema, q), ok = new Set(props.map(p => p.id)), c = new Map(); let votantes = 0;
+  for (const v of S.b2v.values()) {
+    if (v.q !== q) continue;
+    const l = (v.sel?.[tema] || []).filter(id => ok.has(id)).slice(0, B2_SEL);
+    if (l.length) votantes++;
+    for (const id of l) c.set(id, (c.get(id) || 0) + 1);
+  }
+  return { ranked: props.map(p => ({ ...p, n: c.get(p.id) || 0 })).sort((a, b) => b.n - a.n || a.ts - b.ts), votantes };
+}
+function iniciarB2(min) {
+  const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos.");
+  const temas = temasB2(); if (!temas.length) return toast("El plenario no tiene votos: no hay cuellos de botella priorizados.");
+  setRoom({ b2: { q: qActiva(), temas, fin: nowMs() + Math.round(m * 60000), voto: VOTO_MS } });
+}
+function extendB2(min) {
+  const x = b2(); if (!x) return;
+  if (b2Fase() === "escribir") setRoom({ "b2.fin": Math.max(x.fin, nowMs()) + min * 60000 });
+  else setRoom({ "b2.voto": (x.voto || VOTO_MS) + min * 60000 });
+  toast(`Se agregaron ${min} min.`);
+}
+const b2APriorizar = () => setRoom({ "b2.fin": nowMs() - 1000, "b2.voto": VOTO_MS });
+const b2AResultados = () => { const x = b2(); if (x) setRoom({ "b2.voto": Math.max(0, nowMs() - x.fin - 1000) }); };
+async function borrarB2(q, soloVotos) {
+  try {
+    const cols = soloVotos ? ["b2voto"] : ["b2prop", "b2voto"];
+    for (const c of cols) { const old = await salaRef().collection(c).where("q", "==", q).get(); if (!old.empty) { const bt = S.db.batch(); old.docs.forEach(d => bt.delete(d.ref)); await bt.commit(); } }
+  } catch {}
+}
+async function repetirB2Voto() { const x = b2(); if (!x) return; await borrarB2(x.q, true); setRoom({ "b2.fin": nowMs() - 1000, "b2.voto": VOTO_MS }); }
+async function enviarPropB2(tema, ta) {
+  const t = ta.value.trim(); if (!t) return toast("Escribe tu propuesta de solución.");
+  if (b2Fase() !== "escribir" || isFac() || !me()) return;
+  if (misPropsB2(tema).length >= B2_MAX) return toast(`Ya agregaste ${B2_MAX} propuestas para este cuello de botella.`);
+  ta.value = ""; ta.blur();
+  try { await salaRef().collection("b2prop").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), g: me()?.grupo || 0, tema, t: t.slice(0, 400), q: qActiva(), ts: nowMs() }); burst({ particleCount: 40, spread: 55, origin: { y: .7 } }); }
+  catch (e) { ta.value = t; fbError(e); }
+}
+let b2Q = Promise.resolve();
+function toggleB2(tema, id) {
+  if (b2Fase() !== "votar" || isFac() || !me()) return;
+  const q = qActiva(), vid = S.uid + "_" + q, antes = S.b2v.get(vid);
+  const sel = {}; for (const tm of temasB2()) sel[tm.id] = [...(miSelB2()[tm.id] || [])];
+  const l = sel[tema] || (sel[tema] = []), i = l.indexOf(id);
+  if (i >= 0) l.splice(i, 1);
+  else { if (l.length >= B2_SEL) return toast(`Ya marcaste ${B2_SEL} propuestas para este cuello de botella. Quita una para elegir otra.`); l.push(id); }
+  const doc = { uid: S.uid, q, sel, ts: nowMs() };
+  S.b2v.set(vid, doc); S.b2ver++; S.pulse = id; S.sig = ""; render();
+  b2Q = b2Q.then(() => salaRef().collection("b2voto").doc(vid).set(doc))
+    .catch(e => { if (antes) S.b2v.set(vid, antes); else S.b2v.delete(vid); S.b2ver++; S.sig = ""; render(); fbError(e); });
+}
+function b2Overlay(f) {
+  aviso("etapa");
+  if (f === "escribir") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Bloque 2 · Soluciones"), h("div", { class: "bignum" }, "5"),
+    h("h3", {}, "¡Ahora proponemos soluciones!"), h("p", {}, isFac() ? "Los participantes escriben sus propuestas para los 2 cuellos de botella priorizados." : "Escribe tus propuestas de solución para cada uno de los 2 cuellos de botella priorizados.")), 3200);
+  else if (f === "votar") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Bloque 2 · Prioridad"), h("div", { class: "bignum" }, "✓"),
+    h("h3", {}, "¡Hora de priorizar!"), h("p", {}, isFac() ? "Cada participante marca hasta 2 propuestas por cuello de botella." : `Marca hasta ${B2_SEL} propuestas por cada cuello de botella. Tienes ${Math.round((b2()?.voto || VOTO_MS) / 60000)} minutos.`)), 3200);
+  else if (f === "resultados") { overlay(h("div", { class: "ocard" }, svgTrophy(), h("h3", {}, "¡Ya están las propuestas prioritarias!"), h("p", {}, "Mira la tabla con el total de cada propuesta.")), 2800); setTimeout(bigBurst, 400); }
+}
+function tablaB2(q = qActiva(), big) {
+  const X = b2(q); if (!X) return h("div", { class: "card empty" }, h("b", {}, "Sin datos del Bloque 2"));
+  return h("div", { class: "b2tablewrap" }, h("table", { class: "b2table" + (big ? " big" : "") },
+    h("thead", {}, h("tr", {}, h("th", {}, "Cuellos de botella priorizados"), h("th", {}, "Propuestas de solución"), h("th", { class: "num" }, "Total"))),
+    h("tbody", {}, ...X.temas.flatMap((tm, k) => {
+      const { ranked } = tallyB2(tm.id, q);
+      if (!ranked.length) return [h("tr", { class: "first" }, h("th", { scope: "row" }, h("span", { class: "b2n" }, k + 1), tm.t), h("td", { class: "muted" }, "Sin propuestas"), h("td", { class: "num" }, "0"))];
+      return ranked.map((r, i) => h("tr", { class: (i === 0 ? "first" : "") + (i === 0 && r.n > 0 ? " top" : "") },
+        i === 0 ? h("th", { scope: "row", rowspan: String(ranked.length) }, h("span", { class: "b2n" }, k + 1), tm.t) : null,
+        h("td", {}, r.t), h("td", { class: "num" }, String(r.n))));
+    }))));
+}
 function viewBloque2(g, entering) {
   if (!bloque2()) return [h("div", { class: "card empty" }, h("b", {}, "El Bloque 2 aún no empieza"), "Comienza cuando termina el plenario.")];
-  const q = qActiva(), win = plenWin(), { voters } = plenTally();
-  const out = [h("div", { class: "card" }, h("div", { class: "vhead" }, h("div", {},
-    h("h2", {}, "Bloque 2: propuestas de solución"),
-    h("p", {}, g ? "Todo el taller priorizó este cuello de botella. Ahora tu grupo propone cómo resolverlo y quién se hace cargo."
-      : `${solHechas()} de ${nGrupos()} grupos ya guardaron su propuesta.`))))];
-  out.push(win.length === 1 ? winnerCard(win[0], voters, "Cuello de botella priorizado", "Grupo " + win[0].g, entering)
-    : h("div", { class: "winner" }, svgTrophy(), h("div", { class: "lbl" }, "Cuellos de botella priorizados (empate)"), h("div", { class: "tied" }, ...win.map(w => h("div", {}, `Grupo ${w.g}: ${w.t}`)))));
-  if (g) { out.push(solCard(g, q, temaB2())); return out; }
-  out.push(h("h3", { class: "sec-t" }, "Propuestas de los grupos"), h("div", { class: "ggrid" }, ...Array.from({ length: nGrupos() }, (_, i) => {
-    const gg = i + 1, sol = gdata(gg).sol.get(q);
-    return h("button", { class: "gcard", onclick: () => { S.viewG = gg; render(); } }, h("div", { class: "gt" }, h("h3", {}, "Grupo " + gg)),
-      sol ? h("div", { class: "mini sol" }, h("b", {}, "💡"), sol.solucion, sol.responsable ? " · Responsable: " + sol.responsable : "") : h("span", { class: "note" }, "Propuesta pendiente"),
-      h("span", { class: "lnk open" }, "Abrir grupo →"));
-  })));
+  const f = b2Fase(), fac = isFac(), temas = temasB2(), tot = S.miembros.size;
+  const titulo = { prep: "Bloque 2: propuestas de solución", escribir: "Bloque 2: escribe tus propuestas", votar: "Bloque 2: marca las prioritarias", resultados: "Bloque 2: propuestas priorizadas" }[f];
+  const desc = f === "prep" ? (fac ? "Estos son los 2 cuellos de botella más votados en el plenario. Elige los minutos en el panel e inicia el Bloque 2." : "Estos son los 2 cuellos de botella priorizados por todo el taller. En un momento podrás escribir tus propuestas de solución.")
+    : f === "escribir" ? (fac ? `${autoresB2()} de ${tot} participantes ya escribieron al menos una propuesta.` : `Escribe tus propuestas de solución para cada cuello de botella (hasta ${B2_MAX} por cada uno).`)
+    : f === "votar" ? (fac ? `${votantesB2()} de ${tot} participantes ya marcaron sus prioridades.` : `Marca hasta ${B2_SEL} propuestas por cada cuello de botella: las que deberían hacerse primero.`)
+    : "Las propuestas de solución están ordenadas por su total de marcas de prioridad, de mayor a menor.";
+  const out = [h("div", { class: "card" }, h("div", { class: "vhead" }, h("div", {}, h("h2", {}, titulo), h("p", {}, desc))))];
+  if (!temas.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay cuellos de botella priorizados"), "Nadie votó en el plenario.")); return out; }
+  if (f === "resultados") { out.push(tablaB2()); return out; }
+  temas.forEach((tm, k) => {
+    const props = b2Props(tm.id);
+    const box = h("div", { class: "b2tema", style: `--d:${k * 0.08}s` },
+      h("div", { class: "b2head" }, h("span", { class: "b2n" }, k + 1), h("div", {}, h("div", { class: "eyebrow" }, "Cuello de botella priorizado"), h("h3", {}, tm.t))));
+    if (f === "escribir") {
+      box.append(...(props.length ? props.map(p => h("div", { class: "b2prop" + (p.uid === S.uid ? " mine" : "") },
+        h("div", { class: "txt" }, p.t), h("div", { class: "who" }, p.uid === S.uid ? "Tú" : p.nombre || "Participante",
+          p.uid === S.uid || fac ? h("button", { class: "del", onclick: () => salaRef().collection("b2prop").doc(p.id).delete().catch(fbError), "aria-label": "Borrar esta propuesta" }, "borrar") : null)))
+        : [h("p", { class: "note" }, "Aún no hay propuestas para este cuello de botella.")]));
+      if (!fac && me()) {
+        const mias = misPropsB2(tm.id).length;
+        if (mias < B2_MAX) {
+          const ta = h("textarea", { rows: 2, maxlength: 400, id: "b2in-" + tm.id, placeholder: "Escribe una propuesta de solución…", "aria-label": "Propuesta de solución para el cuello de botella " + (k + 1) });
+          box.append(h("div", { class: "b2form" }, ta, h("button", { class: "btn", onclick: () => enviarPropB2(tm.id, ta) }, "Agregar")),
+            h("p", { class: "note" }, mias ? `Puedes agregar ${B2_MAX - mias} más.` : `Puedes agregar hasta ${B2_MAX}.`));
+        } else box.append(h("p", { class: "note" }, `Ya agregaste tus ${B2_MAX} propuestas para este cuello de botella.`));
+      }
+    } else if (f === "votar") {
+      const sel = miSelB2()[tm.id] || [];
+      if (!fac) box.append(h("div", { class: "b2count" + (sel.length >= B2_SEL ? " full" : "") }, `Marcaste ${sel.length} de ${B2_SEL}`));
+      if (!props.length) box.append(h("p", { class: "note" }, "Nadie escribió propuestas para este cuello de botella."));
+      for (const p of props) {
+        const on = sel.includes(p.id);
+        const bt = h("button", { class: "vitem" + (S.pulse === p.id ? " pulse" : ""), "aria-pressed": on, disabled: fac || !me(), onclick: () => toggleB2(tm.id, p.id) },
+          h("span", { class: "box" }, on ? svgCheck() : null),
+          h("span", { class: "body" }, h("div", { class: "who" }, p.uid === S.uid ? "Tu propuesta" : p.nombre || "Participante"), h("div", { class: "txt" }, p.t)));
+        box.append(bt);
+      }
+    } else box.append(h("p", { class: "note" }, fac ? "Inicia el Bloque 2 desde el panel." : "Espera: el facilitador iniciará el tiempo para escribir propuestas."));
+    out.push(box);
+  });
   return out;
 }
 
@@ -1574,7 +1722,7 @@ function solCard(g, q, tema) {
 function checkEncuesta() {
   if (!S.room.encuesta) { S.encChecked = false; return; }
   if (isFac() || S.encChecked || !me()) return;
-  if (S.room.fase !== "resultados" || plenFase() === "votacion" || plenFase() === "preparacion") return; // no interrumpir mientras se responde o vota
+  if (S.room.fase !== "resultados" || plenFase() === "votacion" || plenFase() === "preparacion" || ["prep", "escribir", "votar"].includes(b2Fase())) return; // no interrumpir mientras se responde o vota
   S.encChecked = true;
   salaRef().collection("encuesta").doc(S.uid).get()
     .then(d => { S.encDone = d.exists; if (!d.exists) setTimeout(encuestaOverlay, 900); S.sig = ""; render(); })
@@ -1623,7 +1771,7 @@ function openProj() {
 function openProjQR() { S.projQR = true; if ($("proj")) { S.projSig = ""; paintProj(); } else openProj(); }
 function closeProj() { S.projQR = false; $("proj")?.remove(); try { if (document.fullscreenElement) document.exitFullscreen(); } catch {} }
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("proj")) closeProj(); });
-const relojMs = () => plenFase() === "votacion" ? plen().fin - nowMs() : (restante() || 0);
+const relojMs = () => plenFase() === "votacion" ? plen().fin - nowMs() : b2Restante() != null ? b2Restante() : (restante() || 0);
 function paintProj() {
   const el = $("proj"); if (!el || !S.room) return;
   const r = S.room, q = qActiva(), p = plen(), pf = plenFase();
@@ -1632,7 +1780,7 @@ function paintProj() {
     const g = i + 1, ms = miembrosDe(g).length;
     return { g, ms, resp: ms - faltanResponder(g, q).length, vot: ms - faltanVotar(g, q).length, win: ganadoras(tally(g, q).ranked) };
   });
-  const sig = JSON.stringify([stage, real, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size, p?.fin || 0]);
+  const sig = JSON.stringify([stage, real, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size, p?.fin || 0, b2Fase(), S.b2ver]);
   if (sig === S.projSig) return;
   S.projSig = sig;
   const clock = lbl => h("div", { class: "pj-clock" }, h("span", { class: "pj-lbl" }, lbl), h("b", { id: "pjClock" }, mmss(Math.max(0, relojMs()))));
@@ -1666,11 +1814,11 @@ function paintProj() {
       h("div", { class: "pj-list" }, ...p.items.map(it => h("div", { class: "pj-item" }, h("b", {}, "Grupo " + it.g), h("span", {}, it.t)))),
       h("p", { class: "pj-foot" }, `${plenTally().voters} de ${S.miembros.size} ya votaron`));
   } else if (stage === "bloque2") {
-    body = h("div", {}, h("div", { class: "pj-final" }, svgTrophy(), h("span", { class: "pj-lbl" }, "Bloque 2 · Cuello de botella priorizado"),
-        ...plenWin().map(w => h("div", { class: "pj-ft" }, w.t, h("small", {}, "Grupo " + w.g)))),
-      h("div", { class: "pj-grid", style: "margin-top:clamp(12px,2vw,28px)" }, ...per.map(x => { const sol = gdata(x.g).sol.get(q);
-        return h("div", { class: "pj-card" }, h("h3", {}, "Grupo " + x.g), h("div", { class: "pj-wt" }, sol ? sol.solucion : "Escribiendo su propuesta…"),
-          sol?.responsable ? h("span", {}, "Responsable: " + sol.responsable) : null); })));
+    const f2 = b2Fase(), temas = temasB2();
+    if (f2 === "resultados") body = h("div", {}, h("span", { class: "pj-lbl" }, "Bloque 2 · Propuestas de solución priorizadas"), tablaB2(q, true));
+    else body = h("div", {}, f2 === "escribir" || f2 === "votar" ? clock(f2 === "escribir" ? "Tiempo para escribir propuestas" : "Tiempo para marcar prioridades") : h("span", { class: "pj-lbl" }, "Bloque 2 · Cuellos de botella priorizados"),
+      h("div", { class: "pj-grid", style: "margin-top:clamp(10px,1.6vw,22px)" }, ...temas.map((tm, k) => h("div", { class: "pj-card" }, h("span", { class: "pj-lbl" }, "Cuello de botella " + (k + 1)),
+        h("div", { class: "pj-wt" }, tm.t), h("span", {}, f2 === "votar" ? `${tallyB2(tm.id).votantes} ya marcaron prioridades` : `${b2Props(tm.id).length} propuestas de solución`)))));
   } else {
     const { ranked, voters } = plenTally(), win = ganadoras(ranked);
     body = h("div", { class: "pj-final" }, svgTrophy(), h("span", { class: "pj-lbl" }, win.length > 1 ? "Empate en el plenario" : "Ganadora del plenario"),
@@ -1687,6 +1835,10 @@ function paintProj() {
 
 /* ---------- reloj: avisos de 30 s, plenario y proyección ---------- */
 function tickExtra() {
+  const bf = b2Fase();
+  if (bf !== S.b2FaseTick) { const antes = S.b2FaseTick; S.b2FaseTick = bf; S.sig = ""; S.facSig = ""; S.projSig = ""; if (antes !== undefined) { S.tab = null; if (bf && bf !== "prep") b2Overlay(bf); } render(); }
+  const br = b2Restante(), bk = bf + (b2()?.fin || 0) + "_" + (b2()?.voto || 0);
+  if (br != null && br > 0 && br <= 30000 && S.warnedB2 !== bk) { S.warnedB2 = bk; aviso("30s"); if (!isFac()) toast("¡Quedan 30 segundos!"); }
   const pf = plenFase();
   if (pf !== S.plenFaseTick) { S.plenFaseTick = pf; S.sig = ""; S.facSig = ""; render(); }
   const p = plen(), pl = pf === "votacion";
@@ -1701,14 +1853,14 @@ function tickExtra() {
 }
 function paintTimer() {
   const t = $("timer"); if (!t || !S.room) return;
-  const pl = plenFase() === "votacion", f = S.room.fase;
-  const r = pl ? plen().fin - nowMs() : restante();
-  const show = r != null && r > 0 && (pl || f === "respuestas" || f === "votacion");
+  const pl = plenFase() === "votacion", f = S.room.fase, bf = b2Fase(), b2t = bf === "escribir" || bf === "votar";
+  const r = pl ? plen().fin - nowMs() : b2t ? b2Restante() : restante();
+  const show = r != null && r > 0 && (pl || b2t || f === "respuestas" || f === "votacion");
   const ft = $("flowTime");
   if (ft && show) { ft.textContent = mmss(r); ft.closest(".fstep")?.classList.toggle("low", r <= 30000); }
   if (isFac()) { t.hidden = true; return; }
   t.hidden = !show; if (!show) return;
-  $("timerTxt").replaceChildren(h("span", { class: "tl" }, pl ? "Plenario " : f === "votacion" ? "Votar " : "Responder "), mmss(r));
+  $("timerTxt").replaceChildren(h("span", { class: "tl" }, pl ? "Plenario " : b2t ? (bf === "escribir" ? "Escribir " : "Priorizar ") : f === "votacion" ? "Votar " : "Responder "), mmss(r));
   t.classList.toggle("low", r <= 30000); t.classList.remove("over");
 }
 document.addEventListener("focusout", e => { if ($("view")?.contains(e.target)) setTimeout(render, 60); });
@@ -1745,6 +1897,7 @@ function render() {
   const q = curQ(), pt = p ? plenTally() : null;
   const sig = JSON.stringify([tab, g, q, qTexto(q), qActiva(), S.room.fase, fac, abierto(), S.room.grupos, !!S.room.encuesta, S.encDone,
     p ? [plenFase(), p.items.map(i => i.id + i.t), myPlenVote(), pt.ranked.map(r => r.n), pt.voters] : 0,
+    bloque2() ? [b2Fase(), S.b2ver, b2()?.fin || 0, b2()?.voto || 0] : 0,
     tab === "plenario" ? 0 :
     !g ? [...S.G].map(([k]) => [k, proposals(k, q).map(x => x.key), votosDe(k, q).map(v => v.uid + v.id), gdata(k).sol.get(q) || 0]).concat([[...S.miembros.values()].map(m => m.grupo + m.nombre)]) :
     tab === "respuestas" ? [proposals(g, q).map(x => x.key + (x.pend ? "*" : "")), fac ? faltanResponder(g, q) : 0]
@@ -1777,7 +1930,7 @@ function paintFac() {
   if (!fac) return;
   const r = S.room, tab = currentTab(), q = curQ(), activa = q === qActiva(), tot = preguntas().length, p = plen(), pf = plenFase();
   const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
-  const facSig = JSON.stringify([solHechas(), p ? plenTally().voters : 0,
+  const facSig = JSON.stringify([b2Fase(), S.b2ver, b2()?.fin || 0, b2()?.voto || 0, S.lastMinB2, solHechas(), p ? plenTally().voters : 0,
     Array.from({ length: nGrupos() }, (_, i) => [faltanResponder(i + 1, qActiva()).length, faltanVotar(i + 1, qActiva()).length]), r.fase, r.espera, S.viewG, counts, preguntas().map(x => x.id + x.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin, pf, p?.fin]);
   if (facSig === S.facSig) return;
   S.facSig = facSig;
@@ -1801,8 +1954,8 @@ function paintFac() {
   const steps = h("ol", { class: "flow", style: `--n:${info.length}`, "aria-label": "Etapas de la ronda (toca una para verla)" },
     ...info.map(([f, l, d], i) => {
       const now = i === idx, done = i < idx;
-      const timed = now && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion"));
-      const estado = done ? "Listo" : timed ? mmss(relojMs()) : now ? (f === "plenario" && pf === "preparacion" ? "Revisar" : "Ahora") : d;
+      const bf2 = b2Fase(), timed = now && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion") || (f === "bloque2" && (bf2 === "escribir" || bf2 === "votar")));
+      const estado = done ? "Listo" : timed ? mmss(relojMs()) : now ? ((f === "plenario" && pf === "preparacion") || (f === "bloque2" && bf2 === "prep") ? "Revisar" : f === "bloque2" && bf2 === "resultados" ? "Listo" : "Ahora") : d;
       return h("li", { class: "fstep" + (now ? " now" : "") + (done ? " done" : "") + (tab === f ? " viewing" : "") },
         h("button", { "aria-current": now ? "step" : null, title: "Ver " + l, disabled: f === "plenario" && !p || f === "bloque2" && !bloque2(),
           onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); } },
@@ -1825,11 +1978,34 @@ function paintFac() {
     secundarios = [btn("+1 min", () => setRoom({ "plenario.fin": p.fin + 60000 }))];
     principal = btn("Mostrar ganadora ahora", () => setRoom({ "plenario.fin": nowMs() - 1000 }), true);
   } else if (p && bloque2()) {
-    estado = "Bloque 2"; titulo = "Los grupos proponen soluciones";
-    texto = "Cada grupo escribe su propuesta de solución y el responsable para el cuello de botella priorizado.";
-    extra = prog(solHechas(), nGrupos(), "grupos ya guardaron su propuesta");
-    secundarios = [btn("Repetir votación del plenario", votarPlenario)];
-    principal = btn("+ Nueva pregunta", newPregunta, true);
+    const f2 = b2Fase(), m2 = Number(S.lastMinB2) || 5, temas = temasB2();
+    if (f2 === "prep") {
+      const custom = h("input", { type: "number", min: 1, max: 120, value: [3, 5, 10].includes(m2) ? "" : m2, placeholder: "otro", "aria-label": "Otros minutos" });
+      custom.addEventListener("change", () => { if (custom.value > 0) { S.lastMinB2 = custom.value; S.facSig = ""; paintFac(); } });
+      estado = "Bloque 2 · preparación"; titulo = "Los 2 cuellos de botella priorizados";
+      texto = "Elige cuántos minutos tendrán para escribir propuestas de solución. Después vienen 3 minutos para marcar prioridades.";
+      extra = [h("ol", { class: "b2mini" }, ...temas.map(t => h("li", {}, t.t))),
+        h("div", { class: "mins" }, ...[3, 5, 10].map(m => h("button", { "aria-pressed": m2 === m, onclick: () => { S.lastMinB2 = m; S.facSig = ""; paintFac(); } }, m + " min")), custom)];
+      secundarios = [btn("Repetir votación del plenario", votarPlenario)];
+      principal = btn(`▶ Iniciar Bloque 2 (${m2} min)`, () => iniciarB2(m2), true);
+    } else if (f2 === "escribir") {
+      estado = "Bloque 2 · escribir"; titulo = "Los participantes escriben propuestas";
+      texto = "Cuando se acabe el tiempo empiezan solos los 3 minutos para marcar prioridades.";
+      extra = prog(autoresB2(), S.miembros.size, "participantes ya escribieron");
+      secundarios = [btn("+1 min", () => extendB2(1))];
+      principal = btn("Pasar a priorizar ahora", b2APriorizar, true);
+    } else if (f2 === "votar") {
+      estado = "Bloque 2 · prioridad"; titulo = "Todos marcan sus prioridades";
+      texto = `Cada participante marca hasta ${B2_SEL} propuestas por cuello de botella.`;
+      extra = prog(votantesB2(), S.miembros.size, "participantes ya marcaron");
+      secundarios = [btn("+1 min", () => extendB2(1))];
+      principal = btn("Mostrar resultados ahora", b2AResultados, true);
+    } else {
+      estado = "Bloque 2 · resultados"; titulo = "Tabla de propuestas priorizadas";
+      texto = "Las propuestas de solución están ordenadas por total, de mayor a menor, en cada cuello de botella.";
+      secundarios = [btn("Repetir priorización", repetirB2Voto), btn("+ Nueva pregunta", newPregunta)];
+      principal = btn("Proyectar la tabla", () => { S.projQR = false; if ($("proj")) { S.projSig = ""; paintProj(); } else openProj(); }, true);
+    }
   } else if (p) {
     estado = "Plenario · sin votos"; titulo = "Nadie votó en el plenario";
     texto = "Abre otra vez la votación para que todos elijan la mejor propuesta, o pasa a una nueva pregunta.";
@@ -1964,9 +2140,11 @@ function downloadCSV() {
       rk.forEach((r, i) => rows.push([pi + 1, p.t, "Plenario", i + 1, `[Grupo ${r.g}] ${r.t.replace(/\s+/g, " ")}`, r.n, pw.includes(r) ? (pw.length > 1 ? "Empate en el plenario" : "Ganadora del plenario") : "", "", ""].map(c).join(";")));
       rows.push([pi + 1, p.t, "Plenario", "", "TOTAL PLENARIO", rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
     }
-    for (let g = 1; g <= nGrupos(); g++) {
-      const sol = gdata(g).sol.get(p.id);
-      if (sol?.tema) rows.push([pi + 1, p.t, "Bloque 2 · Grupo " + g, "", sol.tema, "", "", sol.solucion, sol.responsable].map(c).join(";"));
+    const X = b2(p.id);
+    if (X) for (const tm of X.temas) {
+      const rk = tallyB2(tm.id, p.id).ranked;
+      rk.forEach((r, i) => rows.push([pi + 1, p.t, "Bloque 2", i + 1, tm.t, r.n, "", r.t.replace(/\s+/g, " "), ""].map(c).join(";")));
+      rows.push([pi + 1, p.t, "Bloque 2", "", "TOTAL · " + tm.t, rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
     }
   });
   const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" })), download: `resultados-sala-${S.code}.csv` });
@@ -1998,8 +2176,16 @@ function informe() {
       if (win.length) b += `<div class="win">🏆 ${win.map(w => esc(w.t) + ` <span>(Grupo ${w.g})</span>`).join(" <em>/</em> ")}</div>`;
       b += `<table><tr><th>#</th><th>Propuesta</th><th>Grupo</th><th>Votos</th></tr>${ranked.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.t)}</td><td>${x.g}</td><td>${x.n}</td></tr>`).join("")}</table>`;
     }
-    const b2 = Array.from({ length: nGrupos() }, (_, i) => [i + 1, gdata(i + 1).sol.get(p.id)]).filter(([, x]) => x?.tema);
-    if (b2.length) b += `<h3>Bloque 2 · Propuestas de solución</h3><div class="win">🏆 ${esc(b2[0][1].tema)}</div><table><tr><th>Grupo</th><th>Propuesta de solución</th><th>Responsable</th></tr>${b2.map(([g, x]) => `<tr><td>Grupo ${g}</td><td>${esc(x.solucion)}</td><td>${esc(x.responsable || "—")}</td></tr>`).join("")}</table>`;
+    const X = b2(p.id);
+    if (X) {
+      b += `<h3>Bloque 2 · Propuestas de solución priorizadas</h3><table><tr><th>Cuellos de botella priorizados</th><th>Propuestas de solución</th><th>Total</th></tr>`;
+      for (const tm of X.temas) {
+        const rk = tallyB2(tm.id, p.id).ranked;
+        if (!rk.length) b += `<tr><th>${esc(tm.t)}</th><td>Sin propuestas</td><td>0</td></tr>`;
+        rk.forEach((r, i) => { b += `<tr${i === 0 && r.n > 0 ? ' class="w"' : ""}>${i === 0 ? `<th rowspan="${rk.length}">${esc(tm.t)}</th>` : ""}<td>${esc(r.t)}</td><td>${r.n}</td></tr>`; });
+      }
+      b += `</table>`;
+    }
     b += `</section>`;
   });
   const vals = [...S.enc.values()].filter(v => v.nota >= 1);
@@ -2031,8 +2217,8 @@ async function borrarColecciones(refs) {
 const coleccionesDeGrupos = () => Array.from({ length: nGrupos() }, (_, i) => i + 1).flatMap(g => ["respuestas", "votos", "soluciones"].map(c => grupoRef(g).collection(c)));
 async function resetSala() {
   try {
-    await borrarColecciones([...coleccionesDeGrupos(), salaRef().collection("plenario"), salaRef().collection("encuesta")]);
-    await setRoom({ fin: null, voto: VOTO_MS, plenario: null, encuesta: false });
+    await borrarColecciones([...coleccionesDeGrupos(), salaRef().collection("plenario"), salaRef().collection("encuesta"), salaRef().collection("b2prop"), salaRef().collection("b2voto")]);
+    await setRoom({ fin: null, voto: VOTO_MS, plenario: null, encuesta: false, b2: null });
     S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear(); S.sig = "";
     toast("Se borraron las respuestas, votos, propuestas y encuesta de todos los grupos.");
   } catch (e) { fbError(e); }
@@ -2042,7 +2228,7 @@ async function empezarDeCero() {
   S.wiping = true;
   loading("Borrando el taller…");
   try {
-    await borrarColecciones([ref.collection("miembros"), ...coleccionesDeGrupos(), ref.collection("plenario"), ref.collection("encuesta")]);
+    await borrarColecciones([ref.collection("miembros"), ...coleccionesDeGrupos(), ref.collection("plenario"), ref.collection("encuesta"), ref.collection("b2prop"), ref.collection("b2voto")]);
     S.unsub.forEach(u => u()); S.unsub = [];
     for (const [, us] of S.gsubs) us.forEach(u => u());
     await ref.delete();
@@ -2052,7 +2238,7 @@ async function empezarDeCero() {
   } catch (e) { fbError(e); }
   S.unsub.forEach(u => u()); S.unsub = [];
   for (const [, us] of S.gsubs) us.forEach(u => u());
-  S.gsubs.clear(); S.G.clear(); S.miembros = new Map(); S.plen = new Map(); S.enc = new Map();
+  S.gsubs.clear(); S.G.clear(); S.miembros = new Map(); S.plen = new Map(); S.enc = new Map(); S.b2p = new Map(); S.b2v = new Map();
   Object.assign(S, { code: null, room: null, roomReady: false, miembrosReady: false, qSeen: null, faseSeen: null, viewG: 0, viewQ: null, tab: null, sig: "", facSig: "", endedFor: null, wiping: false, plenKey: undefined });
   S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
   closeProj();
@@ -2061,7 +2247,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021172521";
+const BUILD = "20261021174743";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();

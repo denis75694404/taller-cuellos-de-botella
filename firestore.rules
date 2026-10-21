@@ -79,6 +79,34 @@ service cloud.firestore {
         allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       }
 
+      // Bloque 2: cada participante escribe propuestas de solución para los 2 cuellos de botella priorizados, dentro del tiempo.
+      match /b2prop/{id} {
+        allow read: if signedIn();
+        allow create: if signedIn() && exists(miembro(s))
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.q == sala(s).b2.q
+          && request.resource.data.tema in [t1, t2]
+          && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 400
+          && request.time.toMillis() < sala(s).b2.fin + 15000;
+        allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      }
+
+      // Bloque 2: prioridad. Un documento por participante (<uid>_<pregunta>) con hasta 2 marcas por cuello de botella.
+      match /b2voto/{vid} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && exists(miembro(s))
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.q == sala(s).b2.q
+          && vid == request.auth.uid + _ + request.resource.data.q
+          && request.resource.data.sel is map
+          && request.resource.data.sel.keys().hasOnly([t1, t2])
+          && request.resource.data.sel.get(t1, []).size() <= 2
+          && request.resource.data.sel.get(t2, []).size() <= 2
+          && request.time.toMillis() >= sala(s).b2.fin - 5000
+          && request.time.toMillis() < sala(s).b2.fin + sala(s).b2.get(voto, 180000) + 15000;
+        allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      }
+
       // Encuesta de cierre: anónima para los grupos; solo el facilitador ve el conjunto.
       match /encuesta/{uid} {
         allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
