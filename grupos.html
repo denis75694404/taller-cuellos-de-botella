@@ -504,6 +504,12 @@ html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
 .pj-count b{font-family:var(--f-disp);font-size:1.3em}
 .pj-count .dot{width:12px;height:12px;border-radius:50%;background:#7ee2b5;animation:ping 2s infinite}
 @media (max-aspect-ratio:1/1){.proj .pj-join{grid-template-columns:1fr;justify-items:center;text-align:center}.pj-jtx{align-items:center}.pj-steps{text-align:left}.proj .pj-qr img,.proj .pj-qr canvas{width:min(86vw,56vh)!important;height:min(86vw,56vh)!important}}
+/* facilitador: la página entera se desplaza (el panel ya no queda congelado arriba) */
+.app.facmode{height:auto;min-height:100%;grid-template-rows:auto auto auto auto auto}
+.app.facmode > header{position:sticky;top:0;z-index:20}
+.app.facmode > main{overflow:visible;min-height:60vh}
+.app.facmode > .composer{position:sticky;bottom:0;z-index:15}
+.menu{max-height:calc(100dvh - 80px);overflow-y:auto}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -1753,7 +1759,8 @@ function render() {
     if (prevKey && prevKey !== key) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
     view.dataset.key = key;
     view.classList.toggle("bottom", tab === "respuestas" && !!g);
-    if (tab === "respuestas" && g && (S.stick || nearBottom || prevKey !== key)) main.scrollTop = main.scrollHeight;
+    if (fac) { /* toda la página se desplaza: no se mueve sola para no perder lo que el facilitador mira */ }
+    else if (tab === "respuestas" && g && (S.stick || nearBottom || prevKey !== key)) main.scrollTop = main.scrollHeight;
     else if (prevKey !== key) main.scrollTop = 0;
   }
   S.stick = false; S.pulse = null;
@@ -1766,6 +1773,7 @@ function render() {
 function paintFac() {
   const sec = $("fac"), fac = isFac();
   sec.hidden = !fac; $("nav").hidden = fac; $("menuBtn").hidden = !fac;
+  sec.parentElement.classList.toggle("facmode", fac); // el facilitador desplaza toda la página, panel incluido
   if (!fac) return;
   const r = S.room, tab = currentTab(), q = curQ(), activa = q === qActiva(), tot = preguntas().length, p = plen(), pf = plenFase();
   const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
@@ -2053,7 +2061,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021170309";
+const BUILD = "20261021172521";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
