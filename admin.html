@@ -1292,8 +1292,8 @@ addEventListener("offline", netBanner);
 netBanner();
 
 /* ---------- plenario: las ganadoras de todos los grupos ---------- */
-const plen = () => { const p = S.room?.plenario; return p && p.q === qActiva() && Array.isArray(p.items) && p.items.length && p.fin ? p : null; };
-const plenFase = () => { const p = plen(); return p ? (Date.now() < p.fin ? "votacion" : "resultados") : null; };
+const plen = () => { const p = S.room?.plenario; return p && p.q === qActiva() && Array.isArray(p.items) && p.items.length ? p : null; };
+const plenFase = () => { const p = plen(); return p ? (!p.fin ? "preparacion" : Date.now() < p.fin ? "votacion" : "resultados") : null; };
 const myPlenVote = () => { const p = plen(); return p ? (S.plen.get(S.uid + "_" + p.q)?.id || null) : null; };
 function plenTallyFor(p) {
   if (!p) return { ranked: [], voters: 0 };
@@ -1311,7 +1311,15 @@ async function iniciarPlenario() {
     const old = await salaRef().collection("plenario").where("q", "==", q).get();
     if (!old.empty) { const b = S.db.batch(); old.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
   } catch {}
-  setRoom({ plenario: { q, fin: Date.now() + VOTO_MS, items } });
+  setRoom({ plenario: { q, fin: null, items } });
+}
+async function votarPlenario() {
+  const p = plen(); if (!p) return;
+  try {
+    const old = await salaRef().collection("plenario").where("q", "==", p.q).get();
+    if (!old.empty) { const b = S.db.batch(); old.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
+  } catch {}
+  setRoom({ "plenario.fin": Date.now() + VOTO_MS });
 }
 let plenQ = Promise.resolve();
 function votePlen(id) {
@@ -1326,14 +1334,16 @@ function votePlen(id) {
 }
 function plenOverlay(tipo) {
   aviso("etapa");
-  if (tipo === "inicio") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Plenario · todos los grupos"), h("div", { class: "bignum" }, "4"),
+  if (tipo === "prep") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Plenario · todos los grupos"), h("div", { class: "bignum" }, "4"),
+    h("h3", {}, "¡Llegan las ganadoras de cada grupo!"), h("p", {}, isFac() ? "Revisa y edita las propuestas. Cuando estén listas, inicia la votación." : "El facilitador está revisando las propuestas. La votación empieza en un momento.")), 3000);
+  else if (tipo === "inicio") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Plenario · todos los grupos"), h("div", { class: "bignum" }, "4"),
     h("h3", {}, "¡Votación de todo el taller!"), h("p", {}, isFac() ? "Todos los participantes eligen entre las ganadoras de cada grupo." : "Elige la mejor entre las respuestas ganadoras de todos los grupos. Tienes 3 minutos.")), 3000);
   else { overlay(h("div", { class: "ocard" }, svgTrophy(), h("h3", {}, "¡Tenemos la ganadora del plenario!"), h("p", {}, "Ahora todos los grupos pasan al Bloque 2: propongan la solución y su responsable.")), 3200); setTimeout(bigBurst, 400); }
 }
 function checkPlenario() {
   const p = plen(), key = p ? p.q + "|" + p.items.map(i => i.id).join(",") : "", f = plenFase();
-  if (S.plenKey !== undefined && key !== S.plenKey) { if (key) { S.tab = null; plenOverlay("inicio"); } }
-  else if (key && S.plenFaseSeen && f !== S.plenFaseSeen) { S.tab = null; if (f === "resultados") plenOverlay("fin"); }
+  if (S.plenKey !== undefined && key !== S.plenKey) { if (key) { S.tab = null; plenOverlay(f === "preparacion" ? "prep" : "inicio"); } }
+  else if (key && S.plenFaseSeen && f !== S.plenFaseSeen) { S.tab = null; if (f === "resultados") plenOverlay("fin"); else if (f === "votacion") plenOverlay("inicio"); }
   S.plenKey = key; S.plenFaseSeen = f;
 }
 function winnerCard(w, voters, label, meta, entering) {
@@ -1347,11 +1357,20 @@ function viewPlenario(entering) {
   const f = plenFase(), mv = myPlenVote(), open = f === "votacion" && !fac && !!me();
   const { ranked, voters } = plenTally(), out = [];
   out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
-    h("div", {}, h("h2", {}, f === "votacion" ? "Plenario: elige la mejor propuesta" : "Resultados del plenario"),
-      h("p", {}, f === "votacion"
+    h("div", {}, h("h2", {}, f === "preparacion" ? "Plenario: propuestas finalistas" : f === "votacion" ? "Plenario: elige la mejor propuesta" : "Resultados del plenario"),
+      h("p", {}, f === "preparacion"
+        ? (fac ? "Revisa y edita la redacción de las ganadoras. Nadie puede votar hasta que inicies la votación." : "Estas son las ganadoras de cada grupo. El facilitador las está revisando; la votación empieza en un momento.")
+        : f === "votacion"
         ? (fac ? `${voters} de ${S.miembros.size} participantes ya votaron.` : "Estas son las respuestas ganadoras de todos los grupos. Tienes 1 voto para elegir la que debe priorizar todo el taller.")
         : "La propuesta con más votos de todo el taller es la ganadora del plenario.")),
     open ? h("div", { class: "chips" }, h("span", { class: "chip" + (mv ? " used" : "") }, mv ? svgCheck() : "1")) : null)));
+  if (f === "preparacion") {
+    out.push(h("div", { class: "vlist" }, ...p.items.map((it, i) => h("div", { class: "vitem" + (entering ? " enter" : ""), style: `--d:${i * 0.06}s` },
+      h("span", { class: "body" }, h("div", { class: "who" }, `Grupo ${it.g}` + (it.orig ? " · editada por el facilitador" : "")), h("div", { class: "txt" }, it.t))))));
+    if (fac) out.push(plenEditCard(p), h("div", { class: "ractions" }, h("button", { class: "btn", onclick: votarPlenario }, "▶ Iniciar votación del plenario (3 min)")));
+    else out.push(h("div", { class: "sys" }, "Espera: la votación del plenario aún no empieza."));
+    return out;
+  }
   if (f === "votacion") {
     const list = h("div", { class: "vlist" });
     p.items.forEach((it, i) => {
@@ -1363,7 +1382,6 @@ function viewPlenario(entering) {
       list.append(b);
     });
     out.push(list);
-    if (fac) out.push(plenEditCard(p));
     if (open) out.push(h("div", { class: "sys" }, mv ? "Listo: tu voto del plenario está guardado." : "Aún no has votado en el plenario."));
     return out;
   }
@@ -1373,7 +1391,6 @@ function viewPlenario(entering) {
     h("div", { class: "tied" }, ...win.map(w => h("div", {}, `Grupo ${w.g}: ${w.t}`))), h("div", { class: "wmeta" }, h("span", {}, "El plenario decide cuál será la ganadora"))));
   else out.push(h("div", { class: "card empty" }, h("b", {}, "Nadie votó en el plenario")));
   const max = Math.max(1, ...ranked.map(r => r.n));
-  if (fac) out.push(plenEditCard(p));
   out.push(h("h3", { class: "sec-t" }, "Todas las propuestas del plenario"),
     h("div", { class: "rlist" }, ...ranked.map((r, i) => h("div", { class: `ritem${win.includes(r) ? " top win" : ""}` },
       h("span", { class: "pos" }, i + 1),
@@ -1388,12 +1405,13 @@ function plenEditCard(p) {
   return h("div", { class: "solcard" },
     h("div", { class: "eyebrow" }, "Solo el facilitador"),
     h("h3", {}, "Editar las propuestas del plenario"),
-    h("p", { class: "hint" }, "Corrige o une la redacción de las ganadoras. Los votos se mantienen y el cambio se ve al instante en todos los celulares."),
+    h("p", { class: "hint" }, "Corrige o une la redacción de las ganadoras. El cambio se ve al instante en todos los celulares; nadie vota hasta que inicies la votación."),
     ...p.items.map(it => h("div", { class: "a11y-row" }, h("span", {}, h("b", {}, "Grupo " + it.g + ": "), it.t, it.orig ? h("small", { class: "note" }, " (editada)") : null),
       h("button", { class: "btn ghost sm", onclick: () => editPlenItem(it.id) }, "Editar"))));
 }
 function editPlenItem(id) {
   const p = plen(), it = p?.items.find(i => i.id === id); if (!it || !isFac()) return;
+  if (plenFase() !== "preparacion") return toast("Las propuestas solo se editan antes de iniciar la votación.");
   const inp = h("textarea", { rows: 4, maxlength: 400 }); inp.value = it.t;
   let close;
   close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Editar la propuesta del Grupo " + it.g),
@@ -1460,7 +1478,7 @@ function solCard(g, q, tema) {
 function checkEncuesta() {
   if (!S.room.encuesta) { S.encChecked = false; return; }
   if (isFac() || S.encChecked || !me()) return;
-  if (S.room.fase !== "resultados" || plenFase() === "votacion") return; // no interrumpir mientras se responde o vota
+  if (S.room.fase !== "resultados" || plenFase() === "votacion" || plenFase() === "preparacion") return; // no interrumpir mientras se responde o vota
   S.encChecked = true;
   salaRef().collection("encuesta").doc(S.uid).get()
     .then(d => { S.encDone = d.exists; if (!d.exists) setTimeout(encuestaOverlay, 900); S.sig = ""; render(); })
@@ -1516,7 +1534,7 @@ function paintProj() {
     const g = i + 1, ms = miembrosDe(g).length;
     return { g, ms, resp: ms - faltanResponder(g, q).length, vot: ms - faltanVotar(g, q).length, win: ganadoras(tally(g, q).ranked) };
   });
-  const sig = JSON.stringify([stage, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size]);
+  const sig = JSON.stringify([stage, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size, p?.fin || 0]);
   if (sig === S.projSig) return;
   S.projSig = sig;
   const clock = lbl => h("div", { class: "pj-clock" }, h("span", { class: "pj-lbl" }, lbl), h("b", { id: "pjClock" }, mmss(Math.max(0, relojMs()))));
@@ -1538,6 +1556,10 @@ function paintProj() {
     body = h("div", { class: "pj-grid" }, ...per.map(x => h("div", { class: "pj-card win" }, h("h3", {}, "Grupo " + x.g), svgTrophy(),
       ...(x.win.length ? x.win.map(w => h("div", { class: "pj-wt" }, w.t)) : [h("div", { class: "pj-wt" }, "Sin votos")]),
       x.win.length ? h("span", {}, `${x.win[0].n} ${x.win[0].n === 1 ? "voto" : "votos"}${x.win.length > 1 ? " · empate" : ""}`) : null)));
+  } else if (stage === "plen-preparacion") {
+    body = h("div", {}, h("span", { class: "pj-lbl" }, "Propuestas finalistas"),
+      h("div", { class: "pj-list", style: "margin-top:10px" }, ...p.items.map(it => h("div", { class: "pj-item" }, h("b", {}, "Grupo " + it.g), h("span", {}, it.t)))),
+      h("p", { class: "pj-foot" }, "La votación del plenario empieza en un momento"));
   } else if (stage === "plen-votacion") {
     body = h("div", {}, clock("Plenario: todos votan"),
       h("div", { class: "pj-list" }, ...p.items.map(it => h("div", { class: "pj-item" }, h("b", {}, "Grupo " + it.g), h("span", {}, it.t)))),
@@ -1668,23 +1690,27 @@ function paintFac() {
   /* 2. ronda: pasos automáticos y una acción principal */
   const idx = bloque2() ? 4 : p ? 3 : r.espera ? -1 : FASES.indexOf(r.fase), mins = Number(S.lastMin) || 5;
   const info = [["respuestas", "Responder", `${mins} min`], ["votacion", "Votar", `${Math.round(durVoto(r) / 60000)} min`], ["resultados", "Resultados", "Auto"]];
-  if (p) info.push(["plenario", "Plenario", "3 min"], ["bloque2", "Bloque 2", "Libre"]);
+  if (p) info.push(["plenario", "Plenario", pf === "preparacion" ? "Revisar" : "3 min"], ["bloque2", "Bloque 2", "Libre"]);
   const steps = h("div", { class: "stepsbar", style: `grid-template-columns:repeat(${info.length},minmax(0,1fr))`, role: "group", "aria-label": "Etapas de la ronda (toca para ver)" },
     ...info.map(([f, l, d], i) => {
       const timed = i === idx && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion"));
       return h("button", {
         class: "step" + (i === idx ? " now" : "") + (i < idx ? " done" : "") + (tab === f ? " viewing" : ""),
         "aria-current": i === idx ? "step" : null, title: "Ver " + l, onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); }
-      }, h("span", {}, h("span", { class: "tn" }, `${i + 1} · `), l), h("b", { id: timed ? "flowTime" : null }, i < idx ? "✓" : timed ? mmss(relojMs()) : i === idx ? "✓" : d));
+      }, h("span", {}, h("span", { class: "tn" }, `${i + 1} · `), l), h("b", { id: timed ? "flowTime" : null }, i < idx ? "✓" : timed ? mmss(relojMs()) : i === idx ? (f === "plenario" && pf === "preparacion" ? "Revisar" : "✓") : d));
     }));
   let acts;
-  if (p && pf === "votacion") {
+  if (p && pf === "preparacion") {
+    acts = [h("div", { class: "hint" }, `Plenario listo con ${p.items.length} propuestas ganadoras. Revísalas y edítalas; nadie puede votar todavía.`),
+      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => { S.tab = "plenario"; S.viewG = 0; S.sig = ""; S.facSig = ""; render(); } }, "Editar propuestas"),
+        h("button", { class: "btn sm grow", onclick: votarPlenario }, "▶ Iniciar votación (3 min)"))];
+  } else if (p && pf === "votacion") {
     acts = [h("div", { class: "hint" }, `Plenario en curso: ${plenTally().voters} de ${S.miembros.size} ya votaron.`),
       h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setRoom({ "plenario.fin": p.fin + 60000 }) }, "+1 min"),
         h("button", { class: "btn sm grow", onclick: () => setRoom({ "plenario.fin": Date.now() - 1000 }) }, "Mostrar ganadora ahora"))];
   } else if (p) {
     acts = [h("div", { class: "hint" }, bloque2() ? `Bloque 2 en curso: ${solHechas()} de ${nGrupos()} grupos ya guardaron su propuesta de solución.` : "Plenario terminado sin votos."),
-      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: iniciarPlenario }, "Repetir plenario"), h("button", { class: "btn sm grow", onclick: newPregunta }, "+ Nueva pregunta"))];
+      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: votarPlenario }, "Repetir votación del plenario"), h("button", { class: "btn sm grow", onclick: newPregunta }, "+ Nueva pregunta"))];
   } else if (r.espera) {
     const custom = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: [3, 5, 10].includes(mins) ? "" : mins, placeholder: "min", "aria-label": "Otros minutos" });
     custom.addEventListener("change", () => { if (custom.value > 0) { S.lastMin = custom.value; S.facSig = ""; paintFac(); } });
@@ -1698,10 +1724,10 @@ function paintFac() {
     acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extendVoto(1) }, "+1 min"),
       h("button", { class: "btn sm grow", onclick: pasarAResultados }, "Mostrar resultados ahora"))];
   } else {
-    acts = [h("div", { class: "hint" }, nGrupos() === 1 ? "Ronda terminada. El grupo ve su ganadora y escribe su propuesta de solución." : "Ronda terminada. Inicia el plenario: al terminar, todos los grupos pasan al Bloque 2."),
+    acts = [h("div", { class: "hint" }, nGrupos() === 1 ? "Ronda terminada. El grupo ve su ganadora y escribe su propuesta de solución." : "Ronda terminada. Prepara el plenario: revisas las ganadoras, inicias la votación y al terminar todos los grupos pasan al Bloque 2."),
       h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setTimer(mins) }, "Repetir ronda"),
         h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta"),
-        h("button", { class: "btn sm grow", onclick: iniciarPlenario }, "Iniciar plenario (3 min)"))];
+        h("button", { class: "btn sm grow", onclick: iniciarPlenario }, "Preparar plenario"))];
   }
   const rPanel = h("div", { class: "panel" }, h("div", { class: "ptitle" }, h("span", {}, "Ronda de la pregunta " + qNum(qActiva()))), steps, ...acts);
 
