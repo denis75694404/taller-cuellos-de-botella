@@ -434,6 +434,25 @@ html.fs2 :is(.msg.q .txt,.qtext,.winner .wt){font-size:25px}
 html:root.hc{--wall:#ffffff;--wall-dot:#ffffff;--panel:#ffffff;--bar:#efefef;--line:#4a545c;--fg:#000000;--muted:#262e33;--accent:#006b45;--accent-fg:#ffffff;--accent-soft:#d3efe1;--mine:#c6f3bf;--theirs:#ffffff;--sys:#fff1a0;--sys-fg:#231f00;--head:#00362a;--head-fg:#ffffff;--head-muted:#e8f3ef;--tick:#00539c;--warn:#a33a00;color-scheme:light}
 html.hc :is(.msg,.card,.panel,.gcard,.vitem,.ritem,.scard,.solcard,.nextcard,.wbanner,.field){outline:1.5px solid var(--line)}
 html.hc :focus-visible{outline:3px solid #000;outline-offset:3px}
+/* celular: que nada se encime */
+.tab,.step > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (max-width:560px){
+  header .inner{gap:6px}
+  .gavatar{width:36px;height:36px}
+  .htext{min-width:72px}
+  .htext h1{font-size:15px}.htext p{font-size:12px}
+  .timer{font-size:15px;padding:5px 9px;gap:4px}.timer svg,.timer .tl{display:none}
+  .codechip{padding:0;width:36px;height:36px;justify-content:center}.codechip .cc-code{display:none}
+  .hbtn{width:34px;height:34px}.hbtn.a11y{padding:0 8px;font-size:14px}
+  nav .inner{gap:0}
+  .tab{font-size:12.5px;text-transform:none;letter-spacing:0;padding:10px 2px 12px;gap:4px;min-width:0}
+  .tab .tn{display:none}
+  .step{font-size:11.5px;padding:7px 2px}.step .tn{display:none}
+  .brand h1{font-size:23px}
+}
+@media (max-width:380px){
+  .step{font-size:10.5px;letter-spacing:-.01em}.tab{font-size:12px}
+}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -972,13 +991,13 @@ function buildApp() {
       h("div", { class: "htext" }, h("h1", { id: "title" }, ""), h("p", { id: "sub" }, "")),
       h("div", { class: "timer", id: "timer", hidden: true, role: "timer", "aria-live": "off" }, svgClock(), h("span", { id: "timerTxt" }, "")),
       a11yBtn(),
-      h("button", { class: "codechip", id: "codeBtn", onclick: () => shareOverlay(), "aria-label": "Compartir la sala" }, svgShare(), S.code),
+      h("button", { class: "codechip", id: "codeBtn", onclick: () => shareOverlay(), "aria-label": "Compartir la sala " + S.code }, svgShare(), h("span", { class: "cc-code" }, S.code)),
       h("button", { class: "hbtn", id: "menuBtn", hidden: true, "aria-label": "Más opciones", "aria-haspopup": "true", "aria-expanded": "false", onclick: e => { e.stopPropagation(); toggleMenu(); } },
         svg("0 0 24 24", '<circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/>')),
       h("div", { class: "menu", id: "menu", role: "menu", hidden: true }))),
     h("nav", { id: "nav" }, h("div", { class: "inner", role: "tablist", "aria-label": "Etapas del taller" },
-      ...FASES.map((f, i) => h("button", { class: "tab", role: "tab", "data-tab": f, onclick: () => { if (tabAllowed(f)) { S.tab = f; S.sig = ""; render(); } } }, (i + 1) + " · " + ["Responder", "Votar", "Resultados"][i])),
-      h("button", { class: "tab", role: "tab", "data-tab": "plenario", hidden: true, onclick: () => { if (tabAllowed("plenario")) { S.tab = "plenario"; S.sig = ""; render(); } } }, "4 · Plenario"),
+      ...FASES.map((f, i) => h("button", { class: "tab", role: "tab", "data-tab": f, onclick: () => { if (tabAllowed(f)) { S.tab = f; S.sig = ""; render(); } } }, h("span", { class: "tn" }, (i + 1) + " · "), ["Responder", "Votar", "Resultados"][i])),
+      h("button", { class: "tab", role: "tab", "data-tab": "plenario", hidden: true, onclick: () => { if (tabAllowed("plenario")) { S.tab = "plenario"; S.sig = ""; render(); } } }, h("span", { class: "tn" }, "4 · "), "Plenario"),
       h("span", { class: "ink", id: "ink" }))),
     h("section", { class: "ctl", id: "fac", hidden: true }, h("div", { class: "inner", id: "facIn" })),
     h("main", { id: "main" }, h("div", { class: "inner", id: "view" })),
@@ -1501,7 +1520,7 @@ function paintTimer() {
   if (ft && show) { ft.textContent = mmss(r); ft.parentElement.classList.toggle("low", r <= 30000); }
   if (isFac()) { t.hidden = true; return; }
   t.hidden = !show; if (!show) return;
-  $("timerTxt").textContent = (pl ? "Plenario " : f === "votacion" ? "Votar " : "Responder ") + mmss(r);
+  $("timerTxt").replaceChildren(h("span", { class: "tl" }, pl ? "Plenario " : f === "votacion" ? "Votar " : "Responder "), mmss(r));
   t.classList.toggle("low", r <= 30000); t.classList.remove("over");
 }
 document.addEventListener("focusout", e => { if ($("view")?.contains(e.target)) setTimeout(render, 60); });
@@ -1592,7 +1611,7 @@ function paintFac() {
       return h("button", {
         class: "step" + (i === idx ? " now" : "") + (i < idx ? " done" : "") + (tab === f ? " viewing" : ""),
         "aria-current": i === idx ? "step" : null, title: "Ver " + l, onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); }
-      }, h("span", {}, `${i + 1} · ${l}`), h("b", { id: timed ? "flowTime" : null }, i < idx ? "✓" : timed ? mmss(relojMs()) : i === idx ? "✓" : d));
+      }, h("span", {}, h("span", { class: "tn" }, `${i + 1} · `), l), h("b", { id: timed ? "flowTime" : null }, i < idx ? "✓" : timed ? mmss(relojMs()) : i === idx ? "✓" : d));
     }));
   let acts;
   if (p && pf === "votacion") {
