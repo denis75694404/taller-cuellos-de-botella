@@ -617,6 +617,18 @@ const css = name => getComputedStyle(document.documentElement).getPropertyValue(
 function rgb01(hex) { const m = /^#?([0-9a-f]{6})$/i.exec(hex); if (!m) return [0.07, 0.55, 0.37, 1]; const n = parseInt(m[1], 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255, 1]; }
 const PALETA = ["#c2410c", "#7c3aed", "#0369a1", "#be185d", "#4d7c0f", "#b45309", "#0f766e", "#6d28d9"];
 function colorOf(s) { let x = 0; for (const c of s || "") x = (x * 31 + c.charCodeAt(0)) >>> 0; return PALETA[x % PALETA.length]; }
+/* hora del servidor: el reloj de cada celular puede estar adelantado o atrasado y Firebase usa la hora real */
+let SKEW = 0;
+const nowMs = () => Date.now() + SKEW;
+async function medirHora() {
+  try {
+    const t0 = Date.now(), res = await fetch(location.pathname + "?t=" + t0, { method: "HEAD", cache: "no-store" }), t1 = Date.now();
+    const srv = Date.parse(res.headers.get("date") || ""); if (!srv) return;
+    const d = srv + 500 - (t0 + t1) / 2; // la cabecera Date tiene precisión de 1 s
+    if (Math.abs(d) > 2500 && Math.abs(d) < 864e5) { SKEW = Math.round(d); try { S.sig = ""; S.facSig = ""; if (S.room) Object.assign(S.room, etapa(S.room)); render(); } catch {} }
+  } catch {}
+}
+medirHora(); setInterval(medirHora, 300000);
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const mmss = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
@@ -734,14 +746,14 @@ const miembrosDe = g => [...S.miembros.entries()].filter(([, m]) => m.grupo === 
 const durVoto = r => (r && r.voto > 0 ? r.voto : VOTO_MS);
 function etapa(r) {
   if (!r || !r.fin) return { fase: "respuestas", espera: true };
-  const now = Date.now();
+  const now = nowMs();
   if (now < r.fin) return { fase: "respuestas", espera: false };
   if (now < r.fin + durVoto(r)) return { fase: "votacion", espera: false };
   return { fase: "resultados", espera: false };
 }
 const restante = () => {
   const r = S.room; if (!r?.fin) return null;
-  return r.fase === "respuestas" ? r.fin - Date.now() : r.fase === "votacion" ? r.fin + durVoto(r) - Date.now() : null;
+  return r.fase === "respuestas" ? r.fin - nowMs() : r.fase === "votacion" ? r.fin + durVoto(r) - nowMs() : null;
 };
 const abierto = () => S.room?.fase === "respuestas" && !S.room.espera && restante() > 0;
 /* preguntas: la activa la reciben todos los grupos; el facilitador puede revisar las anteriores */
@@ -811,7 +823,7 @@ function adminCodeScreen(err) {
     const v = inp.value.trim(); if (!v) return;
     e.textContent = ""; inp.disabled = true;
     try {
-      await S.db.collection("admins").doc(S.uid).set({ codigo: v, ts: Date.now() });
+      await S.db.collection("admins").doc(S.uid).set({ codigo: v, ts: nowMs() });
       S.isAdmin = true; afterAuth();
     } catch (x) {
       inp.disabled = false; inp.value = ""; inp.focus();
@@ -872,7 +884,7 @@ function groupScreen() {
 async function unirme(g) {
   if (miembrosDe(g).filter(([u]) => u !== S.uid).length >= CUPO) { toast(`El Grupo ${g} ya está completo. Elige otro.`, 4000); return groupScreen(); }
   try {
-    await salaRef().collection("miembros").doc(S.uid).set({ nombre: S.nombre.slice(0, 50), grupo: g, ts: Date.now() });
+    await salaRef().collection("miembros").doc(S.uid).set({ nombre: S.nombre.slice(0, 50), grupo: g, ts: nowMs() });
     const nuevo = me()?.grupo !== g;
     S.changing = false; S.mode = "joining"; S.sig = ""; S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
     route();
@@ -890,7 +902,7 @@ async function crearSala(pregunta, n) {
     await S.db.collection("salas").doc(code).set({
       creador: S.uid, titulo: "Taller: cuellos de botella",
       preguntas: [{ id: "p1", t: (pregunta || "").trim().slice(0, 300) || DEFAULT_Q }], qid: "p1",
-      fin: null, voto: VOTO_MS, grupos: n, ts: Date.now()
+      fin: null, voto: VOTO_MS, grupos: n, ts: nowMs()
     });
     S.justCreated = true;
     openSala(code);
@@ -973,7 +985,7 @@ function route() {
 function fbError(e) {
   console.error(e);
   const c = e?.code || "";
-  if (c.includes("permission-denied")) toast("Firebase rechazó la operación. Revisa las reglas de Firestore, la etapa o el tiempo.", 5000);
+  if (c.includes("permission-denied")) toast(ROLE === "admin" ? "Firebase rechazó la operación. Revisa las reglas de Firestore, la etapa o el tiempo." : "No se pudo guardar: puede que la etapa ya haya cambiado. Si sigue pasando, recarga la página.", 5000);
   else if (c.includes("operation-not-allowed") || c.includes("admin-restricted")) toast("Activa el acceso Anónimo en Firebase → Authentication → Método de acceso.", 6000);
   else if (c.includes("unavailable")) toast("Sin conexión con Firebase. Revisa el internet.", 4000);
   else if (c.includes("failed-precondition")) toast("Firestore no está creado en tu proyecto. Créalo en la consola de Firebase.", 6000);
@@ -1002,7 +1014,7 @@ async function sendMsg() {
   ta.value = ""; autosize(); updateComposer();
   const b = $("send"); b.classList.remove("fly"); void b.offsetWidth; b.classList.add("fly");
   S.stick = true;
-  try { await grupoRef(curG()).collection("respuestas").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), t: text.slice(0, 400), q: qActiva(), ts: Date.now() }); }
+  try { await grupoRef(curG()).collection("respuestas").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), t: text.slice(0, 400), q: qActiva(), ts: nowMs() }); }
   catch (e) { ta.value = text; updateComposer(); fbError(e); }
 }
 function deleteMsg(id, el) {
@@ -1017,23 +1029,23 @@ function vote(key) {
   if (quitar) gdata(g).votos.delete(vid); else gdata(g).votos.set(vid, { id: key, q, uid: S.uid });
   S.pulse = key; render();
   voteQ = voteQ
-    .then(() => quitar ? ref.delete() : ref.set({ id: key, q, uid: S.uid, nombre: S.nombre.slice(0, 50), ts: Date.now() }))
+    .then(() => quitar ? ref.delete() : ref.set({ id: key, q, uid: S.uid, nombre: S.nombre.slice(0, 50), ts: nowMs() }))
     .then(() => { if (!quitar) voteOverlay(); else toast("Quitaste tu voto."); })
     .catch(e => {
       // el voto no se guardó: se desmarca y se explica por qué
       if (antes) gdata(g).votos.set(vid, antes); else gdata(g).votos.delete(vid);
       S.sig = ""; render();
       if ((e?.code || "").includes("permission-denied"))
-        toast(S.room.fase !== "votacion" ? "La votación ya se cerró." : "Firebase no aceptó el voto. El facilitador debe publicar las reglas nuevas de Firestore.", 6000);
+        toast(S.room.fase !== "votacion" ? "La votación ya se cerró." : "No se pudo guardar tu voto. Tócalo otra vez; si sigue fallando, recarga la página.", 6000);
       else fbError(e);
     });
 }
 const setRoom = patch => salaRef().update(patch).catch(fbError);
-function setTimer(min) { const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos."); setRoom({ fin: Date.now() + Math.round(m * 60000), voto: VOTO_MS }); toast(`Tiempo iniciado: ${m} min para responder y luego 3 min de votación.`); }
+function setTimer(min) { const m = Number(min); if (!(m > 0)) return toast("Escribe los minutos."); setRoom({ fin: nowMs() + Math.round(m * 60000), voto: VOTO_MS }); toast(`Tiempo iniciado: ${m} min para responder y luego 3 min de votación.`); }
 function extendVoto(min) { setRoom({ voto: durVoto(S.room) + min * 60000 }); toast(`Se agregaron ${min} min a la votación.`); }
-function pasarAVotacion() { setRoom({ fin: Date.now() - 1000, voto: VOTO_MS }); }
-function pasarAResultados() { setRoom({ voto: Math.max(0, Date.now() - S.room.fin - 1000) }); }
-function extend(min) { const base = Math.max(S.room.fin || Date.now(), Date.now()); setRoom({ fin: base + min * 60000 }); toast(`Se agregaron ${min} min.`); }
+function pasarAVotacion() { setRoom({ fin: nowMs() - 1000, voto: VOTO_MS }); }
+function pasarAResultados() { setRoom({ voto: Math.max(0, nowMs() - S.room.fin - 1000) }); }
+function extend(min) { const base = Math.max(S.room.fin || nowMs(), nowMs()); setRoom({ fin: base + min * 60000 }); toast(`Se agregaron ${min} min.`); }
 
 /* ---------- compartir ---------- */
 function shareLink() { return new URL("grupos.html?sala=" + S.code + "&v=" + BUILD, location.href).href; }
@@ -1130,7 +1142,7 @@ function newPregunta() {
   let close;
   const send = () => {
     const v = inp.value.trim(); if (!v) return toast("Escribe la pregunta.");
-    const id = "p" + Date.now().toString(36);
+    const id = "p" + nowMs().toString(36);
     setRoom({ preguntas: [...preguntas(), { id, t: v.slice(0, 300) }], qid: id, fin: null, voto: VOTO_MS });
     S.viewQ = null; close(); toast(`Pregunta ${preguntas().length + 1} enviada a todos los grupos.`);
   };
@@ -1367,7 +1379,7 @@ netBanner();
 
 /* ---------- plenario: las ganadoras de todos los grupos ---------- */
 const plen = () => { const p = S.room?.plenario; return p && p.q === qActiva() && Array.isArray(p.items) && p.items.length ? p : null; };
-const plenFase = () => { const p = plen(); return p ? (!p.fin ? "preparacion" : Date.now() < p.fin ? "votacion" : "resultados") : null; };
+const plenFase = () => { const p = plen(); return p ? (!p.fin ? "preparacion" : nowMs() < p.fin ? "votacion" : "resultados") : null; };
 const myPlenVote = () => { const p = plen(); return p ? (S.plen.get(S.uid + "_" + p.q)?.id || null) : null; };
 function plenTallyFor(p) {
   if (!p) return { ranked: [], voters: 0 };
@@ -1393,7 +1405,7 @@ async function votarPlenario() {
     const old = await salaRef().collection("plenario").where("q", "==", p.q).get();
     if (!old.empty) { const b = S.db.batch(); old.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
   } catch {}
-  setRoom({ "plenario.fin": Date.now() + VOTO_MS });
+  setRoom({ "plenario.fin": nowMs() + VOTO_MS });
 }
 let plenQ = Promise.resolve();
 function votePlen(id) {
@@ -1402,7 +1414,7 @@ function votePlen(id) {
   const quitar = myPlenVote() === id, antes = S.plen.get(vid);
   if (quitar) S.plen.delete(vid); else S.plen.set(vid, { id, q: p.q, uid: S.uid });
   S.pulse = id; S.sig = ""; render();
-  plenQ = plenQ.then(() => quitar ? ref.delete() : ref.set({ id, q: p.q, uid: S.uid, g: me().grupo, ts: Date.now() }))
+  plenQ = plenQ.then(() => quitar ? ref.delete() : ref.set({ id, q: p.q, uid: S.uid, g: me().grupo, ts: nowMs() }))
     .then(() => { if (!quitar) voteOverlay(); else toast("Quitaste tu voto."); })
     .catch(e => { if (antes) S.plen.set(vid, antes); else S.plen.delete(vid); S.sig = ""; render(); fbError(e); });
 }
@@ -1534,7 +1546,7 @@ function solCard(g, q, tema) {
   const guardar = async () => {
     const sol = ta.value.trim(); if (!sol) return toast("Escribe la propuesta de solución.");
     try {
-      await grupoRef(g).collection("soluciones").doc(q).set({ solucion: sol.slice(0, 600), responsable: rp.value.trim().slice(0, 100), por: (fac ? "Facilitador" : S.nombre || "Participante").slice(0, 50), uid: S.uid, ts: Date.now(), ...(tema ? { tema: tema.slice(0, 600) } : {}) });
+      await grupoRef(g).collection("soluciones").doc(q).set({ solucion: sol.slice(0, 600), responsable: rp.value.trim().slice(0, 100), por: (fac ? "Facilitador" : S.nombre || "Participante").slice(0, 50), uid: S.uid, ts: nowMs(), ...(tema ? { tema: tema.slice(0, 600) } : {}) });
       ta.blur(); rp.blur(); toast("Propuesta guardada para todo el grupo."); burst({ particleCount: 50, spread: 60, origin: { y: .7 } });
     } catch (e) { fbError(e); }
   };
@@ -1568,7 +1580,7 @@ function encuestaOverlay() {
     if (!nota) return toast("Elige de 1 a 5 estrellas.");
     send.disabled = true;
     try {
-      await salaRef().collection("encuesta").doc(S.uid).set({ nota, comentario: com.value.trim().slice(0, 400), g: me()?.grupo || 0, ts: Date.now() });
+      await salaRef().collection("encuesta").doc(S.uid).set({ nota, comentario: com.value.trim().slice(0, 400), g: me()?.grupo || 0, ts: nowMs() });
       S.encDone = true; close(); S.sig = ""; render();
       overlay(h("div", { class: "ocard" }, h("div", { class: "bignum", style: "font-size:56px" }, "¡Gracias!"), h("p", {}, "Tu opinión nos ayuda a mejorar el próximo taller.")), 2400);
       bigBurst();
@@ -1601,7 +1613,7 @@ function openProj() {
 function openProjQR() { S.projQR = true; if ($("proj")) { S.projSig = ""; paintProj(); } else openProj(); }
 function closeProj() { S.projQR = false; $("proj")?.remove(); try { if (document.fullscreenElement) document.exitFullscreen(); } catch {} }
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("proj")) closeProj(); });
-const relojMs = () => plenFase() === "votacion" ? plen().fin - Date.now() : (restante() || 0);
+const relojMs = () => plenFase() === "votacion" ? plen().fin - nowMs() : (restante() || 0);
 function paintProj() {
   const el = $("proj"); if (!el || !S.room) return;
   const r = S.room, q = qActiva(), p = plen(), pf = plenFase();
@@ -1668,7 +1680,7 @@ function tickExtra() {
   const pf = plenFase();
   if (pf !== S.plenFaseTick) { S.plenFaseTick = pf; S.sig = ""; S.facSig = ""; render(); }
   const p = plen(), pl = pf === "votacion";
-  const r = pl ? p.fin - Date.now() : restante();
+  const r = pl ? p.fin - nowMs() : restante();
   const key = pl ? "pl" + p.fin : S.room.fase + S.room.fin + "_" + durVoto(S.room);
   if (r != null && r > 0 && r <= 30000 && (pl || S.room.fase === "respuestas" || S.room.fase === "votacion") && S.warned !== key) {
     S.warned = key; aviso("30s"); if (!isFac()) toast("¡Quedan 30 segundos!");
@@ -1680,7 +1692,7 @@ function tickExtra() {
 function paintTimer() {
   const t = $("timer"); if (!t || !S.room) return;
   const pl = plenFase() === "votacion", f = S.room.fase;
-  const r = pl ? plen().fin - Date.now() : restante();
+  const r = pl ? plen().fin - nowMs() : restante();
   const show = r != null && r > 0 && (pl || f === "respuestas" || f === "votacion");
   const ft = $("flowTime");
   if (ft && show) { ft.textContent = mmss(r); ft.closest(".fstep")?.classList.toggle("low", r <= 30000); }
@@ -1799,7 +1811,7 @@ function paintFac() {
     texto = "Cada persona elige 1 propuesta entre las ganadoras de los grupos.";
     extra = prog(plenTally().voters, S.miembros.size, "participantes ya votaron");
     secundarios = [btn("+1 min", () => setRoom({ "plenario.fin": p.fin + 60000 }))];
-    principal = btn("Mostrar ganadora ahora", () => setRoom({ "plenario.fin": Date.now() - 1000 }), true);
+    principal = btn("Mostrar ganadora ahora", () => setRoom({ "plenario.fin": nowMs() - 1000 }), true);
   } else if (p && bloque2()) {
     estado = "Bloque 2"; titulo = "Los grupos proponen soluciones";
     texto = "Cada grupo escribe su propuesta de solución y el responsable para el cuello de botella priorizado.";
@@ -1862,7 +1874,6 @@ function toggleMenu(force) {
     const item = (txt, fn, cls) => h("button", { role: "menuitem", class: cls || null, onclick: () => { toggleMenu(false); fn(); } }, txt);
     m.replaceChildren(
       item("Modo proyección (pantalla grande)", openProj),
-      item("Mostrar el QR para entrar", () => shareOverlay()),
       h("hr"),
       item("📄 Informe final (imprimir o PDF)", informe),
       item("Descargar resultados (Excel/CSV)", downloadCSV),
@@ -2038,7 +2049,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021164502";
+const BUILD = "20261021165519";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
