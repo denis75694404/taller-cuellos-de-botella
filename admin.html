@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Panel del Facilitador</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1012,7 +1013,7 @@ function pasarAResultados() { setRoom({ voto: Math.max(0, Date.now() - S.room.fi
 function extend(min) { const base = Math.max(S.room.fin || Date.now(), Date.now()); setRoom({ fin: base + min * 60000 }); toast(`Se agregaron ${min} min.`); }
 
 /* ---------- compartir ---------- */
-function shareLink() { return new URL("grupos.html?sala=" + S.code, location.href).href; }
+function shareLink() { return new URL("grupos.html?sala=" + S.code + "&v=" + BUILD, location.href).href; }
 function shareOverlay() {
   const link = shareLink(), qr = h("div", { class: "qr", "aria-label": "Código QR para entrar al taller" });
   let close;
@@ -1957,7 +1958,8 @@ function informe() {
     const avg = vals.reduce((a, v) => a + v.nota, 0) / vals.length;
     b += `<section><h2>Encuesta de cierre</h2><p><b>${avg.toFixed(1)} de 5</b> · ${vals.length} respuestas</p>${vals.filter(v => v.comentario).map(v => `<p class="com">“${esc(v.comentario)}”</p>`).join("")}</section>`;
   }
-  const doc = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe · ${esc(r.titulo || "Taller")} · ${esc(S.code)}</title>
+  const doc = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache"><title>Informe · ${esc(r.titulo || "Taller")} · ${esc(S.code)}</title>
 <style>body{font-family:"Segoe UI",system-ui,sans-serif;color:#111b21;max-width:880px;margin:0 auto;padding:28px 20px;line-height:1.45}
 header{display:flex;gap:16px;align-items:center;border-bottom:3px solid #128c5e;padding-bottom:14px;margin-bottom:8px}header img{width:64px;height:64px;border-radius:50%;object-fit:cover}
 h1{margin:0;font-size:26px}h2{margin:26px 0 6px;color:#0d5e4f;font-size:20px;border-bottom:1px solid #dfe5e2;padding-bottom:4px}h3{margin:16px 0 6px;font-size:16px}
@@ -2008,6 +2010,25 @@ async function empezarDeCero() {
   history.replaceState(null, "", location.pathname);
   homeScreen(true);
 }
+
+/* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
+const BUILD = "20261021162947";
+async function checkVersion() {
+  try {
+    const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
+    const v = (t.match(/const BUILD = "([^"]+)"/) || [])[1];
+    if (!v || v === BUILD || v === "__BUILD__") return;
+    const ae = document.activeElement;
+    if (ae && /^(TEXTAREA|INPUT)$/.test(ae.tagName) && ae.value) return; // no interrumpir a quien escribe
+    let n = 0; try { n = +sessionStorage.getItem("taller-recarga-" + v) || 0; sessionStorage.setItem("taller-recarga-" + v, n + 1); } catch {}
+    if (n >= 2) return; // evita recargas en bucle si la red aún entrega la copia vieja
+    const u = new URL(location.href); u.searchParams.set("v", v); location.replace(u.href);
+  } catch {}
+}
+setTimeout(checkVersion, 2500);
+setInterval(checkVersion, 60000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkVersion(); });
+addEventListener("pageshow", e => { if (e.persisted) checkVersion(); });
 
 /* ---------- bienvenida ---------- */
 function banner(fac) {
