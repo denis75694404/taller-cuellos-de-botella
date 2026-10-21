@@ -617,7 +617,15 @@ function openSala(code) {
   loading("Entrando a la sala " + code + "…");
   S.unsub.forEach(u => u()); S.unsub = [];
   S.unsub.push(salaRef().onSnapshot(d => {
-    if (!d.exists) { S.unsub.forEach(u => u()); S.unsub = []; toast("No existe una sala con el código " + code + ".", 4000); history.replaceState(null, "", location.pathname + location.hash); S.code = null; return homeScreen(); }
+    if (!d.exists) {
+      if (S.wiping) return;
+      const habia = S.roomReady;
+      S.unsub.forEach(u => u()); S.unsub = [];
+      for (const [, us] of S.gsubs) us.forEach(u => u());
+      S.gsubs.clear(); S.G.clear(); S.room = null; S.roomReady = false; S.qSeen = null; S.faseSeen = null; S.sig = "";
+      toast(habia ? "El facilitador cerró esta sala. Pide el código de la sala nueva." : "No existe una sala con el código " + code + ".", 5000);
+      history.replaceState(null, "", location.pathname); S.code = null; return homeScreen();
+    }
     const v = d.data();
     const pre = (Array.isArray(v.preguntas) ? v.preguntas : []).filter(p => p && typeof p.id === "string" && typeof p.t === "string");
     if (!pre.length) pre.push({ id: "p1", t: v.pregunta || DEFAULT_Q });
@@ -644,7 +652,7 @@ function ensureGroupSubs() {
   }
 }
 function route() {
-  if (!S.roomReady || !S.miembrosReady) return;
+  if (S.wiping || !S.roomReady || !S.miembrosReady) return;
   if (ROLE === "admin" && !S.isAdmin) return S.mode === "code" ? null : adminCodeScreen();
   if (isFac()) {
     if (S.mode !== "app") { S.mode = "app"; buildApp(); }
@@ -865,7 +873,8 @@ function paintFac() {
       r.fin ? h("button", { class: "tbtn", onclick: () => extend(5) }, "+5 min") : null,
       r.fin ? h("button", { class: "tbtn", onclick: () => { setRoom({ fin: null }); toast("Sin límite de tiempo."); } }, "Sin límite") : null),
     h("span", { class: "spacer" }),
-    h("button", { class: "lnk danger", onclick: confirmReset }, "Reiniciar"),
+    h("button", { class: "lnk danger", onclick: confirmReset }, "Reiniciar respuestas"),
+    h("button", { class: "tbtn", style: "border-color:var(--warn);color:var(--warn)", onclick: confirmEmpezarDeCero }, "Empezar de cero"),
     h("div", { class: "gchips", role: "group", "aria-label": "Preguntas" },
       h("span", { class: "lbl", style: "align-self:center;margin-right:4px" }, "Preguntas"),
       ...preguntas().map((p, i) => h("button", { class: "gchip", "aria-pressed": p.id === curQ(), title: p.t, onclick: () => { S.viewQ = p.id; S.facSig = ""; render(); } },
@@ -913,6 +922,35 @@ function questionOverlay() {
     h("div", { class: "bignum" }, "P" + n), h("h3", { style: "font-size:21px;text-wrap:balance" }, qTexto(qActiva())),
     h("p", {}, isFac() ? "Los grupos ya pueden responder." : "Escribe tu respuesta en el chat de tu grupo.")), 3200);
   setTimeout(() => burst({ particleCount: 60, spread: 70, origin: { y: .6 } }), 450);
+}
+function confirmEmpezarDeCero() {
+  let close;
+  close = overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow", style: "color:var(--warn)" }, "Sala " + S.code), h("h3", {}, "¿Empezar de cero?"),
+    h("p", {}, "Se borrará la sala completa: grupos, integrantes, preguntas, respuestas y votos. Los participantes saldrán de la sala. Luego volverás a crear la sala y los grupos como al principio. No se puede deshacer."),
+    h("div", { class: "row", style: "justify-content:center;margin-top:14px" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
+      h("button", { class: "btn warn", onclick: () => { close(); empezarDeCero(); } }, "Borrar todo y empezar"))), 0);
+}
+async function empezarDeCero() {
+  const code = S.code, ref = salaRef(), n = nGrupos();
+  S.wiping = true;
+  loading("Borrando la sala " + code + "…");
+  try {
+    const snaps = [ref.collection("miembros").get()];
+    for (let g = 1; g <= n; g++) snaps.push(grupoRef(g).collection("respuestas").get(), grupoRef(g).collection("votos").get());
+    const docs = (await Promise.all(snaps)).flatMap(q => q.docs);
+    for (let i = 0; i < docs.length; i += 400) { const b = S.db.batch(); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
+    S.unsub.forEach(u => u()); S.unsub = [];
+    for (const [, us] of S.gsubs) us.forEach(u => u());
+    await ref.delete();
+    toast("Sala " + code + " borrada. Crea la nueva sala y sus grupos.", 4000);
+  } catch (e) { fbError(e); }
+  S.unsub.forEach(u => u()); S.unsub = [];
+  for (const [, us] of S.gsubs) us.forEach(u => u());
+  S.gsubs.clear(); S.G.clear(); S.miembros = new Map();
+  Object.assign(S, { code: null, room: null, roomReady: false, miembrosReady: false, qSeen: null, faseSeen: null, viewG: 0, viewQ: null, tab: null, sig: "", facSig: "", endedFor: null, wiping: false });
+  S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
+  history.replaceState(null, "", location.pathname);
+  homeScreen();
 }
 function confirmReset() {
   let close;
