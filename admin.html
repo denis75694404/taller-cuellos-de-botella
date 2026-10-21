@@ -647,7 +647,7 @@ const FASE_TXT = {
   votacion: "Tienes 3 minutos y 1 voto. Elige la respuesta de tu grupo que mejor describe el problema.",
   resultados: "Estas son las prioridades de tu grupo."
 };
-const CUPO = 5, MAX_MSG = 3, TOP = 3, GRACIA = 15000, VOTO_MS = 3 * 60000;
+const CUPO = 5, MAX_MSG = 1, TOP = 3, GRACIA = 15000, VOTO_MS = 3 * 60000;
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LS = { name: "taller-fb-nombre" };
 
@@ -1100,6 +1100,23 @@ async function sendMsg() {
   try { await grupoRef(curG()).collection("respuestas").add({ uid: S.uid, nombre: S.nombre.slice(0, 50), t: text.slice(0, 400), q: qActiva(), ts: nowMs() }); }
   catch (e) { ta.value = text; updateComposer(); fbError(e); }
 }
+function editMsg(p) {
+  if (!abierto()) return toast("Se acabó el tiempo para responder.");
+  const inp = h("textarea", { rows: 4, maxlength: 400 }); inp.value = p.t;
+  let close;
+  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Editar mi respuesta"), h("p", {}, "Tu grupo verá el cambio al instante."), inp,
+    h("div", { class: "row" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
+      h("button", { class: "btn", onclick: async () => {
+        const v = inp.value.trim(); if (!v) return toast("La respuesta no puede quedar vacía. Si quieres quitarla, usa «borrar».");
+        if (!abierto()) { close(); return toast("Se acabó el tiempo para responder."); }
+        const col = grupoRef(curG()).collection("respuestas"), nuevo = col.doc(), b = S.db.batch();
+        b.delete(col.doc(p.key));
+        b.set(nuevo, { uid: S.uid, nombre: S.nombre.slice(0, 50), t: v.slice(0, 400), q: qActiva(), ts: p.ts || nowMs() });
+        close();
+        try { await b.commit(); toast("Respuesta actualizada."); } catch (e) { fbError(e); }
+      } }, "Guardar"))), 0);
+  setTimeout(() => { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 50);
+}
 function deleteMsg(id, el) {
   el?.classList.add("out");
   setTimeout(() => grupoRef(curG()).collection("respuestas").doc(id).delete().catch(fbError), REDUCED ? 0 : 280);
@@ -1186,7 +1203,7 @@ function updateComposer() {
   const ok = canWrite();
   ta.disabled = !ok;
   ta.placeholder = isFac() ? `Aquí escriben los integrantes del Grupo ${curG()} (vista del facilitador)` : S.room.espera ? "Espera: el facilitador iniciará el tiempo" : S.room.fase !== "respuestas" ? "La etapa de respuestas está cerrada" : !abierto() ? "Se acabó el tiempo para responder" :
-    myProps().length >= MAX_MSG ? `Llegaste al máximo de ${MAX_MSG} respuestas` : "Escribe tu respuesta";
+    myProps().length >= MAX_MSG ? "Ya enviaste tu respuesta" : "Escribe tu respuesta";
   $("send").disabled = !ok || !ta.value.trim();
 }
 const currentTab = () => S.tab || (bloque2() ? "bloque2" : plen() ? "plenario" : S.room?.fase) || "respuestas";
@@ -1273,6 +1290,7 @@ function viewChat(g) {
     if (!mine) el.append(h("div", { class: "who", style: `color:${colorOf(p.uid)}` }, p.a));
     el.append(h("span", { class: "txt" }, p.t),
       h("span", { class: "meta" },
+        mine && abierto() && !fac ? h("button", { class: "del", onclick: () => editMsg(p), "aria-label": "Editar mi respuesta" }, "editar") : null,
         (mine && abierto()) || fac ? h("button", { class: "del", onclick: () => deleteMsg(p.key, el), "aria-label": "Borrar esta respuesta" }, "borrar") : null,
         hora(p.ts), mine ? (p.pend ? svgPend() : svgTicks()) : null));
     out.push(el);
@@ -1296,7 +1314,7 @@ function viewChat(g) {
   } else if (S.room.fase === "resultados") {
     out.push(next(h("div", { class: "ic" }, "3"), "¡Ya están los resultados!", fac ? "Cada grupo ya ve sus prioridades." : "Descubre qué priorizó tu grupo.", "Ver resultados →", ir("resultados")));
   } else if (!abierto()) out.push(h("div", { class: "sys" }, "Se acabó el tiempo para responder."));
-  else if (!fac) out.push(h("div", { class: "sys" }, `Puedes enviar hasta ${MAX_MSG} respuestas. Te quedan ${Math.max(0, MAX_MSG - myProps().length)}.`));
+  else if (!fac) out.push(h("div", { class: "sys" }, myProps().length ? "Ya enviaste tu respuesta. Puedes editarla o borrarla hasta que termine el tiempo; si la borras, puedes enviar otra." : "Puedes enviar 1 respuesta. Podrás editarla o borrarla mientras dure el tiempo."));
   if (fac && abierto()) out.push(h("div", { class: "sys" }, faltaLinea(faltanResponder(g), "responder")));
   if (!fac && !myProps().length && S.room.fase === "respuestas")
     out.push(h("button", { class: "lnk", style: "align-self:center", onclick: () => { S.changing = true; route(); } }, "¿Te equivocaste de grupo? Cambiar de grupo"));
@@ -2372,7 +2390,7 @@ setInterval(async () => {
 }, 15000);
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021184913";
+const BUILD = "20261021185108";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
