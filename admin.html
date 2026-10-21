@@ -447,6 +447,7 @@ html.hc :focus-visible{outline:3px solid #000;outline-offset:3px}
   nav .inner{gap:0}
   .tab{font-size:12.5px;text-transform:none;letter-spacing:0;padding:10px 2px 12px;gap:4px;min-width:0}
   .tab .tn{display:none}
+  nav .inner:has([data-tab="bloque2"]:not([hidden])) .tab{font-size:11.5px}
   .step{font-size:11.5px;padding:7px 2px}.step .tn{display:none}
   .brand h1{font-size:23px}
 }
@@ -998,6 +999,7 @@ function buildApp() {
     h("nav", { id: "nav" }, h("div", { class: "inner", role: "tablist", "aria-label": "Etapas del taller" },
       ...FASES.map((f, i) => h("button", { class: "tab", role: "tab", "data-tab": f, onclick: () => { if (tabAllowed(f)) { S.tab = f; S.sig = ""; render(); } } }, h("span", { class: "tn" }, (i + 1) + " · "), ["Responder", "Votar", "Resultados"][i])),
       h("button", { class: "tab", role: "tab", "data-tab": "plenario", hidden: true, onclick: () => { if (tabAllowed("plenario")) { S.tab = "plenario"; S.sig = ""; render(); } } }, h("span", { class: "tn" }, "4 · "), "Plenario"),
+      h("button", { class: "tab", role: "tab", "data-tab": "bloque2", hidden: true, onclick: () => { if (tabAllowed("bloque2")) { S.tab = "bloque2"; S.sig = ""; render(); } } }, h("span", { class: "tn" }, "5 · "), "Bloque 2"),
       h("span", { class: "ink", id: "ink" }))),
     h("section", { class: "ctl", id: "fac", hidden: true }, h("div", { class: "inner", id: "facIn" })),
     h("main", { id: "main" }, h("div", { class: "inner", id: "view" })),
@@ -1018,8 +1020,8 @@ function updateComposer() {
     myProps().length >= MAX_MSG ? `Llegaste al máximo de ${MAX_MSG} respuestas` : "Escribe tu respuesta";
   $("send").disabled = !ok || !ta.value.trim();
 }
-const currentTab = () => S.tab || (plen() ? "plenario" : S.room?.fase) || "respuestas";
-const tabAllowed = t => t === "plenario" ? !!plen() : isFac() || FASES.indexOf(t) <= FASES.indexOf(S.room?.fase || "respuestas");
+const currentTab = () => S.tab || (bloque2() ? "bloque2" : plen() ? "plenario" : S.room?.fase) || "respuestas";
+const tabAllowed = t => t === "bloque2" ? bloque2() : t === "plenario" ? !!plen() : isFac() || FASES.indexOf(t) <= FASES.indexOf(S.room?.fase || "respuestas");
 function moveInk() { const sel = document.querySelector('.tab[aria-selected="true"]'), ink = $("ink"); if (sel && ink) { ink.style.left = sel.offsetLeft + 12 + "px"; ink.style.width = sel.offsetWidth - 24 + "px"; } }
 addEventListener("resize", moveInk);
 
@@ -1188,7 +1190,12 @@ function viewResults(g, entering) {
       h("div", { class: "tied" }, ...win.map(w => h("div", {}, w.t))),
       h("div", { class: "wmeta" }, h("span", {}, "El grupo decide cuál será la ganadora"))));
   } else out.push(h("div", { class: "card empty" }, h("b", {}, "Aún no hay votos"), "La ganadora será la respuesta con más votos."));
-  if (win.length) out.push(solCard(g, curQ()));
+  if (win.length && nGrupos() === 1) out.push(solCard(g, curQ()));
+  else if (win.length && curQ() === qActiva()) out.push(bloque2()
+    ? h("div", { class: "nextcard" }, h("div", { class: "ic" }, "5"), h("div", { class: "tx" }, h("h4", {}, "El plenario ya eligió"), h("p", {}, "Ahora tu grupo propone la solución en el Bloque 2.")),
+        h("button", { class: "btn", onclick: () => { S.tab = "bloque2"; S.sig = ""; render(); } }, "Ir al Bloque 2"))
+    : h("div", { class: "nextcard" }, h("div", { class: "ic" }, "4"), h("div", { class: "tx" }, h("h4", {}, "Lo que sigue: el plenario"),
+        h("p", {}, "La ganadora de tu grupo compite con las de los demás. Todo el taller elegirá una y luego cada grupo pasará al Bloque 2 a proponer su solución."))));
   if (!fac && S.room.encuesta && !S.encDone) out.push(h("div", { class: "nextcard" }, h("div", { class: "ic" }, "★"),
     h("div", { class: "tx" }, h("h4", {}, "Cuéntanos qué te pareció"), h("p", {}, "La encuesta de cierre es anónima y toma 30 segundos.")),
     h("button", { class: "btn", onclick: encuestaOverlay }, "Responder la encuesta")));
@@ -1321,7 +1328,7 @@ function plenOverlay(tipo) {
   aviso("etapa");
   if (tipo === "inicio") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Plenario · todos los grupos"), h("div", { class: "bignum" }, "4"),
     h("h3", {}, "¡Votación de todo el taller!"), h("p", {}, isFac() ? "Todos los participantes eligen entre las ganadoras de cada grupo." : "Elige la mejor entre las respuestas ganadoras de todos los grupos. Tienes 3 minutos.")), 3000);
-  else { overlay(h("div", { class: "ocard" }, svgTrophy(), h("h3", {}, "¡Tenemos la ganadora del plenario!"), h("p", {}, "Mira cuál eligió todo el taller.")), 2600); setTimeout(bigBurst, 400); }
+  else { overlay(h("div", { class: "ocard" }, svgTrophy(), h("h3", {}, "¡Tenemos la ganadora del plenario!"), h("p", {}, "Ahora todos los grupos pasan al Bloque 2: propongan la solución y su responsable.")), 3200); setTimeout(bigBurst, 400); }
 }
 function checkPlenario() {
   const p = plen(), key = p ? p.q + "|" + p.items.map(i => i.id).join(",") : "", f = plenFase();
@@ -1356,6 +1363,7 @@ function viewPlenario(entering) {
       list.append(b);
     });
     out.push(list);
+    if (fac) out.push(plenEditCard(p));
     if (open) out.push(h("div", { class: "sys" }, mv ? "Listo: tu voto del plenario está guardado." : "Aún no has votado en el plenario."));
     return out;
   }
@@ -1365,6 +1373,7 @@ function viewPlenario(entering) {
     h("div", { class: "tied" }, ...win.map(w => h("div", {}, `Grupo ${w.g}: ${w.t}`))), h("div", { class: "wmeta" }, h("span", {}, "El plenario decide cuál será la ganadora"))));
   else out.push(h("div", { class: "card empty" }, h("b", {}, "Nadie votó en el plenario")));
   const max = Math.max(1, ...ranked.map(r => r.n));
+  if (fac) out.push(plenEditCard(p));
   out.push(h("h3", { class: "sec-t" }, "Todas las propuestas del plenario"),
     h("div", { class: "rlist" }, ...ranked.map((r, i) => h("div", { class: `ritem${win.includes(r) ? " top win" : ""}` },
       h("span", { class: "pos" }, i + 1),
@@ -1374,10 +1383,58 @@ function viewPlenario(entering) {
   return out;
 }
 
+/* ---------- plenario: el facilitador puede ajustar la redacción de las ganadoras ---------- */
+function plenEditCard(p) {
+  return h("div", { class: "solcard" },
+    h("div", { class: "eyebrow" }, "Solo el facilitador"),
+    h("h3", {}, "Editar las propuestas del plenario"),
+    h("p", { class: "hint" }, "Corrige o une la redacción de las ganadoras. Los votos se mantienen y el cambio se ve al instante en todos los celulares."),
+    ...p.items.map(it => h("div", { class: "a11y-row" }, h("span", {}, h("b", {}, "Grupo " + it.g + ": "), it.t, it.orig ? h("small", { class: "note" }, " (editada)") : null),
+      h("button", { class: "btn ghost sm", onclick: () => editPlenItem(it.id) }, "Editar"))));
+}
+function editPlenItem(id) {
+  const p = plen(), it = p?.items.find(i => i.id === id); if (!it || !isFac()) return;
+  const inp = h("textarea", { rows: 4, maxlength: 400 }); inp.value = it.t;
+  let close;
+  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Editar la propuesta del Grupo " + it.g),
+    h("p", {}, "Original: " + (it.orig || it.t)), inp,
+    h("div", { class: "row" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
+      h("button", { class: "btn", onclick: () => {
+        const v = inp.value.trim(); if (!v) return toast("La propuesta no puede quedar vacía.");
+        setRoom({ "plenario.items": plen().items.map(i => i.id === id ? { ...i, t: v.slice(0, 400), orig: i.orig || i.t } : i) });
+        close(); toast("Propuesta actualizada en todos los celulares.");
+      } }, "Guardar"))), 0);
+  setTimeout(() => inp.focus(), 50);
+}
+
+/* ---------- Bloque 2: después del plenario, todos los grupos ---------- */
+const plenWin = () => plenFase() === "resultados" ? ganadoras(plenTally().ranked) : [];
+const bloque2 = () => plenWin().length > 0;
+const temaB2 = () => plenWin().map(w => w.t).join(" / ");
+const solHechas = () => { const q = qActiva(); let n = 0; for (let g = 1; g <= nGrupos(); g++) if (gdata(g).sol.get(q)) n++; return n; };
+function viewBloque2(g, entering) {
+  if (!bloque2()) return [h("div", { class: "card empty" }, h("b", {}, "El Bloque 2 aún no empieza"), "Comienza cuando termina el plenario.")];
+  const q = qActiva(), win = plenWin(), { voters } = plenTally();
+  const out = [h("div", { class: "card" }, h("div", { class: "vhead" }, h("div", {},
+    h("h2", {}, "Bloque 2: propuestas de solución"),
+    h("p", {}, g ? "Todo el taller priorizó este cuello de botella. Ahora tu grupo propone cómo resolverlo y quién se hace cargo."
+      : `${solHechas()} de ${nGrupos()} grupos ya guardaron su propuesta.`))))];
+  out.push(win.length === 1 ? winnerCard(win[0], voters, "Cuello de botella priorizado", "Grupo " + win[0].g, entering)
+    : h("div", { class: "winner" }, svgTrophy(), h("div", { class: "lbl" }, "Cuellos de botella priorizados (empate)"), h("div", { class: "tied" }, ...win.map(w => h("div", {}, `Grupo ${w.g}: ${w.t}`)))));
+  if (g) { out.push(solCard(g, q, temaB2())); return out; }
+  out.push(h("h3", { class: "sec-t" }, "Propuestas de los grupos"), h("div", { class: "ggrid" }, ...Array.from({ length: nGrupos() }, (_, i) => {
+    const gg = i + 1, sol = gdata(gg).sol.get(q);
+    return h("button", { class: "gcard", onclick: () => { S.viewG = gg; render(); } }, h("div", { class: "gt" }, h("h3", {}, "Grupo " + gg)),
+      sol ? h("div", { class: "mini sol" }, h("b", {}, "💡"), sol.solucion, sol.responsable ? " · Responsable: " + sol.responsable : "") : h("span", { class: "note" }, "Propuesta pendiente"),
+      h("span", { class: "lnk open" }, "Abrir grupo →"));
+  })));
+  return out;
+}
+
 /* ---------- Bloque 2: propuesta de solución y responsable ---------- */
-function solCard(g, q) {
+function solCard(g, q, tema) {
   const s = gdata(g).sol.get(q) || {}, fac = isFac();
-  const puede = fac || (q === qActiva() && S.room.fase === "resultados");
+  const puede = fac || (q === qActiva() && S.room.fase === "resultados" && (!!tema || nGrupos() === 1));
   const ta = h("textarea", { id: "solIn", rows: 3, maxlength: 600, placeholder: "¿Qué acción concreta proponen para resolver este cuello de botella?", disabled: !puede });
   ta.value = s.solucion || "";
   const rp = h("input", { id: "respIn", maxlength: 100, placeholder: "Responsable (persona o área)", disabled: !puede });
@@ -1385,13 +1442,13 @@ function solCard(g, q) {
   const guardar = async () => {
     const sol = ta.value.trim(); if (!sol) return toast("Escribe la propuesta de solución.");
     try {
-      await grupoRef(g).collection("soluciones").doc(q).set({ solucion: sol.slice(0, 600), responsable: rp.value.trim().slice(0, 100), por: (fac ? "Facilitador" : S.nombre || "Participante").slice(0, 50), uid: S.uid, ts: Date.now() });
+      await grupoRef(g).collection("soluciones").doc(q).set({ solucion: sol.slice(0, 600), responsable: rp.value.trim().slice(0, 100), por: (fac ? "Facilitador" : S.nombre || "Participante").slice(0, 50), uid: S.uid, ts: Date.now(), ...(tema ? { tema: tema.slice(0, 600) } : {}) });
       ta.blur(); rp.blur(); toast("Propuesta guardada para todo el grupo."); burst({ particleCount: 50, spread: 60, origin: { y: .7 } });
     } catch (e) { fbError(e); }
   };
   return h("div", { class: "solcard" },
     h("div", { class: "eyebrow" }, "Bloque 2 · Propuesta de solución"),
-    h("h3", {}, "¿Cómo resolvemos la respuesta ganadora?"),
+    h("h3", {}, tema ? "¿Cómo resolvemos el cuello de botella priorizado?" : "¿Cómo resolvemos la respuesta ganadora?"),
     h("p", { class: "hint" }, "Escríbanla entre todos: cualquier integrante del grupo puede completarla o mejorarla."),
     ta, rp,
     h("div", { class: "acts" },
@@ -1454,12 +1511,12 @@ const relojMs = () => plenFase() === "votacion" ? plen().fin - Date.now() : (res
 function paintProj() {
   const el = $("proj"); if (!el || !S.room) return;
   const r = S.room, q = qActiva(), p = plen(), pf = plenFase();
-  const stage = p ? "plen-" + pf : r.espera ? "espera" : r.fase;
+  const stage = bloque2() ? "bloque2" : p ? "plen-" + pf : r.espera ? "espera" : r.fase;
   const per = Array.from({ length: nGrupos() }, (_, i) => {
     const g = i + 1, ms = miembrosDe(g).length;
     return { g, ms, resp: ms - faltanResponder(g, q).length, vot: ms - faltanVotar(g, q).length, win: ganadoras(tally(g, q).ranked) };
   });
-  const sig = JSON.stringify([stage, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n)]), p ? plenTally().ranked.map(x => x.n) : 0, S.miembros.size]);
+  const sig = JSON.stringify([stage, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n), gdata(x.g).sol.get(q)?.ts || 0]), p ? plenTally().ranked.map(x => x.n + x.t) : 0, S.miembros.size]);
   if (sig === S.projSig) return;
   S.projSig = sig;
   const clock = lbl => h("div", { class: "pj-clock" }, h("span", { class: "pj-lbl" }, lbl), h("b", { id: "pjClock" }, mmss(Math.max(0, relojMs()))));
@@ -1485,6 +1542,12 @@ function paintProj() {
     body = h("div", {}, clock("Plenario: todos votan"),
       h("div", { class: "pj-list" }, ...p.items.map(it => h("div", { class: "pj-item" }, h("b", {}, "Grupo " + it.g), h("span", {}, it.t)))),
       h("p", { class: "pj-foot" }, `${plenTally().voters} de ${S.miembros.size} ya votaron`));
+  } else if (stage === "bloque2") {
+    body = h("div", {}, h("div", { class: "pj-final" }, svgTrophy(), h("span", { class: "pj-lbl" }, "Bloque 2 · Cuello de botella priorizado"),
+        ...plenWin().map(w => h("div", { class: "pj-ft" }, w.t, h("small", {}, "Grupo " + w.g)))),
+      h("div", { class: "pj-grid", style: "margin-top:clamp(12px,2vw,28px)" }, ...per.map(x => { const sol = gdata(x.g).sol.get(q);
+        return h("div", { class: "pj-card" }, h("h3", {}, "Grupo " + x.g), h("div", { class: "pj-wt" }, sol ? sol.solucion : "Escribiendo su propuesta…"),
+          sol?.responsable ? h("span", {}, "Responsable: " + sol.responsable) : null); })));
   } else {
     const { ranked, voters } = plenTally(), win = ganadoras(ranked);
     body = h("div", { class: "pj-final" }, svgTrophy(), h("span", { class: "pj-lbl" }, win.length > 1 ? "Empate en el plenario" : "Ganadora del plenario"),
@@ -1493,7 +1556,7 @@ function paintProj() {
   el.replaceChildren(
     h("div", { class: "pj-top" }, h("div", { class: "pj-brand" }, h("img", { src: "img/administrador-icono.jpg", alt: "" }), h("span", {}, (r.titulo || "Taller") + " · Sala " + S.code)),
       h("button", { class: "pj-x", onclick: closeProj, "aria-label": "Salir del modo proyección" }, "✕ Salir")),
-    h("div", { class: "pj-q" }, h("span", { class: "pj-lbl" }, (p ? "Plenario · " : "") + "Pregunta " + qNum(q)), h("h1", {}, qTexto(q))),
+    h("div", { class: "pj-q" }, h("span", { class: "pj-lbl" }, (bloque2() ? "Bloque 2 · " : p ? "Plenario · " : "") + "Pregunta " + qNum(q)), h("h1", {}, qTexto(q))),
     h("div", { class: "pj-stage" }, body));
 }
 
@@ -1542,11 +1605,12 @@ function render() {
   const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
   $("sub").textContent = fac
     ? (g ? `Facilitador · Grupo ${g} · ${qLbl}` : `Facilitador · ${nGrupos()} grupos · ${S.miembros.size} participantes · ${qLbl}`)
-    : `${S.nombre} · ${nm} de ${CUPO} integrantes · ${qLbl} · ${p ? "Plenario" : FASE_NOMBRE[S.room.fase]}`;
-  const vivo = p ? "plenario" : S.room.fase;
+    : `${S.nombre} · ${nm} de ${CUPO} integrantes · ${qLbl} · ${bloque2() ? "Bloque 2" : p ? "Plenario" : FASE_NOMBRE[S.room.fase]}`;
+  const vivo = bloque2() ? "bloque2" : p ? "plenario" : S.room.fase;
   document.querySelectorAll(".tab").forEach(b => {
     const t = b.dataset.tab;
     if (t === "plenario") b.hidden = !p;
+    if (t === "bloque2") b.hidden = !bloque2();
     b.setAttribute("aria-selected", t === tab); b.disabled = !tabAllowed(t);
     b.querySelector(".live")?.remove();
     if (t === vivo) b.prepend(h("span", { class: "live", "aria-label": "etapa actual" }));
@@ -1555,7 +1619,7 @@ function render() {
 
   const q = curQ(), pt = p ? plenTally() : null;
   const sig = JSON.stringify([tab, g, q, qTexto(q), qActiva(), S.room.fase, fac, abierto(), S.room.grupos, !!S.room.encuesta, S.encDone,
-    p ? [plenFase(), p.items.map(i => i.id), myPlenVote(), pt.ranked.map(r => r.n), pt.voters] : 0,
+    p ? [plenFase(), p.items.map(i => i.id + i.t), myPlenVote(), pt.ranked.map(r => r.n), pt.voters] : 0,
     tab === "plenario" ? 0 :
     !g ? [...S.G].map(([k]) => [k, proposals(k, q).map(x => x.key), votosDe(k, q).map(v => v.uid + v.id), gdata(k).sol.get(q) || 0]).concat([[...S.miembros.values()].map(m => m.grupo + m.nombre)]) :
     tab === "respuestas" ? [proposals(g, q).map(x => x.key + (x.pend ? "*" : "")), fac ? faltanResponder(g, q) : 0]
@@ -1566,7 +1630,7 @@ function render() {
   if (sig !== S.sig && !(typing && prevKey === key)) {
     S.sig = sig;
     const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 80;
-    view.replaceChildren(...(tab === "plenario" ? viewPlenario(prevKey !== key) : !g ? viewSummary(tab) : tab === "respuestas" ? viewChat(g) : tab === "votacion" ? viewVote(g) : viewResults(g, prevKey !== key)));
+    view.replaceChildren(...(tab === "plenario" ? viewPlenario(prevKey !== key) : tab === "bloque2" ? viewBloque2(g, prevKey !== key) : !g ? viewSummary(tab) : tab === "respuestas" ? viewChat(g) : tab === "votacion" ? viewVote(g) : viewResults(g, prevKey !== key)));
     if (prevKey && prevKey !== key) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
     view.dataset.key = key;
     view.classList.toggle("bottom", tab === "respuestas" && !!g);
@@ -1586,7 +1650,7 @@ function paintFac() {
   if (!fac) return;
   const r = S.room, tab = currentTab(), q = curQ(), activa = q === qActiva(), tot = preguntas().length, p = plen(), pf = plenFase();
   const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
-  const facSig = JSON.stringify([r.fase, r.espera, S.viewG, counts, preguntas().map(x => x.id + x.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin, pf, p?.fin]);
+  const facSig = JSON.stringify([solHechas(), r.fase, r.espera, S.viewG, counts, preguntas().map(x => x.id + x.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin, pf, p?.fin]);
   if (facSig === S.facSig) return;
   S.facSig = facSig;
 
@@ -1602,9 +1666,9 @@ function paintFac() {
       h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta")));
 
   /* 2. ronda: pasos automáticos y una acción principal */
-  const idx = p ? 3 : r.espera ? -1 : FASES.indexOf(r.fase), mins = Number(S.lastMin) || 5;
+  const idx = bloque2() ? 4 : p ? 3 : r.espera ? -1 : FASES.indexOf(r.fase), mins = Number(S.lastMin) || 5;
   const info = [["respuestas", "Responder", `${mins} min`], ["votacion", "Votar", `${Math.round(durVoto(r) / 60000)} min`], ["resultados", "Resultados", "Auto"]];
-  if (p) info.push(["plenario", "Plenario", "3 min"]);
+  if (p) info.push(["plenario", "Plenario", "3 min"], ["bloque2", "Bloque 2", "Libre"]);
   const steps = h("div", { class: "stepsbar", style: `grid-template-columns:repeat(${info.length},minmax(0,1fr))`, role: "group", "aria-label": "Etapas de la ronda (toca para ver)" },
     ...info.map(([f, l, d], i) => {
       const timed = i === idx && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion"));
@@ -1619,7 +1683,7 @@ function paintFac() {
       h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setRoom({ "plenario.fin": p.fin + 60000 }) }, "+1 min"),
         h("button", { class: "btn sm grow", onclick: () => setRoom({ "plenario.fin": Date.now() - 1000 }) }, "Mostrar ganadora ahora"))];
   } else if (p) {
-    acts = [h("div", { class: "hint" }, "Plenario terminado. Todos ven la ganadora del taller."),
+    acts = [h("div", { class: "hint" }, bloque2() ? `Bloque 2 en curso: ${solHechas()} de ${nGrupos()} grupos ya guardaron su propuesta de solución.` : "Plenario terminado sin votos."),
       h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: iniciarPlenario }, "Repetir plenario"), h("button", { class: "btn sm grow", onclick: newPregunta }, "+ Nueva pregunta"))];
   } else if (r.espera) {
     const custom = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: [3, 5, 10].includes(mins) ? "" : mins, placeholder: "min", "aria-label": "Otros minutos" });
@@ -1634,7 +1698,7 @@ function paintFac() {
     acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extendVoto(1) }, "+1 min"),
       h("button", { class: "btn sm grow", onclick: pasarAResultados }, "Mostrar resultados ahora"))];
   } else {
-    acts = [h("div", { class: "hint" }, "Ronda terminada. Cada grupo ve su ganadora y escribe su propuesta de solución."),
+    acts = [h("div", { class: "hint" }, nGrupos() === 1 ? "Ronda terminada. El grupo ve su ganadora y escribe su propuesta de solución." : "Ronda terminada. Inicia el plenario: al terminar, todos los grupos pasan al Bloque 2."),
       h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setTimer(mins) }, "Repetir ronda"),
         h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta"),
         h("button", { class: "btn sm grow", onclick: iniciarPlenario }, "Iniciar plenario (3 min)"))];
@@ -1715,7 +1779,7 @@ function groupText(g, q = curQ()) {
   const lines = [`Grupo ${g} · ${S.room.titulo || "Taller"}`, `Pregunta ${qNum(q)}: ${qTexto(q)}`, ""];
   ranked.forEach((r, i) => lines.push(`${i + 1}. ${r.t.replace(/\s+/g, " ")} (${r.n} ${r.n === 1 ? "voto" : "votos"})${win.includes(r) ? (win.length > 1 ? " · EMPATE 1.er LUGAR" : " · GANADORA") : ""}`));
   lines.push(`Votaron: ${voters} de ${miembrosDe(g).length}`);
-  if (sol) lines.push(`Propuesta de solución: ${sol.solucion}`, `Responsable: ${sol.responsable || "—"}`);
+  if (sol) lines.push(...(sol.tema ? [`Bloque 2 · Cuello de botella priorizado: ${sol.tema}`] : []), `Propuesta de solución: ${sol.solucion}`, `Responsable: ${sol.responsable || "—"}`);
   return lines.join("\n");
 }
 function downloadCSV() {
@@ -1726,7 +1790,7 @@ function downloadCSV() {
     for (let g = 1; g <= nGrupos(); g++) {
       const rk = tally(g, p.id).ranked, win = ganadoras(rk), sol = gdata(g).sol.get(p.id);
       if (!rk.length) continue;
-      rk.forEach((r, i) => { const w = win.includes(r); rows.push([pi + 1, p.t, `Grupo ${g}`, i + 1, r.t.replace(/\s+/g, " "), r.n, w ? (win.length > 1 ? "Empate" : "Sí") : "", w && sol ? sol.solucion : "", w && sol ? sol.responsable : ""].map(c).join(";")); });
+      rk.forEach((r, i) => { const w = win.includes(r); rows.push([pi + 1, p.t, `Grupo ${g}`, i + 1, r.t.replace(/\s+/g, " "), r.n, w ? (win.length > 1 ? "Empate" : "Sí") : "", w && sol && !sol.tema ? sol.solucion : "", w && sol && !sol.tema ? sol.responsable : ""].map(c).join(";")); });
       rows.push([pi + 1, p.t, `Grupo ${g}`, "", `TOTAL GRUPO ${g}`, rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
     }
     const P = S.room.plenario;
@@ -1734,6 +1798,10 @@ function downloadCSV() {
       const rk = plenTallyFor(P).ranked;
       rk.forEach((r, i) => rows.push([pi + 1, p.t, "Plenario", i + 1, `[Grupo ${r.g}] ${r.t.replace(/\s+/g, " ")}`, r.n, i === 0 && r.n > 0 ? "Ganadora del plenario" : "", "", ""].map(c).join(";")));
       rows.push([pi + 1, p.t, "Plenario", "", "TOTAL PLENARIO", rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
+    }
+    for (let g = 1; g <= nGrupos(); g++) {
+      const sol = gdata(g).sol.get(p.id);
+      if (sol?.tema) rows.push([pi + 1, p.t, "Bloque 2 · Grupo " + g, "", sol.tema, "", "", sol.solucion, sol.responsable].map(c).join(";"));
     }
   });
   const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" })), download: `resultados-sala-${S.code}.csv` });
@@ -1755,7 +1823,7 @@ function informe() {
       const win = ganadoras(ranked), sol = gdata(g).sol.get(p.id);
       b += `<h3>Grupo ${g}</h3>`;
       if (win.length) b += `<div class="win">🏆 ${win.map(w => esc(w.t)).join(" <em>/</em> ")} <span>(${win[0].n} ${win[0].n === 1 ? "voto" : "votos"} de ${voters}${win.length > 1 ? " · empate" : ""})</span></div>`;
-      if (sol) b += `<div class="sol"><b>Propuesta de solución:</b> ${esc(sol.solucion)}<br><b>Responsable:</b> ${esc(sol.responsable || "—")}</div>`;
+      if (sol && !sol.tema) b += `<div class="sol"><b>Propuesta de solución:</b> ${esc(sol.solucion)}<br><b>Responsable:</b> ${esc(sol.responsable || "—")}</div>`;
       b += `<table><tr><th>#</th><th>Respuesta</th><th>Autor</th><th>Votos</th></tr>${ranked.map((x, i) => `<tr${win.includes(x) ? ' class="w"' : ""}><td>${i + 1}</td><td>${esc(x.t)}</td><td>${esc(x.a)}</td><td>${x.n}</td></tr>`).join("")}</table>`;
     }
     const P = r.plenario;
@@ -1765,6 +1833,8 @@ function informe() {
       if (win.length) b += `<div class="win">🏆 ${win.map(w => esc(w.t) + ` <span>(Grupo ${w.g})</span>`).join(" <em>/</em> ")}</div>`;
       b += `<table><tr><th>#</th><th>Propuesta</th><th>Grupo</th><th>Votos</th></tr>${ranked.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.t)}</td><td>${x.g}</td><td>${x.n}</td></tr>`).join("")}</table>`;
     }
+    const b2 = Array.from({ length: nGrupos() }, (_, i) => [i + 1, gdata(i + 1).sol.get(p.id)]).filter(([, x]) => x?.tema);
+    if (b2.length) b += `<h3>Bloque 2 · Propuestas de solución</h3><div class="win">🏆 ${esc(b2[0][1].tema)}</div><table><tr><th>Grupo</th><th>Propuesta de solución</th><th>Responsable</th></tr>${b2.map(([g, x]) => `<tr><td>Grupo ${g}</td><td>${esc(x.solucion)}</td><td>${esc(x.responsable || "—")}</td></tr>`).join("")}</table>`;
     b += `</section>`;
   });
   const vals = [...S.enc.values()].filter(v => v.nota >= 1);
