@@ -454,6 +454,42 @@ html.hc :focus-visible{outline:3px solid #000;outline-offset:3px}
 @media (max-width:380px){
   .step{font-size:10.5px;letter-spacing:-.01em}.tab{font-size:12px}
 }
+/* ronda: línea de etapas */
+.flow{list-style:none;margin:2px 0 0;padding:0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+.fstep{position:relative;min-width:0}
+.fstep::before{content:"";position:absolute;top:17px;left:-50%;width:100%;height:3px;background:var(--line);z-index:0}
+.fstep:first-child::before{display:none}
+.fstep.done::before,.fstep.now::before{background:var(--accent)}
+.fstep button{position:relative;z-index:1;width:100%;background:none;border:0;padding:0 2px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--fg);border-radius:10px}
+.fstep button:disabled{cursor:default}
+.fstep button:not(:disabled):hover .fdot{transform:scale(1.08)}
+.fdot{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-disp);font-weight:800;font-size:16px;background:var(--panel);color:var(--muted);border:2px solid var(--line);transition:transform .2s,background .25s}
+.fstep.done .fdot{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.fstep.now .fdot{background:var(--panel);border:3px solid var(--accent);color:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
+.fstep.viewing .fl{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+.fl{font-size:13px;font-weight:700;line-height:1.2;color:var(--fg);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fs{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fstep.done .fs{color:var(--accent)}
+.fstep.now .fs{color:var(--accent);font-weight:800;font-size:13px}
+.fstep.low .fs{color:var(--warn);animation:beat 1s ease-in-out infinite}
+/* ronda: recuadro "Ahora" */
+.nowbox{border-radius:14px;background:var(--accent-soft);border-left:5px solid var(--accent);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.neyebrow{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:6px}
+.neyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ping 2s infinite}
+.ntitle{font-family:var(--f-disp);font-weight:800;font-size:19px;line-height:1.2;color:var(--fg);text-wrap:balance}
+.ntext{margin:0;font-size:14.5px;line-height:1.45;color:var(--fg)}
+.nprog{height:10px;border-radius:99px;background:var(--panel);overflow:hidden}
+.nprog i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .5s}
+.ncount{font-size:14px;color:var(--fg)}
+.ncount b{font-variant-numeric:tabular-nums}
+.btn.nmain{width:100%;padding:13px 18px;font-size:16px;font-weight:700;margin-top:2px}
+.nsecs{display:flex;gap:8px;flex-wrap:wrap}
+.btn.nsec{flex:1 1 auto;padding:10px 14px;font-size:14.5px;font-weight:700;background:var(--panel)}
+.nowbox .mins button{padding:8px 14px;font-size:14.5px;background:var(--panel)}
+.nowbox .mins input{padding:8px;font-size:14.5px;width:70px}
+@media (max-width:420px){.fl{font-size:11.5px}.fs{font-size:11px}.fdot{width:32px;height:32px;font-size:14px}.fstep::before{top:15px}.ntitle{font-size:17.5px}}
+html.fs1 .ntext,html.fs1 .ncount{font-size:17px}html.fs2 .ntext,html.fs2 .ncount{font-size:20px}
+html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -477,7 +513,7 @@ html.hc :focus-visible{outline:3px solid #000;outline-offset:3px}
 /* panel del facilitador: pregunta | ronda, y debajo los grupos */
 .ctl{background:var(--bar);border-bottom:1px solid var(--line)}
 .ctl .inner{padding-block:12px 10px;display:flex;flex-direction:column;gap:10px}
-.ctl-grid{min-width:0;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:10px}
+.ctl-grid{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px}
 .panel{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .ptitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .ptitle .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:ping 2s infinite}
@@ -1602,7 +1638,7 @@ function paintTimer() {
   const r = pl ? plen().fin - Date.now() : restante();
   const show = r != null && r > 0 && (pl || f === "respuestas" || f === "votacion");
   const ft = $("flowTime");
-  if (ft && show) { ft.textContent = mmss(r); ft.parentElement.classList.toggle("low", r <= 30000); }
+  if (ft && show) { ft.textContent = mmss(r); ft.closest(".fstep")?.classList.toggle("low", r <= 30000); }
   if (isFac()) { t.hidden = true; return; }
   t.hidden = !show; if (!show) return;
   $("timerTxt").replaceChildren(h("span", { class: "tl" }, pl ? "Plenario " : f === "votacion" ? "Votar " : "Responder "), mmss(r));
@@ -1672,7 +1708,8 @@ function paintFac() {
   if (!fac) return;
   const r = S.room, tab = currentTab(), q = curQ(), activa = q === qActiva(), tot = preguntas().length, p = plen(), pf = plenFase();
   const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
-  const facSig = JSON.stringify([solHechas(), r.fase, r.espera, S.viewG, counts, preguntas().map(x => x.id + x.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin, pf, p?.fin]);
+  const facSig = JSON.stringify([solHechas(), p ? plenTally().voters : 0,
+    Array.from({ length: nGrupos() }, (_, i) => [faltanResponder(i + 1, qActiva()).length, faltanVotar(i + 1, qActiva()).length]), r.fase, r.espera, S.viewG, counts, preguntas().map(x => x.id + x.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin, pf, p?.fin]);
   if (facSig === S.facSig) return;
   S.facSig = facSig;
 
@@ -1687,48 +1724,82 @@ function paintFac() {
       h("button", { class: "btn ghost sm", onclick: editPregunta }, "Editar"),
       h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta")));
 
-  /* 2. ronda: pasos automáticos y una acción principal */
+  /* 2. ronda: línea de etapas y recuadro "Ahora" con una acción principal */
   const idx = bloque2() ? 4 : p ? 3 : r.espera ? -1 : FASES.indexOf(r.fase), mins = Number(S.lastMin) || 5;
-  const info = [["respuestas", "Responder", `${mins} min`], ["votacion", "Votar", `${Math.round(durVoto(r) / 60000)} min`], ["resultados", "Resultados", "Auto"]];
-  if (p) info.push(["plenario", "Plenario", pf === "preparacion" ? "Revisar" : "3 min"], ["bloque2", "Bloque 2", "Libre"]);
-  const steps = h("div", { class: "stepsbar", style: `grid-template-columns:repeat(${info.length},minmax(0,1fr))`, role: "group", "aria-label": "Etapas de la ronda (toca para ver)" },
+  const multi = nGrupos() > 1 || !!p;
+  const info = [["respuestas", "Responder", mins + " min"], ["votacion", "Votar", Math.round(durVoto(r) / 60000) + " min"], ["resultados", "Resultados", "Auto"]];
+  if (multi) info.push(["plenario", "Plenario", "3 min"], ["bloque2", "Bloque 2", "Al final"]);
+  const steps = h("ol", { class: "flow", style: `--n:${info.length}`, "aria-label": "Etapas de la ronda (toca una para verla)" },
     ...info.map(([f, l, d], i) => {
-      const timed = i === idx && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion"));
-      return h("button", {
-        class: "step" + (i === idx ? " now" : "") + (i < idx ? " done" : "") + (tab === f ? " viewing" : ""),
-        "aria-current": i === idx ? "step" : null, title: "Ver " + l, onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); }
-      }, h("span", {}, h("span", { class: "tn" }, `${i + 1} · `), l), h("b", { id: timed ? "flowTime" : null }, i < idx ? "✓" : timed ? mmss(relojMs()) : i === idx ? (f === "plenario" && pf === "preparacion" ? "Revisar" : "✓") : d));
+      const now = i === idx, done = i < idx;
+      const timed = now && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion"));
+      const estado = done ? "Listo" : timed ? mmss(relojMs()) : now ? (f === "plenario" && pf === "preparacion" ? "Revisar" : "Ahora") : d;
+      return h("li", { class: "fstep" + (now ? " now" : "") + (done ? " done" : "") + (tab === f ? " viewing" : "") },
+        h("button", { "aria-current": now ? "step" : null, title: "Ver " + l, disabled: f === "plenario" && !p || f === "bloque2" && !bloque2(),
+          onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); } },
+          h("span", { class: "fdot" }, done ? "✓" : String(i + 1)), h("span", { class: "fl" }, l), h("span", { class: "fs", id: timed ? "flowTime" : null }, estado)));
     }));
-  let acts;
+  const q0 = qActiva(), nTot = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length).reduce((a, b) => a + b, 0);
+  const sum = fn => Array.from({ length: nGrupos() }, (_, i) => fn(i + 1)).reduce((a, b) => a + b, 0);
+  const prog = (n, de, txt) => [h("div", { class: "nprog", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": de, "aria-valuenow": n }, h("i", { style: `width:${de ? Math.min(100, n / de * 100) : 0}%` })), h("div", { class: "ncount" }, h("b", {}, `${n} de ${de}`), " " + txt)];
+  const btn = (txt, fn, main) => h("button", { class: main ? "btn nmain" : "btn ghost nsec", onclick: fn }, txt);
+  let estado, titulo, texto, extra = [], principal = null, secundarios = [];
   if (p && pf === "preparacion") {
-    acts = [h("div", { class: "hint" }, `Plenario listo con ${p.items.length} propuestas ganadoras. Revísalas y edítalas; nadie puede votar todavía.`),
-      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => { S.tab = "plenario"; S.viewG = 0; S.sig = ""; S.facSig = ""; render(); } }, "Editar propuestas"),
-        h("button", { class: "btn sm grow", onclick: votarPlenario }, "▶ Iniciar votación (3 min)"))];
+    estado = "Plenario · preparación"; titulo = "Revisa las propuestas finalistas";
+    texto = `Llegaron ${p.items.length} respuestas ganadoras de los grupos. Corrige su redacción si hace falta: nadie puede votar todavía.`;
+    secundarios = [btn("✎ Editar propuestas", () => { S.tab = "plenario"; S.viewG = 0; S.sig = ""; S.facSig = ""; render(); })];
+    principal = btn("▶ Iniciar votación (3 min)", votarPlenario, true);
   } else if (p && pf === "votacion") {
-    acts = [h("div", { class: "hint" }, `Plenario en curso: ${plenTally().voters} de ${S.miembros.size} ya votaron.`),
-      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setRoom({ "plenario.fin": p.fin + 60000 }) }, "+1 min"),
-        h("button", { class: "btn sm grow", onclick: () => setRoom({ "plenario.fin": Date.now() - 1000 }) }, "Mostrar ganadora ahora"))];
+    estado = "Plenario · votación"; titulo = "Todo el taller está votando";
+    texto = "Cada persona elige 1 propuesta entre las ganadoras de los grupos.";
+    extra = prog(plenTally().voters, S.miembros.size, "participantes ya votaron");
+    secundarios = [btn("+1 min", () => setRoom({ "plenario.fin": p.fin + 60000 }))];
+    principal = btn("Mostrar ganadora ahora", () => setRoom({ "plenario.fin": Date.now() - 1000 }), true);
+  } else if (p && bloque2()) {
+    estado = "Bloque 2"; titulo = "Los grupos proponen soluciones";
+    texto = "Cada grupo escribe su propuesta de solución y el responsable para el cuello de botella priorizado.";
+    extra = prog(solHechas(), nGrupos(), "grupos ya guardaron su propuesta");
+    secundarios = [btn("Repetir votación del plenario", votarPlenario)];
+    principal = btn("+ Nueva pregunta", newPregunta, true);
   } else if (p) {
-    acts = [h("div", { class: "hint" }, bloque2() ? `Bloque 2 en curso: ${solHechas()} de ${nGrupos()} grupos ya guardaron su propuesta de solución.` : "Plenario terminado sin votos."),
-      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: votarPlenario }, "Repetir votación del plenario"), h("button", { class: "btn sm grow", onclick: newPregunta }, "+ Nueva pregunta"))];
+    estado = "Plenario · sin votos"; titulo = "Nadie votó en el plenario";
+    texto = "Abre otra vez la votación para que todos elijan la mejor propuesta, o pasa a una nueva pregunta.";
+    secundarios = [btn("+ Nueva pregunta", newPregunta)];
+    principal = btn("▶ Repetir votación (3 min)", votarPlenario, true);
   } else if (r.espera) {
-    const custom = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: [3, 5, 10].includes(mins) ? "" : mins, placeholder: "min", "aria-label": "Otros minutos" });
+    const custom = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: [3, 5, 10].includes(mins) ? "" : mins, placeholder: "otro", "aria-label": "Otros minutos" });
     custom.addEventListener("change", () => { if (custom.value > 0) { S.lastMin = custom.value; S.facSig = ""; paintFac(); } });
-    acts = [h("div", { class: "hint" }, "Minutos para responder (luego 3 min de votación y resultados automáticos):"),
-      h("div", { class: "mins" }, ...[3, 5, 10].map(m => h("button", { "aria-pressed": mins === m, onclick: () => { S.lastMin = m; S.facSig = ""; paintFac(); } }, m + " min")), custom),
-      h("div", { class: "acts" }, h("button", { class: "btn grow", onclick: () => setTimer(mins) }, `▶ Iniciar ronda (${mins} min)`))];
+    estado = "Lista para empezar"; titulo = "¿Cuántos minutos para responder?";
+    texto = "Después vienen 3 minutos de votación y los resultados aparecen solos.";
+    extra = [h("div", { class: "mins" }, ...[3, 5, 10].map(m => h("button", { "aria-pressed": mins === m, onclick: () => { S.lastMin = m; S.facSig = ""; paintFac(); } }, m + " min")), custom)];
+    principal = btn(`▶ Iniciar ronda (${mins} min)`, () => setTimer(mins), true);
   } else if (r.fase === "respuestas") {
-    acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extend(1) }, "+1 min"), h("button", { class: "btn ghost sm", onclick: () => extend(5) }, "+5 min"),
-      h("button", { class: "btn sm grow", onclick: pasarAVotacion }, "Pasar a votación ahora"))];
+    estado = "Etapa 1 · Responder"; titulo = "Los grupos están respondiendo";
+    texto = "La votación empieza sola cuando se acabe el tiempo.";
+    extra = prog(sum(g => miembrosDe(g).length - faltanResponder(g, q0).length), nTot, "participantes ya respondieron");
+    secundarios = [btn("+1 min", () => extend(1)), btn("+5 min", () => extend(5))];
+    principal = btn("Pasar a votación ahora", pasarAVotacion, true);
   } else if (r.fase === "votacion") {
-    acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extendVoto(1) }, "+1 min"),
-      h("button", { class: "btn sm grow", onclick: pasarAResultados }, "Mostrar resultados ahora"))];
+    estado = "Etapa 2 · Votar"; titulo = "Los grupos están votando";
+    texto = "Los resultados aparecen solos cuando se acabe el tiempo.";
+    extra = prog(sum(g => miembrosDe(g).length - faltanVotar(g, q0).length), nTot, "participantes ya votaron");
+    secundarios = [btn("+1 min", () => extendVoto(1))];
+    principal = btn("Mostrar resultados ahora", pasarAResultados, true);
+  } else if (multi) {
+    estado = "Etapa 3 · Resultados"; titulo = "Cada grupo ya tiene su ganadora";
+    texto = "Siguiente paso: prepara el plenario para que todo el taller elija la mejor propuesta.";
+    secundarios = [btn("Repetir ronda", () => setTimer(mins)), btn("+ Nueva pregunta", newPregunta)];
+    principal = btn("Preparar plenario →", iniciarPlenario, true);
   } else {
-    acts = [h("div", { class: "hint" }, nGrupos() === 1 ? "Ronda terminada. El grupo ve su ganadora y escribe su propuesta de solución." : "Ronda terminada. Prepara el plenario: revisas las ganadoras, inicias la votación y al terminar todos los grupos pasan al Bloque 2."),
-      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setTimer(mins) }, "Repetir ronda"),
-        h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta"),
-        h("button", { class: "btn sm grow", onclick: iniciarPlenario }, "Preparar plenario"))];
+    estado = "Etapa 3 · Resultados"; titulo = "Ronda terminada";
+    texto = "El grupo ve su respuesta ganadora y escribe su propuesta de solución.";
+    secundarios = [btn("Repetir ronda", () => setTimer(mins))];
+    principal = btn("+ Nueva pregunta", newPregunta, true);
   }
+  const acts = [h("div", { class: "nowbox", role: "status" },
+    h("div", { class: "neyebrow" }, h("span", { class: "dot", "aria-hidden": "true" }), "Ahora · " + estado),
+    h("div", { class: "ntitle" }, titulo), h("p", { class: "ntext" }, texto), ...extra,
+    principal, secundarios.length ? h("div", { class: "nsecs" }, ...secundarios) : null)];
   const rPanel = h("div", { class: "panel" }, h("div", { class: "ptitle" }, h("span", {}, "Ronda de la pregunta " + qNum(qActiva()))), steps, ...acts);
 
   /* 3. grupos */
