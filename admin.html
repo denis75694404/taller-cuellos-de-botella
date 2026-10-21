@@ -974,7 +974,7 @@ function render() {
     else if (prevKey !== key) main.scrollTop = 0;
   }
   S.stick = false; S.pulse = null;
-  $("composer").hidden = fac || tab !== "respuestas" || !abierto();
+  $("composer").hidden = fac || tab !== "respuestas";
   updateComposer();
 }
 
