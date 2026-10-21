@@ -577,15 +577,15 @@ function groupScreen() {
     h("h2", {}, S.changing ? "Cambiar de grupo" : "Elige tu grupo"),
     h("p", {}, `Hola, ${S.nombre}. Cada grupo tiene hasta ${CUPO} integrantes. Solo verás las respuestas y resultados de tu grupo.`),
     h("div", { class: "ggrid" }, ...cards),
-    S.changing ? h("button", { class: "btn ghost", onclick: () => { S.changing = false; S.mode = "app"; route(); } }, "Volver a mi grupo") : null));
+    S.changing ? h("button", { class: "btn ghost", onclick: () => { S.changing = false; S.mode = "joining"; route(); } }, "Volver a mi grupo") : null));
 }
 async function unirme(g) {
-  if (miembrosDe(g).filter(([u]) => u !== S.uid).length >= CUPO) return toast("Ese grupo ya está completo. Elige otro.");
+  if (miembrosDe(g).filter(([u]) => u !== S.uid).length >= CUPO) { toast(`El Grupo ${g} ya está completo. Elige otro.`, 4000); return groupScreen(); }
   try {
     await salaRef().collection("miembros").doc(S.uid).set({ nombre: S.nombre.slice(0, 50), grupo: g, ts: Date.now() });
-    S.changing = false; S.mode = "app"; S.sig = ""; S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
+    S.changing = false; S.mode = "joining"; S.sig = ""; S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
     route();
-  } catch (e) { fbError(e); }
+  } catch (e) { fbError(e); groupScreen(); }
 }
 
 /* ---------- salas ---------- */
