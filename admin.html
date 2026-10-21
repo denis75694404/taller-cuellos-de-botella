@@ -361,6 +361,79 @@ main > .inner{flex:1 0 auto;width:100%}
 .winner .tied div{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;font-weight:700;overflow-wrap:anywhere}
 .ritem.win{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
 .ritem.win .pos{background:var(--gold);color:#1b1400}
+/* quién falta */
+.falta{font-size:12.5px;color:var(--warn);font-weight:600;overflow-wrap:anywhere}
+.okall{font-size:12.5px;color:var(--accent);font-weight:700}
+.mini.sol{border-left-color:var(--gold)}
+.gchip .ico{width:15px;height:15px}
+/* Bloque 2 */
+.solcard{align-self:stretch;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:10px;margin-top:12px;border:2px dashed color-mix(in srgb,var(--accent) 45%,transparent)}
+.solcard .eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.solcard h3{margin:0;font-family:var(--f-disp);font-weight:800;font-size:19px;text-wrap:balance}
+.solcard textarea,.solcard input{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--bar);padding:10px 12px;font:inherit;color:var(--fg)}
+.solcard textarea{resize:vertical;min-height:84px}
+.solcard :disabled{opacity:.75}
+/* proyección */
+.proj{position:fixed;inset:0;z-index:35;overflow:auto;color:#fff;background:radial-gradient(120% 80% at 50% 0%,#11745a,#06261d);padding-block:clamp(16px,3vw,40px);padding-left:max(clamp(16px,3vw,40px),env(safe-area-inset-left,0px));padding-right:max(clamp(16px,3vw,40px),env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:clamp(12px,2vw,28px);animation:fadeIn .3s ease}
+.pj-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pj-brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:clamp(14px,1.4vw,20px);opacity:.92;min-width:0}
+.pj-brand img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none}
+.pj-x{flex:none;background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:999px;padding:8px 16px;font-weight:700}
+.pj-lbl{font-size:clamp(12px,1.2vw,17px);font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.82}
+.pj-q h1{margin:6px 0 0;font-family:var(--f-disp);font-weight:800;font-size:clamp(26px,4vw,58px);line-height:1.1;text-wrap:balance;overflow-wrap:anywhere}
+.pj-stage{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.pj-clock{display:flex;flex-direction:column;align-items:center;margin-bottom:clamp(12px,2vw,28px)}
+.pj-clock b{font-family:var(--f-disp);font-weight:800;font-size:clamp(64px,11vw,170px);line-height:1;font-variant-numeric:tabular-nums}
+.pj-clock b.low{color:#ffb35c;animation:beat 1s ease-in-out infinite}
+.pj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:clamp(10px,1.5vw,20px)}
+.pj-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:22px;padding:clamp(14px,1.6vw,24px);display:flex;flex-direction:column;gap:6px;min-width:0}
+.pj-card h3{margin:0;font-family:var(--f-disp);font-size:clamp(18px,1.8vw,26px)}
+.pj-big{font-family:var(--f-disp);font-weight:800;font-size:clamp(36px,4.5vw,64px);line-height:1;font-variant-numeric:tabular-nums}
+.pj-card .prog{height:10px;border-radius:99px;background:rgba(255,255,255,.18);overflow:hidden}
+.pj-card .prog i{display:block;height:100%;background:#7ee2b5;border-radius:99px;transition:width .6s}
+.pj-card.win .trophy{width:44px;height:44px;color:var(--gold)}
+.pj-wt{font-weight:700;font-size:clamp(16px,1.6vw,22px);line-height:1.3;overflow-wrap:anywhere}
+.pj-join{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(16px,3vw,48px);align-items:center}
+.pj-code{font-family:var(--f-disp);font-weight:800;font-size:clamp(56px,10vw,150px);letter-spacing:.12em;line-height:1}
+.pj-link{font-size:clamp(14px,1.5vw,22px);opacity:.85;word-break:break-all}
+.pj-qr{padding:16px;border-radius:20px}
+.pj-qr img,.pj-qr canvas{width:min(34vw,360px)!important;height:auto!important}
+.pj-list{display:flex;flex-direction:column;gap:10px}
+.pj-item{background:rgba(255,255,255,.1);border-radius:16px;padding:14px 18px;display:flex;gap:14px;align-items:baseline;font-size:clamp(16px,1.7vw,24px);overflow-wrap:anywhere}
+.pj-item b{flex:none;color:#7ee2b5}
+.pj-foot{text-align:center;opacity:.85;font-size:clamp(14px,1.4vw,20px)}
+.pj-final{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.pj-final .trophy{width:clamp(70px,8vw,120px);height:auto;color:var(--gold);animation:float 3s ease-in-out infinite}
+.pj-ft{font-family:var(--f-disp);font-weight:800;font-size:clamp(28px,4.2vw,64px);line-height:1.15;max-width:24ch;text-wrap:balance;overflow-wrap:anywhere}
+.pj-ft small{display:block;font-family:var(--f-body);font-weight:600;font-size:clamp(14px,1.4vw,20px);opacity:.85;margin-top:8px}
+@media (max-width:700px){.pj-join{grid-template-columns:1fr}}
+/* encuesta */
+.stars{display:flex;gap:6px;justify-content:center;margin:10px 0}
+.star{border:0;background:none;font-size:40px;line-height:1;color:var(--line);transition:transform .2s cubic-bezier(.3,1.8,.5,1),color .2s}
+.star.on{color:var(--gold)}
+.star:hover{transform:scale(1.15)}
+.edist{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.erow{display:grid;grid-template-columns:38px 1fr 28px;gap:8px;align-items:center;font-size:13.5px;font-variant-numeric:tabular-nums}
+.erow .prog{height:8px;border-radius:99px;background:var(--bar);overflow:hidden}
+.erow .prog i{display:block;height:100%;background:var(--gold)}
+.ecoms{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;margin-bottom:10px}
+.ecoms p{margin:0;color:var(--fg);font-style:italic}
+/* sin conexión */
+.net{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:45;background:var(--warn);color:#fff;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:700;box-shadow:var(--lift);max-width:calc(100% - 32px);text-align:center}
+.msg .meta svg.pend{color:var(--muted)}
+/* accesibilidad */
+.a11y-pill{margin-left:auto;flex:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:999px;padding:6px 12px;font-weight:800}
+.hbtn.a11y{font-weight:800;font-size:15px;width:auto;padding:0 10px;border-radius:999px}
+.a11y-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+html.fs1 body{font-size:17px}
+html.fs2 body{font-size:19px}
+html.fs1 :is(.msg .txt,.vitem .txt,.ritem .txt,.mini,.field textarea,.scard p,.sys,.nextcard p,.wbanner p,.solcard textarea,.solcard input,.ptxt,.note,.hint,.falta,.okall){font-size:17px}
+html.fs2 :is(.msg .txt,.vitem .txt,.ritem .txt,.mini,.field textarea,.scard p,.sys,.nextcard p,.wbanner p,.solcard textarea,.solcard input,.ptxt,.note,.hint,.falta,.okall){font-size:20px}
+html.fs1 :is(.msg.q .txt,.qtext,.winner .wt){font-size:21px}
+html.fs2 :is(.msg.q .txt,.qtext,.winner .wt){font-size:25px}
+html:root.hc{--wall:#ffffff;--wall-dot:#ffffff;--panel:#ffffff;--bar:#efefef;--line:#4a545c;--fg:#000000;--muted:#262e33;--accent:#006b45;--accent-fg:#ffffff;--accent-soft:#d3efe1;--mine:#c6f3bf;--theirs:#ffffff;--sys:#fff1a0;--sys-fg:#231f00;--head:#00362a;--head-fg:#ffffff;--head-muted:#e8f3ef;--tick:#00539c;--warn:#a33a00;color-scheme:light}
+html.hc :is(.msg,.card,.panel,.gcard,.vitem,.ritem,.scard,.solcard,.nextcard,.wbanner,.field){outline:1.5px solid var(--line)}
+html.hc :focus-visible{outline:3px solid #000;outline-offset:3px}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -533,6 +606,7 @@ function overlay(content, ms) {
   return close;
 }
 function stageOverlay(fase) {
+  aviso("etapa");
   const i = FASES.indexOf(fase) + 1;
   overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Etapa " + i + " de 3"), h("div", { class: "bignum" }, i), h("h3", {}, FASE_NOMBRE[fase]),
     h("p", {}, isFac() ? "Todos los grupos pasaron a esta etapa." : FASE_TXT[fase])), 2600);
@@ -575,6 +649,7 @@ const S = {
   code: null, room: null, roomReady: false, miembros: new Map(), miembrosReady: false,
   G: new Map(), gsubs: new Map(), mode: "loading", changing: false,
   viewG: 0, tab: null, faseSeen: null, pulse: null, stick: false, endedFor: null,
+  plen: new Map(), enc: new Map(), mute: false, encDone: false,
   seen: new Set(), seenVote: new Set(), seenRes: new Set(), prevW: new Map(), prevStats: {}, sig: "", unsub: []
 };
 const isFac = () => ROLE === "admin" && S.isAdmin && !!S.room;
@@ -583,7 +658,7 @@ const salaRef = () => S.db.collection("salas").doc(S.code);
 const grupoRef = g => salaRef().collection("grupos").doc(String(g));
 const nGrupos = () => Math.max(1, S.room?.grupos | 0);
 const curG = () => isFac() ? S.viewG : (me()?.grupo | 0);
-const gdata = g => S.G.get(g) || { resp: [], votos: new Map() };
+const gdata = g => S.G.get(g) || { resp: [], votos: new Map(), sol: new Map() };
 const miembrosDe = g => [...S.miembros.entries()].filter(([, m]) => m.grupo === g).sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
 /* las etapas avanzan solas: respuestas hasta "fin", votación durante "voto" ms, luego resultados */
 const durVoto = r => (r && r.voto > 0 ? r.voto : VOTO_MS);
@@ -618,7 +693,7 @@ function screen(...cards) {
   img.addEventListener("error", () => hero.remove());
   root.replaceChildren(h("div", { class: "screen" }, h("div", { class: "inner split" }, hero, h("div", { class: "col" },
     h("div", { class: "brand" }, h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
-      h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, S.code ? "Sala " + S.code : "Respuestas, votación y prioridades por grupo"))),
+      h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, S.code ? "Sala " + S.code : "Respuestas, votación y prioridades por grupo")), a11yBtn("a11y-pill")),
     ...cards))));
 }
 function loading(msg) { S.mode = "loading"; screen(h("div", { class: "scard", style: "align-items:center;text-align:center" }, h("div", { class: "spinner" }), h("p", {}, msg))); }
@@ -770,15 +845,18 @@ function openSala(code) {
   S.unsub.push(salaRef().collection("miembros").onSnapshot(q => {
     S.miembros = new Map(q.docs.map(d => [d.id, d.data()])); S.miembrosReady = true; route();
   }, fbError));
+  S.unsub.push(salaRef().collection("plenario").onSnapshot(q => { S.plen = new Map(q.docs.map(d => [d.id, d.data()])); render(); }, () => {}));
+  if (ROLE === "admin" && S.isAdmin) S.unsub.push(salaRef().collection("encuesta").onSnapshot(q => { S.enc = new Map(q.docs.map(d => [d.id, d.data()])); }, () => {}));
 }
 function ensureGroupSubs() {
   const want = new Set(isFac() ? Array.from({ length: nGrupos() }, (_, i) => i + 1) : (me()?.grupo ? [me().grupo] : []));
   for (const [g, us] of S.gsubs) if (!want.has(g)) { us.forEach(u => u()); S.gsubs.delete(g); S.G.delete(g); }
   for (const g of want) {
     if (S.gsubs.has(g)) continue;
-    S.G.set(g, { resp: [], votos: new Map() });
+    S.G.set(g, { resp: [], votos: new Map(), sol: new Map() });
     S.gsubs.set(g, [
-      grupoRef(g).collection("respuestas").orderBy("ts").onSnapshot(q => { gdata(g).resp = q.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => typeof r.t === "string"); S.G.set(g, gdata(g)); render(); }, fbError),
+      grupoRef(g).collection("respuestas").orderBy("ts").onSnapshot({ includeMetadataChanges: true }, q => { gdata(g).resp = q.docs.map(d => ({ id: d.id, ...d.data(), pend: d.metadata.hasPendingWrites })).filter(r => typeof r.t === "string"); S.G.set(g, gdata(g)); render(); }, fbError),
+      grupoRef(g).collection("soluciones").onSnapshot(q => { gdata(g).sol = new Map(q.docs.map(d => [d.id, d.data()])); S.G.set(g, gdata(g)); render(); }, fbError),
       grupoRef(g).collection("votos").onSnapshot(q => { gdata(g).votos = new Map(q.docs.map(d => [d.id, d.data()])); S.G.set(g, gdata(g)); render(); }, fbError)
     ]);
   }
@@ -809,7 +887,7 @@ function fbError(e) {
 }
 
 /* ---------- datos derivados ---------- */
-function proposals(g, q = curQ()) { return gdata(g).resp.filter(r => qOf(r) === q).map(r => ({ key: r.id, uid: r.uid, a: r.nombre || "Participante", t: String(r.t).slice(0, 400), ts: +r.ts || 0 })); }
+function proposals(g, q = curQ()) { return gdata(g).resp.filter(r => qOf(r) === q).map(r => ({ key: r.id, uid: r.uid, a: r.nombre || "Participante", t: String(r.t).slice(0, 400), ts: +r.ts || 0, pend: !!r.pend })); }
 const myProps = () => gdata(curG()).resp.filter(r => r.uid === S.uid && qOf(r) === qActiva());
 const voteId = () => S.uid + "_" + qActiva();
 const myVote = () => { const v = gdata(curG()).votos.get(voteId())?.id; return typeof v === "string" ? v : null; };
@@ -862,19 +940,6 @@ function extendVoto(min) { setRoom({ voto: durVoto(S.room) + min * 60000 }); toa
 function pasarAVotacion() { setRoom({ fin: Date.now() - 1000, voto: VOTO_MS }); }
 function pasarAResultados() { setRoom({ voto: Math.max(0, Date.now() - S.room.fin - 1000) }); }
 function extend(min) { const base = Math.max(S.room.fin || Date.now(), Date.now()); setRoom({ fin: base + min * 60000 }); toast(`Se agregaron ${min} min.`); }
-async function resetSala() {
-  try {
-    const docs = [];
-    for (let g = 1; g <= nGrupos(); g++) {
-      const [r, v] = await Promise.all([grupoRef(g).collection("respuestas").get(), grupoRef(g).collection("votos").get()]);
-      docs.push(...r.docs, ...v.docs);
-    }
-    for (let i = 0; i < docs.length; i += 400) { const b = S.db.batch(); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
-    await setRoom({ fin: null, voto: VOTO_MS });
-    S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear(); S.sig = "";
-    toast("Se borraron las respuestas y votos de todos los grupos.");
-  } catch (e) { fbError(e); }
-}
 
 /* ---------- compartir ---------- */
 function shareLink() { return new URL("grupos.html?sala=" + S.code, location.href).href; }
@@ -906,12 +971,14 @@ function buildApp() {
       ROLE === "admin" ? h("div", { class: "gavatar photo", "aria-hidden": "true" }, h("img", { src: "img/administrador-icono.jpg", alt: "" })) : h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
       h("div", { class: "htext" }, h("h1", { id: "title" }, ""), h("p", { id: "sub" }, "")),
       h("div", { class: "timer", id: "timer", hidden: true, role: "timer", "aria-live": "off" }, svgClock(), h("span", { id: "timerTxt" }, "")),
+      a11yBtn(),
       h("button", { class: "codechip", id: "codeBtn", onclick: () => shareOverlay(), "aria-label": "Compartir la sala" }, svgShare(), S.code),
       h("button", { class: "hbtn", id: "menuBtn", hidden: true, "aria-label": "Más opciones", "aria-haspopup": "true", "aria-expanded": "false", onclick: e => { e.stopPropagation(); toggleMenu(); } },
         svg("0 0 24 24", '<circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/>')),
       h("div", { class: "menu", id: "menu", role: "menu", hidden: true }))),
     h("nav", { id: "nav" }, h("div", { class: "inner", role: "tablist", "aria-label": "Etapas del taller" },
       ...FASES.map((f, i) => h("button", { class: "tab", role: "tab", "data-tab": f, onclick: () => { if (tabAllowed(f)) { S.tab = f; S.sig = ""; render(); } } }, (i + 1) + " · " + ["Responder", "Votar", "Resultados"][i])),
+      h("button", { class: "tab", role: "tab", "data-tab": "plenario", hidden: true, onclick: () => { if (tabAllowed("plenario")) { S.tab = "plenario"; S.sig = ""; render(); } } }, "4 · Plenario"),
       h("span", { class: "ink", id: "ink" }))),
     h("section", { class: "ctl", id: "fac", hidden: true }, h("div", { class: "inner", id: "facIn" })),
     h("main", { id: "main" }, h("div", { class: "inner", id: "view" })),
@@ -932,8 +999,8 @@ function updateComposer() {
     myProps().length >= MAX_MSG ? `Llegaste al máximo de ${MAX_MSG} respuestas` : "Escribe tu respuesta";
   $("send").disabled = !ok || !ta.value.trim();
 }
-const currentTab = () => S.tab || S.room?.fase || "respuestas";
-const tabAllowed = t => isFac() || FASES.indexOf(t) <= FASES.indexOf(S.room?.fase || "respuestas");
+const currentTab = () => S.tab || (plen() ? "plenario" : S.room?.fase) || "respuestas";
+const tabAllowed = t => t === "plenario" ? !!plen() : isFac() || FASES.indexOf(t) <= FASES.indexOf(S.room?.fase || "respuestas");
 function moveInk() { const sel = document.querySelector('.tab[aria-selected="true"]'), ink = $("ink"); if (sel && ink) { ink.style.left = sel.offsetLeft + 12 + "px"; ink.style.width = sel.offsetWidth - 24 + "px"; } }
 addEventListener("resize", moveInk);
 
@@ -943,139 +1010,13 @@ setInterval(() => {
   if (S.mode !== "app" || !S.room) return;
   const e = etapa(S.room);
   if (e.fase !== S.room.fase || e.espera !== S.room.espera) { Object.assign(S.room, e); S.sig = ""; S.facSig = ""; render(); }
-  paintTimer();
+  paintTimer(); tickExtra();
   const o = abierto();
   if (wasOpen !== null && o !== wasOpen) { S.sig = ""; render(); }
   wasOpen = o;
 }, 250);
-function paintTimer() {
-  const t = $("timer"); if (!t) return;
-  const f = S.room.fase, r = restante(), show = r != null && r > 0 && (f === "respuestas" || f === "votacion");
-  const ft = $("flowTime");
-  if (ft && show) { ft.textContent = mmss(r); ft.parentElement.classList.toggle("low", r <= 30000); }
-  if (isFac()) { t.hidden = true; return; }
-  t.hidden = !show; if (!show) return;
-  $("timerTxt").textContent = (f === "votacion" ? "Votar " : "Responder ") + mmss(r);
-  t.classList.toggle("low", r <= 30000);
-  t.classList.remove("over");
-}
 
-function render() {
-  if (S.mode !== "app" || !S.roomReady || !$("view")) return;
-  if (S.room.qid !== S.qSeen) {
-    const had = S.qSeen; S.qSeen = S.room.qid; S.faseSeen = S.room.fase; S.tab = null; S.viewQ = null;
-    if (had != null) questionOverlay();
-  } else if (S.room.fase !== S.faseSeen) { const had = S.faseSeen; S.faseSeen = S.room.fase; S.tab = null; if (had !== null) stageOverlay(S.room.fase); }
-  else if (S.esperaSeen === true && !S.room.espera) stageOverlay("respuestas");
-  S.esperaSeen = S.room.espera;
-  const tab = currentTab(), g = curG(), fac = isFac();
-  document.title = (S.room.titulo || "Taller") + " · " + S.code;
-  $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
-  const nm = g ? miembrosDe(g).length : S.miembros.size;
-  const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
-  $("sub").textContent = fac
-    ? (g ? `Facilitador · Grupo ${g} · ${qLbl}` : `Facilitador · ${nGrupos()} grupos · ${S.miembros.size} participantes · ${qLbl}`)
-    : `${S.nombre} · ${nm} de ${CUPO} integrantes · ${qLbl} · ${FASE_NOMBRE[S.room.fase]}`;
-  document.querySelectorAll(".tab").forEach(b => {
-    const t = b.dataset.tab;
-    b.setAttribute("aria-selected", t === tab); b.disabled = !tabAllowed(t);
-    b.querySelector(".live")?.remove();
-    if (t === S.room.fase) b.prepend(h("span", { class: "live", "aria-label": "etapa actual" }));
-  });
-  moveInk(); paintFac(); paintTimer();
 
-  const gd = g ? gdata(g) : null;
-  const q = curQ();
-  const sig = JSON.stringify([tab, g, q, qTexto(q), qActiva(), S.room.fase, fac, abierto(), S.room.grupos,
-    !g ? [...S.G].map(([k]) => [k, proposals(k, q).map(p => p.key), votosDe(k, q).map(v => v.id)]).concat([[...S.miembros.values()].map(m => m.grupo)]) :
-    tab === "respuestas" ? proposals(g, q).map(p => p.key) : tab === "votacion" ? [proposals(g, q).map(p => p.key), myVote(), fac ? votosDe(g, q).length : 0] : tally(g, q).ranked.map(r => r.key + ":" + r.n)]);
-  const view = $("view"), main = $("main"), prevKey = view.dataset.key, key = tab + "|" + g + "|" + q;
-  if (sig !== S.sig) {
-    S.sig = sig;
-    const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 80;
-    view.replaceChildren(...(!g ? viewSummary(tab) : tab === "respuestas" ? viewChat(g) : tab === "votacion" ? viewVote(g) : viewResults(g, prevKey !== key)));
-    if (prevKey && prevKey !== key) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
-    view.dataset.key = key;
-    view.classList.toggle("bottom", tab === "respuestas" && !!g);
-    if (tab === "respuestas" && g && (S.stick || nearBottom || prevKey !== key)) main.scrollTop = main.scrollHeight;
-    else if (prevKey !== key) main.scrollTop = 0;
-  }
-  S.stick = false; S.pulse = null;
-  $("composer").hidden = tab !== "respuestas" || !g;
-  updateComposer();
-}
-
-function paintFac() {
-  const sec = $("fac"), fac = isFac();
-  sec.hidden = !fac; $("nav").hidden = fac; $("menuBtn").hidden = !fac;
-  if (!fac) return;
-  const r = S.room, tab = currentTab(), q = curQ(), activa = q === qActiva(), tot = preguntas().length;
-  const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
-  const facSig = JSON.stringify([r.fase, r.espera, S.viewG, counts, preguntas().map(p => p.id + p.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin]);
-  if (facSig === S.facSig) return;
-  S.facSig = facSig;
-
-  /* 1. pregunta */
-  const sel = tot > 1 ? h("select", { class: "qsel", "aria-label": "Ver otra pregunta", onchange: e => { S.viewQ = e.target.value; S.facSig = ""; S.sig = ""; render(); } },
-    ...preguntas().map((p, i) => { const o = h("option", { value: p.id }, `P${i + 1}${p.id === qActiva() ? " · activa" : ""}`); o.selected = p.id === q; return o; })) : null;
-  const qPanel = h("div", { class: "panel" },
-    h("div", { class: "ptitle" }, h("span", {}, activa ? h("span", { class: "dot", "aria-hidden": "true" }) : null, `Pregunta ${qNum(q)} de ${tot}` + (activa ? " · en todos los grupos" : " · anterior")), sel),
-    h("div", { class: "qtext" }, qTexto(q)),
-    h("div", { class: "acts" },
-      activa ? null : h("button", { class: "btn sm", onclick: () => activarPregunta(q) }, "Volver a enviar esta pregunta"),
-      h("button", { class: "btn ghost sm", onclick: editPregunta }, "Editar"),
-      h("button", { class: (activa && r.fase === "resultados" ? "btn" : "btn ghost") + " sm", onclick: newPregunta }, "+ Nueva pregunta")));
-
-  /* 2. ronda: pasos automáticos y una acción principal */
-  const idx = r.espera ? -1 : FASES.indexOf(r.fase), mins = Number(S.lastMin) || 5;
-  const info = [["respuestas", "Responder", `${mins} min`], ["votacion", "Votar", `${Math.round(durVoto(r) / 60000)} min`], ["resultados", "Resultados", "Auto"]];
-  const steps = h("div", { class: "stepsbar", role: "group", "aria-label": "Etapas de la ronda (toca para ver)" },
-    ...info.map(([f, l, d], i) => h("button", {
-      class: "step" + (i === idx ? " now" : "") + (i < idx ? " done" : "") + (tab === f ? " viewing" : ""),
-      "aria-current": i === idx ? "step" : null, title: "Ver " + l, onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); }
-    }, h("span", {}, `${i + 1} · ${l}`), h("b", { id: i === idx && f !== "resultados" ? "flowTime" : null }, i < idx ? "✓" : i === idx && f !== "resultados" ? mmss(restante() || 0) : i === idx ? "✓" : d))));
-  let acts;
-  if (r.espera) {
-    const custom = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: [3, 5, 10].includes(mins) ? "" : mins, placeholder: "min", "aria-label": "Otros minutos" });
-    custom.addEventListener("change", () => { if (custom.value > 0) { S.lastMin = custom.value; S.facSig = ""; paintFac(); } });
-    acts = [h("div", { class: "hint" }, "Minutos para responder (luego 3 min de votación y resultados automáticos):"),
-      h("div", { class: "mins" }, ...[3, 5, 10].map(m => h("button", { "aria-pressed": mins === m, onclick: () => { S.lastMin = m; S.facSig = ""; paintFac(); } }, m + " min")), custom),
-      h("div", { class: "acts" }, h("button", { class: "btn grow", onclick: () => setTimer(mins) }, `▶ Iniciar ronda (${mins} min)`))];
-  } else if (r.fase === "respuestas") {
-    acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extend(1) }, "+1 min"), h("button", { class: "btn ghost sm", onclick: () => extend(5) }, "+5 min"),
-      h("button", { class: "btn sm grow", onclick: pasarAVotacion }, "Pasar a votación ahora"))];
-  } else if (r.fase === "votacion") {
-    acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extendVoto(1) }, "+1 min"),
-      h("button", { class: "btn sm grow", onclick: pasarAResultados }, "Mostrar resultados ahora"))];
-  } else {
-    acts = [h("div", { class: "hint" }, "Ronda terminada. Cada grupo ya ve sus resultados."),
-      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setTimer(mins) }, "Repetir ronda"), h("button", { class: "btn sm grow", onclick: newPregunta }, "+ Nueva pregunta"))];
-  }
-  const rPanel = h("div", { class: "panel" }, h("div", { class: "ptitle" }, h("span", {}, "Ronda de la pregunta " + qNum(qActiva()))), steps, ...acts);
-
-  /* 3. grupos */
-  const gbar = h("div", { class: "groupbar", role: "group", "aria-label": "Ver grupo" },
-    h("button", { class: "gchip", "aria-pressed": S.viewG === 0, onclick: () => { S.viewG = 0; S.facSig = ""; render(); } }, "Todos los grupos"),
-    ...counts.map((n, i) => h("button", { class: "gchip", "aria-pressed": S.viewG === i + 1, onclick: () => { S.viewG = i + 1; S.facSig = ""; render(); } }, "Grupo " + (i + 1), h("small", {}, `${n}/${CUPO}`))));
-
-  $("facIn").replaceChildren(h("div", { class: "ctl-grid" }, qPanel, rPanel), gbar);
-}
-function toggleMenu(force) {
-  const m = $("menu"), b = $("menuBtn"); if (!m) return;
-  const open = force ?? m.hidden;
-  if (open) {
-    const item = (txt, fn, cls) => h("button", { role: "menuitem", class: cls || null, onclick: () => { toggleMenu(false); fn(); } }, txt);
-    m.replaceChildren(
-      item("Mostrar código y QR de la sala", () => shareOverlay()),
-      item("Descargar resultados (Excel/CSV)", downloadCSV),
-      item("Copiar resultados de todos los grupos", () => copy(allResultsText(), "Resultados de todos los grupos copiados.")),
-      item("Agregar un grupo", () => { setRoom({ grupos: nGrupos() + 1 }); toast(`Se agregó el Grupo ${nGrupos() + 1}.`); }),
-      h("hr"),
-      item("Reiniciar respuestas y votos", confirmReset, "danger"),
-      item("Empezar de cero (borrar la sala)", confirmEmpezarDeCero, "danger"));
-  }
-  m.hidden = !open; b.setAttribute("aria-expanded", String(open));
-}
 document.addEventListener("click", e => { const m = $("menu"); if (m && !m.hidden && !m.contains(e.target)) toggleMenu(false); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") toggleMenu(false); });
 function editPregunta() {
@@ -1108,6 +1049,7 @@ function activarPregunta(q) {
   S.viewQ = null; toast(`Pregunta ${qNum(q)} enviada a todos los grupos.`);
 }
 function questionOverlay() {
+  aviso("etapa");
   const n = qNum(qActiva());
   overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, isFac() ? "Enviada a todos los grupos" : "Nueva pregunta"),
     h("div", { class: "bignum" }, "P" + n), h("h3", { style: "font-size:21px;text-wrap:balance" }, qTexto(qActiva())),
@@ -1121,28 +1063,6 @@ function confirmEmpezarDeCero() {
     h("div", { class: "row", style: "justify-content:center;margin-top:14px" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
       h("button", { class: "btn warn", onclick: () => { close(); empezarDeCero(); } }, "Borrar todo y empezar"))), 0);
 }
-async function empezarDeCero() {
-  const code = S.code, ref = salaRef(), n = nGrupos();
-  S.wiping = true;
-  loading("Borrando la sala " + code + "…");
-  try {
-    const snaps = [ref.collection("miembros").get()];
-    for (let g = 1; g <= n; g++) snaps.push(grupoRef(g).collection("respuestas").get(), grupoRef(g).collection("votos").get());
-    const docs = (await Promise.all(snaps)).flatMap(q => q.docs);
-    for (let i = 0; i < docs.length; i += 400) { const b = S.db.batch(); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
-    S.unsub.forEach(u => u()); S.unsub = [];
-    for (const [, us] of S.gsubs) us.forEach(u => u());
-    await ref.delete();
-    toast("Sala " + code + " borrada. Crea la nueva sala y sus grupos.", 4000);
-  } catch (e) { fbError(e); }
-  S.unsub.forEach(u => u()); S.unsub = [];
-  for (const [, us] of S.gsubs) us.forEach(u => u());
-  S.gsubs.clear(); S.G.clear(); S.miembros = new Map();
-  Object.assign(S, { code: null, room: null, roomReady: false, miembrosReady: false, qSeen: null, faseSeen: null, viewG: 0, viewQ: null, tab: null, sig: "", facSig: "", endedFor: null, wiping: false });
-  S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
-  history.replaceState(null, "", location.pathname);
-  homeScreen();
-}
 function confirmReset() {
   let close;
   close = overlay(h("div", { class: "ocard" }, h("h3", {}, "¿Reiniciar el taller?"), h("p", {}, "Se borrarán las respuestas y votos de todos los grupos. Los integrantes se mantienen en sus grupos."),
@@ -1150,27 +1070,6 @@ function confirmReset() {
       h("button", { class: "btn warn", onclick: () => { close(); resetSala(); } }, "Borrar todo"))), 0);
 }
 
-function viewSummary(tab) {
-  const out = [banner(true), h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())}` + (curQ() === qActiva() ? " · activa en todos los grupos" : " · anterior (solo consulta)")), h("div", { class: "txt" }, qTexto(curQ())))];
-  const cards = [];
-  for (let g = 1; g <= nGrupos(); g++) {
-    const ms = miembrosDe(g), d = gdata(g), t = tally(g);
-    let body;
-    const pr = proposals(g);
-    if (tab === "respuestas") body = [h("span", { class: "note" }, `${pr.length} ${pr.length === 1 ? "respuesta" : "respuestas"}`), ...pr.slice(-2).map(r => h("div", { class: "mini" }, r.t))];
-    else if (tab === "votacion") body = [h("span", { class: "note" }, `${t.voters} de ${ms.length} votaron`), h("div", { class: "prog" }, h("i", { style: `width:${ms.length ? t.voters / ms.length * 100 : 0}%` }))];
-    else body = ganadoras(t.ranked).map(r => h("div", { class: "mini" }, h("b", {}, "🏆"), r.t, ` (${r.n} ${r.n === 1 ? "voto" : "votos"})`));
-    if (tab === "resultados" && !body.length) body = [h("span", { class: "note" }, "Sin votos todavía.")];
-    cards.push(h("button", { class: "gcard", style: `--d:${(g - 1) * 0.05}s`, onclick: () => { S.viewG = g; render(); } },
-      h("div", { class: "gt" }, h("h3", {}, "Grupo " + g), h("span", { class: "pill" + (ms.length >= CUPO ? " ok" : "") }, `${ms.length}/${CUPO}`)),
-      h("div", { class: "names" }, ...ms.map(([, m]) => h("span", {}, m.nombre || "Participante"))),
-      ...body, h("span", { class: "lnk open" }, "Abrir grupo →")));
-  }
-  out.push(h("div", { class: "ggrid", style: "margin-top:10px" }, ...cards));
-  out.push(h("div", { class: "ractions" },
-    h("button", { class: "btn ghost", onclick: () => shareOverlay() }, "Mostrar código y QR para que entren")));
-  return out;
-}
 
 function viewChat(g) {
   const out = [isFac() ? null : banner(false), h("div", { class: "day" }, "Grupo " + g)].filter(Boolean);
@@ -1185,7 +1084,7 @@ function viewChat(g) {
     el.append(h("span", { class: "txt" }, p.t),
       h("span", { class: "meta" },
         (mine && abierto()) || fac ? h("button", { class: "del", onclick: () => deleteMsg(p.key, el), "aria-label": "Borrar esta respuesta" }, "borrar") : null,
-        hora(p.ts), mine ? svgTicks() : null));
+        hora(p.ts), mine ? (p.pend ? svgPend() : svgTicks()) : null));
     out.push(el);
   }
   if (!props.length) {
@@ -1208,6 +1107,7 @@ function viewChat(g) {
     out.push(next(h("div", { class: "ic" }, "3"), "¡Ya están los resultados!", fac ? "Cada grupo ya ve sus prioridades." : "Descubre qué priorizó tu grupo.", "Ver resultados →", ir("resultados")));
   } else if (!abierto()) out.push(h("div", { class: "sys" }, "Se acabó el tiempo para responder."));
   else if (!fac) out.push(h("div", { class: "sys" }, `Puedes enviar hasta ${MAX_MSG} respuestas. Te quedan ${Math.max(0, MAX_MSG - myProps().length)}.`));
+  if (fac && abierto()) out.push(h("div", { class: "sys" }, faltaLinea(faltanResponder(g), "responder")));
   if (!fac && !myProps().length && S.room.fase === "respuestas")
     out.push(h("button", { class: "lnk", style: "align-self:center", onclick: () => { S.changing = true; route(); } }, "¿Te equivocaste de grupo? Cambiar de grupo"));
   return out;
@@ -1219,7 +1119,7 @@ function viewVote(g) {
   const t = tally(g), nm = miembrosDe(g).length;
   out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
     h("div", {}, h("h2", {}, fac ? `Votación del Grupo ${g}` : "Elige 1 respuesta"),
-      h("p", {}, fac ? `${t.voters} de ${nm} integrantes ya votaron. Los votos se muestran en Resultados.`
+      h("p", {}, fac ? `${t.voters} de ${nm} integrantes ya votaron.${S.room.fase === "votacion" && faltanVotar(g).length ? " Faltan: " + faltanVotar(g).join(", ") + "." : ""} Los votos se muestran en Resultados.`
         : S.room.fase === "votacion" ? "Toca la respuesta de tu grupo que mejor describe el cuello de botella. Tienes 3 minutos; puedes cambiar tu voto hasta que termine el tiempo."
         : S.room.fase === "respuestas" ? "La votación empieza sola cuando termine el tiempo para responder y dura 3 minutos." : "La votación está cerrada.")),
     fac ? null : h("div", { class: "chips", "aria-label": mv ? "Ya votaste" : "Aún no votas" }, h("span", { class: "chip" + (mv ? " used" + (S.pulse ? " new" : "") : "") }, mv ? svgCheck() : "1")))));
@@ -1269,6 +1169,10 @@ function viewResults(g, entering) {
       h("div", { class: "tied" }, ...win.map(w => h("div", {}, w.t))),
       h("div", { class: "wmeta" }, h("span", {}, "El grupo decide cuál será la ganadora"))));
   } else out.push(h("div", { class: "card empty" }, h("b", {}, "Aún no hay votos"), "La ganadora será la respuesta con más votos."));
+  if (win.length) out.push(solCard(g, curQ()));
+  if (!fac && S.room.encuesta && !S.encDone) out.push(h("div", { class: "nextcard" }, h("div", { class: "ic" }, "★"),
+    h("div", { class: "tx" }, h("h4", {}, "Cuéntanos qué te pareció"), h("p", {}, "La encuesta de cierre es anónima y toma 30 segundos.")),
+    h("button", { class: "btn", onclick: encuestaOverlay }, "Responder la encuesta")));
   out.push(h("h3", { class: "sec-t" }, "Todas las respuestas del grupo"));
   const list = h("div", { class: "rlist" }), bars = [];
   ranked.forEach((r, i) => {
@@ -1290,25 +1194,613 @@ function viewResults(g, entering) {
     fac ? h("button", { class: "btn ghost", onclick: bigBurst }, "Celebrar") : null));
   return out;
 }
-function groupText(g, q = curQ()) {
-  const { ranked, voters } = tally(g, q);
-  const lines = [`Grupo ${g} · ${S.room.titulo || "Taller"}`, `Pregunta ${qNum(q)}: ${qTexto(q)}`, ""];
+function allResultsText() { return Array.from({ length: nGrupos() }, (_, i) => groupText(i + 1)).join("\n\n"); }
+
+/* ======================================================================
+   MEJORAS: quién falta, proyección, plenario, Bloque 2, avisos,
+   accesibilidad, sin conexión, encuesta e informe final
+   ====================================================================== */
+
+/* ---------- quién falta ---------- */
+const faltanResponder = (g, q = qActiva()) => { const con = new Set(proposals(g, q).map(p => p.uid)); return miembrosDe(g).filter(([u]) => !con.has(u)).map(([, m]) => m.nombre || "Participante"); };
+const faltanVotar = (g, q = qActiva()) => { const con = new Set(votosDe(g, q).map(v => v.uid)); return miembrosDe(g).filter(([u]) => !con.has(u)).map(([, m]) => m.nombre || "Participante"); };
+const faltaLinea = (lista, verbo) => lista.length ? h("div", { class: "falta" }, `Faltan ${verbo}: ${lista.join(", ")}`) : h("div", { class: "okall" }, `✓ Todos ya ${verbo === "responder" ? "respondieron" : "votaron"}`);
+
+/* ---------- avisos con sonido y vibración ---------- */
+let AC = null;
+document.addEventListener("pointerdown", () => {
+  try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); else if (AC.state === "suspended") AC.resume(); } catch {}
+}, { capture: true });
+function tono(freqs, dur) {
+  if (S.mute || !AC) return;
+  try {
+    let t = AC.currentTime;
+    for (const f of freqs) {
+      const o = AC.createOscillator(), gn = AC.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.22, t + 0.02); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(gn).connect(AC.destination); o.start(t); o.stop(t + dur + 0.02); t += dur * 0.85;
+    }
+  } catch {}
+}
+function vibrar(p) { if (S.mute) return; try { navigator.vibrate?.(p); } catch {} }
+function aviso(tipo) {
+  if (tipo === "30s") { tono([880, 880], 0.12); vibrar(300); }
+  else { tono([523, 659, 784], 0.16); vibrar([120, 60, 120]); }
+}
+
+/* ---------- accesibilidad: letra, contraste y sonido ---------- */
+const A11Y_KEY = "taller-accesibilidad";
+function a11yLoad() { let o = {}; try { o = JSON.parse(lsGet(A11Y_KEY)) || {}; } catch {} return { fs: Math.min(2, Math.max(0, o.fs | 0)), hc: !!o.hc, mute: !!o.mute }; }
+function a11yApply(o) {
+  const c = document.documentElement.classList;
+  c.toggle("fs1", o.fs === 1); c.toggle("fs2", o.fs === 2); c.toggle("hc", o.hc);
+  S.mute = o.mute; lsSet(A11Y_KEY, JSON.stringify(o));
+}
+a11yApply(a11yLoad());
+function a11yBtn(cls) { return h("button", { class: cls || "hbtn a11y", "aria-label": "Tamaño de letra, contraste y sonido", title: "Texto, contraste y sonido", onclick: e => { e.stopPropagation(); a11yPanel(); } }, "Aa"); }
+function a11yPanel() {
+  const o = a11yLoad(), body = h("div", {});
+  let close;
+  const sw = (on, fn) => h("button", { class: "switch", role: "switch", "aria-checked": on, onclick: fn }, h("span", { class: "knob" }));
+  const paint = () => body.replaceChildren(
+    h("div", { class: "a11y-row" }, h("span", {}, "Tamaño de letra"),
+      h("div", { class: "seg" }, ...["A", "A+", "A++"].map((l, i) => h("button", { "aria-pressed": o.fs === i, style: `font-size:${14 + i * 3}px`, onclick: () => { o.fs = i; a11yApply(o); paint(); } }, l)))),
+    h("div", { class: "a11y-row" }, h("span", {}, "Alto contraste"), sw(o.hc, () => { o.hc = !o.hc; a11yApply(o); paint(); })),
+    h("div", { class: "a11y-row" }, h("span", {}, "Sonido y vibración en los avisos"), sw(!o.mute, () => { o.mute = !o.mute; a11yApply(o); paint(); if (!o.mute) aviso("etapa"); })));
+  paint();
+  close = overlay(h("div", { class: "ocard left" }, h("h3", {}, "Texto, contraste y sonido"), body,
+    h("div", { class: "row", style: "margin-top:14px" }, h("button", { class: "btn", onclick: () => close() }, "Listo"))), 0);
+}
+
+/* ---------- sin conexión ---------- */
+const svgScreen = () => svg("0 0 24 24", '<rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>', "ico");
+const svgPend = () => svg("0 0 16 16", '<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5V8l2.2 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>', "pend");
+function netBanner() {
+  let el = $("net");
+  if (navigator.onLine) { el?.remove(); return; }
+  if (!el) document.body.append(h("div", { id: "net", class: "net", role: "status" }, "Sin conexión · lo que escribas se enviará cuando vuelva la señal"));
+}
+addEventListener("online", () => { netBanner(); toast("Conexión recuperada."); });
+addEventListener("offline", netBanner);
+netBanner();
+
+/* ---------- plenario: las ganadoras de todos los grupos ---------- */
+const plen = () => { const p = S.room?.plenario; return p && p.q === qActiva() && Array.isArray(p.items) && p.items.length && p.fin ? p : null; };
+const plenFase = () => { const p = plen(); return p ? (Date.now() < p.fin ? "votacion" : "resultados") : null; };
+const myPlenVote = () => { const p = plen(); return p ? (S.plen.get(S.uid + "_" + p.q)?.id || null) : null; };
+function plenTallyFor(p) {
+  if (!p) return { ranked: [], voters: 0 };
+  const c = new Map(); let voters = 0;
+  for (const v of S.plen.values()) if (v.q === p.q && p.items.some(i => i.id === v.id)) { voters++; c.set(v.id, (c.get(v.id) || 0) + 1); }
+  const ranked = p.items.map((it, i) => ({ ...it, key: it.id, n: c.get(it.id) || 0, ts: i })).sort((a, b) => b.n - a.n || a.ts - b.ts);
+  return { ranked, voters };
+}
+const plenTally = () => plenTallyFor(plen());
+async function iniciarPlenario() {
+  const q = qActiva(), items = [];
+  for (let g = 1; g <= nGrupos(); g++) for (const r of ganadoras(tally(g, q).ranked)) items.push({ id: `g${g}_${r.key}`, g, t: r.t, a: r.a });
+  if (items.length < 2) return toast(items.length ? "Solo hay una respuesta ganadora: no hace falta plenario." : "Aún no hay respuestas ganadoras en los grupos.", 4500);
+  try {
+    const old = await salaRef().collection("plenario").where("q", "==", q).get();
+    if (!old.empty) { const b = S.db.batch(); old.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
+  } catch {}
+  setRoom({ plenario: { q, fin: Date.now() + VOTO_MS, items } });
+}
+let plenQ = Promise.resolve();
+function votePlen(id) {
+  const p = plen(); if (!p || plenFase() !== "votacion" || isFac() || !me()) return;
+  const vid = S.uid + "_" + p.q, ref = salaRef().collection("plenario").doc(vid);
+  const quitar = myPlenVote() === id, antes = S.plen.get(vid);
+  if (quitar) S.plen.delete(vid); else S.plen.set(vid, { id, q: p.q, uid: S.uid });
+  S.pulse = id; S.sig = ""; render();
+  plenQ = plenQ.then(() => quitar ? ref.delete() : ref.set({ id, q: p.q, uid: S.uid, g: me().grupo, ts: Date.now() }))
+    .then(() => { if (!quitar) voteOverlay(); else toast("Quitaste tu voto."); })
+    .catch(e => { if (antes) S.plen.set(vid, antes); else S.plen.delete(vid); S.sig = ""; render(); fbError(e); });
+}
+function plenOverlay(tipo) {
+  aviso("etapa");
+  if (tipo === "inicio") overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow" }, "Plenario · todos los grupos"), h("div", { class: "bignum" }, "4"),
+    h("h3", {}, "¡Votación de todo el taller!"), h("p", {}, isFac() ? "Todos los participantes eligen entre las ganadoras de cada grupo." : "Elige la mejor entre las respuestas ganadoras de todos los grupos. Tienes 3 minutos.")), 3000);
+  else { overlay(h("div", { class: "ocard" }, svgTrophy(), h("h3", {}, "¡Tenemos la ganadora del plenario!"), h("p", {}, "Mira cuál eligió todo el taller.")), 2600); setTimeout(bigBurst, 400); }
+}
+function checkPlenario() {
+  const p = plen(), key = p ? p.q + "|" + p.items.map(i => i.id).join(",") : "", f = plenFase();
+  if (S.plenKey !== undefined && key !== S.plenKey) { if (key) { S.tab = null; plenOverlay("inicio"); } }
+  else if (key && S.plenFaseSeen && f !== S.plenFaseSeen) { S.tab = null; if (f === "resultados") plenOverlay("fin"); }
+  S.plenKey = key; S.plenFaseSeen = f;
+}
+function winnerCard(w, voters, label, meta, entering) {
+  return h("div", { class: "winner" + (entering && !REDUCED ? " rise" : ""), role: "status" },
+    svgTrophy(), h("div", { class: "lbl" }, label), h("div", { class: "wt" }, w.t),
+    h("div", { class: "wmeta" }, h("span", {}, `${w.n} ${w.n === 1 ? "voto" : "votos"} de ${voters}`), meta ? h("span", {}, meta) : null));
+}
+function viewPlenario(entering) {
+  const p = plen(), fac = isFac();
+  if (!p) return [h("div", { class: "card empty" }, h("b", {}, "No hay plenario activo"), "El facilitador lo inicia al terminar los resultados de los grupos.")];
+  const f = plenFase(), mv = myPlenVote(), open = f === "votacion" && !fac && !!me();
+  const { ranked, voters } = plenTally(), out = [];
+  out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
+    h("div", {}, h("h2", {}, f === "votacion" ? "Plenario: elige la mejor propuesta" : "Resultados del plenario"),
+      h("p", {}, f === "votacion"
+        ? (fac ? `${voters} de ${S.miembros.size} participantes ya votaron.` : "Estas son las respuestas ganadoras de todos los grupos. Tienes 1 voto para elegir la que debe priorizar todo el taller.")
+        : "La propuesta con más votos de todo el taller es la ganadora del plenario.")),
+    open ? h("div", { class: "chips" }, h("span", { class: "chip" + (mv ? " used" : "") }, mv ? svgCheck() : "1")) : null)));
+  if (f === "votacion") {
+    const list = h("div", { class: "vlist" });
+    p.items.forEach((it, i) => {
+      const on = mv === it.id;
+      const b = h("button", { class: "vitem" + (entering ? " enter" : "") + (S.pulse === it.id ? " pulse" : ""), style: `--d:${i * 0.06}s`, "aria-pressed": on, disabled: !open, onclick: () => votePlen(it.id) },
+        h("span", { class: "box", style: "border-radius:50%" }, on ? svgCheck() : null),
+        h("span", { class: "body" }, h("div", { class: "who" }, `Grupo ${it.g} · ${it.a}`), h("div", { class: "txt" }, it.t)));
+      if (open) tilt(b);
+      list.append(b);
+    });
+    out.push(list);
+    if (open) out.push(h("div", { class: "sys" }, mv ? "Listo: tu voto del plenario está guardado." : "Aún no has votado en el plenario."));
+    return out;
+  }
   const win = ganadoras(ranked);
+  if (win.length === 1) out.push(winnerCard(win[0], voters, "Ganadora del plenario", "Grupo " + win[0].g, entering));
+  else if (win.length > 1) out.push(h("div", { class: "winner" + (entering && !REDUCED ? " rise" : "") }, svgTrophy(), h("div", { class: "lbl" }, "Empate en el plenario"),
+    h("div", { class: "tied" }, ...win.map(w => h("div", {}, `Grupo ${w.g}: ${w.t}`))), h("div", { class: "wmeta" }, h("span", {}, "El plenario decide cuál será la ganadora"))));
+  else out.push(h("div", { class: "card empty" }, h("b", {}, "Nadie votó en el plenario")));
+  const max = Math.max(1, ...ranked.map(r => r.n));
+  out.push(h("h3", { class: "sec-t" }, "Todas las propuestas del plenario"),
+    h("div", { class: "rlist" }, ...ranked.map((r, i) => h("div", { class: `ritem${win.includes(r) ? " top win" : ""}` },
+      h("span", { class: "pos" }, i + 1),
+      h("div", { class: "txt" }, h("span", { class: "prio" }, "Grupo " + r.g), r.t),
+      h("div", { class: "n" }, r.n, h("small", {}, r.n === 1 ? "voto" : "votos")),
+      h("div", { class: "barwrap" }, h("div", { class: "bar", style: `width:${r.n / max * 100}%` }))))));
+  return out;
+}
+
+/* ---------- Bloque 2: propuesta de solución y responsable ---------- */
+function solCard(g, q) {
+  const s = gdata(g).sol.get(q) || {}, fac = isFac();
+  const puede = fac || (q === qActiva() && S.room.fase === "resultados");
+  const ta = h("textarea", { id: "solIn", rows: 3, maxlength: 600, placeholder: "¿Qué acción concreta proponen para resolver este cuello de botella?", disabled: !puede });
+  ta.value = s.solucion || "";
+  const rp = h("input", { id: "respIn", maxlength: 100, placeholder: "Responsable (persona o área)", disabled: !puede });
+  rp.value = s.responsable || "";
+  const guardar = async () => {
+    const sol = ta.value.trim(); if (!sol) return toast("Escribe la propuesta de solución.");
+    try {
+      await grupoRef(g).collection("soluciones").doc(q).set({ solucion: sol.slice(0, 600), responsable: rp.value.trim().slice(0, 100), por: (fac ? "Facilitador" : S.nombre || "Participante").slice(0, 50), uid: S.uid, ts: Date.now() });
+      ta.blur(); rp.blur(); toast("Propuesta guardada para todo el grupo."); burst({ particleCount: 50, spread: 60, origin: { y: .7 } });
+    } catch (e) { fbError(e); }
+  };
+  return h("div", { class: "solcard" },
+    h("div", { class: "eyebrow" }, "Bloque 2 · Propuesta de solución"),
+    h("h3", {}, "¿Cómo resolvemos la respuesta ganadora?"),
+    h("p", { class: "hint" }, "Escríbanla entre todos: cualquier integrante del grupo puede completarla o mejorarla."),
+    ta, rp,
+    h("div", { class: "acts" },
+      puede ? h("button", { class: "btn", onclick: guardar }, s.solucion ? "Actualizar propuesta" : "Guardar propuesta") : null,
+      s.ts ? h("span", { class: "note" }, `Guardado por ${s.por || "alguien del grupo"} · ${hora(s.ts)}`) : null));
+}
+
+/* ---------- encuesta de cierre ---------- */
+function checkEncuesta() {
+  if (!S.room.encuesta) { S.encChecked = false; return; }
+  if (isFac() || S.encChecked || !me()) return;
+  if (S.room.fase !== "resultados" || plenFase() === "votacion") return; // no interrumpir mientras se responde o vota
+  S.encChecked = true;
+  salaRef().collection("encuesta").doc(S.uid).get()
+    .then(d => { S.encDone = d.exists; if (!d.exists) setTimeout(encuestaOverlay, 900); S.sig = ""; render(); })
+    .catch(() => {});
+}
+function encuestaOverlay() {
+  let nota = 0, close;
+  const stars = h("div", { class: "stars", role: "radiogroup", "aria-label": "Calificación del 1 al 5" });
+  const paint = () => stars.replaceChildren(...[1, 2, 3, 4, 5].map(n => h("button", { class: "star" + (n <= nota ? " on" : ""), role: "radio", "aria-checked": n === nota, "aria-label": n + (n === 1 ? " estrella" : " estrellas"), onclick: () => { nota = n; paint(); } }, "★")));
+  paint();
+  const com = h("textarea", { id: "encCom", rows: 3, maxlength: 400, placeholder: "¿Qué fue lo más valioso o qué mejorarías? (opcional)" });
+  const send = h("button", { class: "btn block", onclick: async () => {
+    if (!nota) return toast("Elige de 1 a 5 estrellas.");
+    send.disabled = true;
+    try {
+      await salaRef().collection("encuesta").doc(S.uid).set({ nota, comentario: com.value.trim().slice(0, 400), g: me()?.grupo || 0, ts: Date.now() });
+      S.encDone = true; close(); S.sig = ""; render();
+      overlay(h("div", { class: "ocard" }, h("div", { class: "bignum", style: "font-size:56px" }, "¡Gracias!"), h("p", {}, "Tu opinión nos ayuda a mejorar el próximo taller.")), 2400);
+      bigBurst();
+    } catch (e) { send.disabled = false; fbError(e); }
+  } }, "Enviar mi opinión");
+  close = overlay(h("div", { class: "ocard left" }, h("div", { class: "eyebrow" }, "Encuesta de cierre · anónima"),
+    h("h3", {}, "¿Qué tan útil fue este taller para ti?"), stars, com, send), 0);
+}
+function encuestaResultados() {
+  const vals = [...S.enc.values()].filter(v => v.nota >= 1 && v.nota <= 5);
+  const n = vals.length, avg = n ? vals.reduce((a, v) => a + v.nota, 0) / n : 0;
+  const coms = vals.filter(v => v.comentario).map(v => v.comentario);
+  let close;
+  close = overlay(h("div", { class: "ocard left" }, h("div", { class: "eyebrow" }, "Encuesta de cierre"),
+    h("h3", {}, n ? `${avg.toFixed(1)} de 5 ★` : "Aún no hay respuestas"),
+    h("p", {}, `${n} ${n === 1 ? "respuesta" : "respuestas"} de ${S.miembros.size} participantes` + (S.room.encuesta ? " · encuesta abierta" : " · encuesta cerrada")),
+    h("div", { class: "edist" }, ...[5, 4, 3, 2, 1].map(k => { const c = vals.filter(v => v.nota === k).length; return h("div", { class: "erow" }, h("span", {}, k + " ★"), h("div", { class: "prog" }, h("i", { style: `width:${n ? c / n * 100 : 0}%` })), h("b", {}, c)); })),
+    coms.length ? h("div", { class: "ecoms" }, h("b", {}, "Comentarios"), ...coms.map(c => h("p", {}, "“" + c + "”"))) : null,
+    h("div", { class: "row" }, h("button", { class: "btn", onclick: () => close() }, "Cerrar"))), 0);
+}
+
+/* ---------- modo proyección ---------- */
+function openProj() {
+  if ($("proj")) return;
+  document.body.append(h("div", { id: "proj", class: "proj", role: "dialog", "aria-modal": "true", "aria-label": "Modo proyección" }));
+  S.projSig = ""; paintProj();
+  try { document.documentElement.requestFullscreen?.()?.catch(() => {}); } catch {}
+}
+function closeProj() { $("proj")?.remove(); try { if (document.fullscreenElement) document.exitFullscreen(); } catch {} }
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("proj")) closeProj(); });
+const relojMs = () => plenFase() === "votacion" ? plen().fin - Date.now() : (restante() || 0);
+function paintProj() {
+  const el = $("proj"); if (!el || !S.room) return;
+  const r = S.room, q = qActiva(), p = plen(), pf = plenFase();
+  const stage = p ? "plen-" + pf : r.espera ? "espera" : r.fase;
+  const per = Array.from({ length: nGrupos() }, (_, i) => {
+    const g = i + 1, ms = miembrosDe(g).length;
+    return { g, ms, resp: ms - faltanResponder(g, q).length, vot: ms - faltanVotar(g, q).length, win: ganadoras(tally(g, q).ranked) };
+  });
+  const sig = JSON.stringify([stage, q, qTexto(q), r.titulo, per.map(x => [x.ms, x.resp, x.vot, x.win.map(w => w.key + w.n)]), p ? plenTally().ranked.map(x => x.n) : 0, S.miembros.size]);
+  if (sig === S.projSig) return;
+  S.projSig = sig;
+  const clock = lbl => h("div", { class: "pj-clock" }, h("span", { class: "pj-lbl" }, lbl), h("b", { id: "pjClock" }, mmss(Math.max(0, relojMs()))));
+  let body;
+  if (stage === "espera") {
+    const qr = h("div", { class: "qr pj-qr" });
+    body = h("div", { class: "pj-join" },
+      h("div", {}, h("span", { class: "pj-lbl" }, "Entra desde tu celular con el código"), h("div", { class: "pj-code" }, S.code),
+        h("div", { class: "pj-link" }, shareLink().replace(/^https?:\/\//, "")), h("p", { class: "pj-foot", style: "text-align:left" }, `${S.miembros.size} ${S.miembros.size === 1 ? "persona ya está" : "personas ya están"} en sus grupos`)),
+      qr);
+    setTimeout(() => { try { new QRCode(qr, { text: shareLink(), width: 520, height: 520, correctLevel: QRCode.CorrectLevel.L }); } catch {} }, 0);
+  } else if (stage === "respuestas" || stage === "votacion") {
+    const k = stage === "respuestas" ? "resp" : "vot";
+    body = h("div", {}, clock(stage === "respuestas" ? "Tiempo para responder" : "Tiempo para votar"),
+      h("div", { class: "pj-grid" }, ...per.map(x => h("div", { class: "pj-card" }, h("h3", {}, "Grupo " + x.g),
+        h("div", { class: "pj-big" }, `${x[k]}/${x.ms}`), h("span", {}, stage === "respuestas" ? "respondieron" : "votaron"),
+        h("div", { class: "prog" }, h("i", { style: `width:${x.ms ? x[k] / x.ms * 100 : 0}%` }))))));
+  } else if (stage === "resultados") {
+    body = h("div", { class: "pj-grid" }, ...per.map(x => h("div", { class: "pj-card win" }, h("h3", {}, "Grupo " + x.g), svgTrophy(),
+      ...(x.win.length ? x.win.map(w => h("div", { class: "pj-wt" }, w.t)) : [h("div", { class: "pj-wt" }, "Sin votos")]),
+      x.win.length ? h("span", {}, `${x.win[0].n} ${x.win[0].n === 1 ? "voto" : "votos"}${x.win.length > 1 ? " · empate" : ""}`) : null)));
+  } else if (stage === "plen-votacion") {
+    body = h("div", {}, clock("Plenario: todos votan"),
+      h("div", { class: "pj-list" }, ...p.items.map(it => h("div", { class: "pj-item" }, h("b", {}, "Grupo " + it.g), h("span", {}, it.t)))),
+      h("p", { class: "pj-foot" }, `${plenTally().voters} de ${S.miembros.size} ya votaron`));
+  } else {
+    const { ranked, voters } = plenTally(), win = ganadoras(ranked);
+    body = h("div", { class: "pj-final" }, svgTrophy(), h("span", { class: "pj-lbl" }, win.length > 1 ? "Empate en el plenario" : "Ganadora del plenario"),
+      ...(win.length ? win.map(w => h("div", { class: "pj-ft" }, w.t, h("small", {}, `Grupo ${w.g} · ${w.n} ${w.n === 1 ? "voto" : "votos"} de ${voters}`))) : [h("div", { class: "pj-ft" }, "Sin votos")]));
+  }
+  el.replaceChildren(
+    h("div", { class: "pj-top" }, h("div", { class: "pj-brand" }, h("img", { src: "img/administrador-icono.jpg", alt: "" }), h("span", {}, (r.titulo || "Taller") + " · Sala " + S.code)),
+      h("button", { class: "pj-x", onclick: closeProj, "aria-label": "Salir del modo proyección" }, "✕ Salir")),
+    h("div", { class: "pj-q" }, h("span", { class: "pj-lbl" }, (p ? "Plenario · " : "") + "Pregunta " + qNum(q)), h("h1", {}, qTexto(q))),
+    h("div", { class: "pj-stage" }, body));
+}
+
+/* ---------- reloj: avisos de 30 s, plenario y proyección ---------- */
+function tickExtra() {
+  const pf = plenFase();
+  if (pf !== S.plenFaseTick) { S.plenFaseTick = pf; S.sig = ""; S.facSig = ""; render(); }
+  const p = plen(), pl = pf === "votacion";
+  const r = pl ? p.fin - Date.now() : restante();
+  const key = pl ? "pl" + p.fin : S.room.fase + S.room.fin + "_" + durVoto(S.room);
+  if (r != null && r > 0 && r <= 30000 && (pl || S.room.fase === "respuestas" || S.room.fase === "votacion") && S.warned !== key) {
+    S.warned = key; aviso("30s"); if (!isFac()) toast("¡Quedan 30 segundos!");
+  }
+  const pc = $("pjClock");
+  if (pc) { const rr = r != null && r > 0 ? r : 0; pc.textContent = mmss(rr); pc.classList.toggle("low", rr > 0 && rr <= 30000); }
+  paintProj();
+}
+function paintTimer() {
+  const t = $("timer"); if (!t || !S.room) return;
+  const pl = plenFase() === "votacion", f = S.room.fase;
+  const r = pl ? plen().fin - Date.now() : restante();
+  const show = r != null && r > 0 && (pl || f === "respuestas" || f === "votacion");
+  const ft = $("flowTime");
+  if (ft && show) { ft.textContent = mmss(r); ft.parentElement.classList.toggle("low", r <= 30000); }
+  if (isFac()) { t.hidden = true; return; }
+  t.hidden = !show; if (!show) return;
+  $("timerTxt").textContent = (pl ? "Plenario " : f === "votacion" ? "Votar " : "Responder ") + mmss(r);
+  t.classList.toggle("low", r <= 30000); t.classList.remove("over");
+}
+document.addEventListener("focusout", e => { if ($("view")?.contains(e.target)) setTimeout(render, 60); });
+
+/* ---------- pantalla principal ---------- */
+function render() {
+  if (S.mode !== "app" || !S.roomReady || !$("view")) return;
+  if (S.room.qid !== S.qSeen) {
+    const had = S.qSeen; S.qSeen = S.room.qid; S.faseSeen = S.room.fase; S.tab = null; S.viewQ = null;
+    if (had != null) questionOverlay();
+  } else if (S.room.fase !== S.faseSeen) { const had = S.faseSeen; S.faseSeen = S.room.fase; S.tab = null; if (had !== null) stageOverlay(S.room.fase); }
+  else if (S.esperaSeen === true && !S.room.espera) stageOverlay("respuestas");
+  S.esperaSeen = S.room.espera;
+  checkPlenario(); checkEncuesta();
+  const tab = currentTab(), g = curG(), fac = isFac(), p = plen();
+  document.title = (S.room.titulo || "Taller") + " · " + S.code;
+  $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
+  const nm = g ? miembrosDe(g).length : S.miembros.size;
+  const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
+  $("sub").textContent = fac
+    ? (g ? `Facilitador · Grupo ${g} · ${qLbl}` : `Facilitador · ${nGrupos()} grupos · ${S.miembros.size} participantes · ${qLbl}`)
+    : `${S.nombre} · ${nm} de ${CUPO} integrantes · ${qLbl} · ${p ? "Plenario" : FASE_NOMBRE[S.room.fase]}`;
+  const vivo = p ? "plenario" : S.room.fase;
+  document.querySelectorAll(".tab").forEach(b => {
+    const t = b.dataset.tab;
+    if (t === "plenario") b.hidden = !p;
+    b.setAttribute("aria-selected", t === tab); b.disabled = !tabAllowed(t);
+    b.querySelector(".live")?.remove();
+    if (t === vivo) b.prepend(h("span", { class: "live", "aria-label": "etapa actual" }));
+  });
+  moveInk(); paintFac(); paintTimer();
+
+  const q = curQ(), pt = p ? plenTally() : null;
+  const sig = JSON.stringify([tab, g, q, qTexto(q), qActiva(), S.room.fase, fac, abierto(), S.room.grupos, !!S.room.encuesta, S.encDone,
+    p ? [plenFase(), p.items.map(i => i.id), myPlenVote(), pt.ranked.map(r => r.n), pt.voters] : 0,
+    tab === "plenario" ? 0 :
+    !g ? [...S.G].map(([k]) => [k, proposals(k, q).map(x => x.key), votosDe(k, q).map(v => v.uid + v.id), gdata(k).sol.get(q) || 0]).concat([[...S.miembros.values()].map(m => m.grupo + m.nombre)]) :
+    tab === "respuestas" ? [proposals(g, q).map(x => x.key + (x.pend ? "*" : "")), fac ? faltanResponder(g, q) : 0]
+    : tab === "votacion" ? [proposals(g, q).map(x => x.key), myVote(), fac ? faltanVotar(g, q) : 0]
+    : [tally(g, q).ranked.map(r => r.key + ":" + r.n), gdata(g).sol.get(q) || 0]]);
+  const view = $("view"), main = $("main"), prevKey = view.dataset.key, key = tab + "|" + (tab === "plenario" ? "" : g) + "|" + q;
+  const typing = view.contains(document.activeElement) && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName);
+  if (sig !== S.sig && !(typing && prevKey === key)) {
+    S.sig = sig;
+    const nearBottom = main.scrollHeight - main.scrollTop - main.clientHeight < 80;
+    view.replaceChildren(...(tab === "plenario" ? viewPlenario(prevKey !== key) : !g ? viewSummary(tab) : tab === "respuestas" ? viewChat(g) : tab === "votacion" ? viewVote(g) : viewResults(g, prevKey !== key)));
+    if (prevKey && prevKey !== key) { view.classList.remove("view-in"); void view.offsetWidth; view.classList.add("view-in"); }
+    view.dataset.key = key;
+    view.classList.toggle("bottom", tab === "respuestas" && !!g);
+    if (tab === "respuestas" && g && (S.stick || nearBottom || prevKey !== key)) main.scrollTop = main.scrollHeight;
+    else if (prevKey !== key) main.scrollTop = 0;
+  }
+  S.stick = false; S.pulse = null;
+  $("composer").hidden = tab !== "respuestas" || !g;
+  updateComposer();
+  paintProj();
+}
+
+/* ---------- panel del facilitador ---------- */
+function paintFac() {
+  const sec = $("fac"), fac = isFac();
+  sec.hidden = !fac; $("nav").hidden = fac; $("menuBtn").hidden = !fac;
+  if (!fac) return;
+  const r = S.room, tab = currentTab(), q = curQ(), activa = q === qActiva(), tot = preguntas().length, p = plen(), pf = plenFase();
+  const counts = Array.from({ length: nGrupos() }, (_, i) => miembrosDe(i + 1).length);
+  const facSig = JSON.stringify([r.fase, r.espera, S.viewG, counts, preguntas().map(x => x.id + x.t), qActiva(), q, tab, S.lastMin, durVoto(r), r.fin, pf, p?.fin]);
+  if (facSig === S.facSig) return;
+  S.facSig = facSig;
+
+  /* 1. pregunta */
+  const sel = tot > 1 ? h("select", { class: "qsel", "aria-label": "Ver otra pregunta", onchange: e => { S.viewQ = e.target.value; S.facSig = ""; S.sig = ""; render(); } },
+    ...preguntas().map((x, i) => { const o = h("option", { value: x.id }, `P${i + 1}${x.id === qActiva() ? " · activa" : ""}`); o.selected = x.id === q; return o; })) : null;
+  const qPanel = h("div", { class: "panel" },
+    h("div", { class: "ptitle" }, h("span", {}, activa ? h("span", { class: "dot", "aria-hidden": "true" }) : null, `Pregunta ${qNum(q)} de ${tot}` + (activa ? " · en todos los grupos" : " · anterior")), sel),
+    h("div", { class: "qtext" }, qTexto(q)),
+    h("div", { class: "acts" },
+      activa ? null : h("button", { class: "btn sm", onclick: () => activarPregunta(q) }, "Volver a enviar esta pregunta"),
+      h("button", { class: "btn ghost sm", onclick: editPregunta }, "Editar"),
+      h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta")));
+
+  /* 2. ronda: pasos automáticos y una acción principal */
+  const idx = p ? 3 : r.espera ? -1 : FASES.indexOf(r.fase), mins = Number(S.lastMin) || 5;
+  const info = [["respuestas", "Responder", `${mins} min`], ["votacion", "Votar", `${Math.round(durVoto(r) / 60000)} min`], ["resultados", "Resultados", "Auto"]];
+  if (p) info.push(["plenario", "Plenario", "3 min"]);
+  const steps = h("div", { class: "stepsbar", style: `grid-template-columns:repeat(${info.length},minmax(0,1fr))`, role: "group", "aria-label": "Etapas de la ronda (toca para ver)" },
+    ...info.map(([f, l, d], i) => {
+      const timed = i === idx && (f === "respuestas" || f === "votacion" || (f === "plenario" && pf === "votacion"));
+      return h("button", {
+        class: "step" + (i === idx ? " now" : "") + (i < idx ? " done" : "") + (tab === f ? " viewing" : ""),
+        "aria-current": i === idx ? "step" : null, title: "Ver " + l, onclick: () => { S.tab = f; S.sig = ""; S.facSig = ""; render(); }
+      }, h("span", {}, `${i + 1} · ${l}`), h("b", { id: timed ? "flowTime" : null }, i < idx ? "✓" : timed ? mmss(relojMs()) : i === idx ? "✓" : d));
+    }));
+  let acts;
+  if (p && pf === "votacion") {
+    acts = [h("div", { class: "hint" }, `Plenario en curso: ${plenTally().voters} de ${S.miembros.size} ya votaron.`),
+      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setRoom({ "plenario.fin": p.fin + 60000 }) }, "+1 min"),
+        h("button", { class: "btn sm grow", onclick: () => setRoom({ "plenario.fin": Date.now() - 1000 }) }, "Mostrar ganadora ahora"))];
+  } else if (p) {
+    acts = [h("div", { class: "hint" }, "Plenario terminado. Todos ven la ganadora del taller."),
+      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: iniciarPlenario }, "Repetir plenario"), h("button", { class: "btn sm grow", onclick: newPregunta }, "+ Nueva pregunta"))];
+  } else if (r.espera) {
+    const custom = h("input", { id: "minIn", type: "number", min: 1, max: 120, value: [3, 5, 10].includes(mins) ? "" : mins, placeholder: "min", "aria-label": "Otros minutos" });
+    custom.addEventListener("change", () => { if (custom.value > 0) { S.lastMin = custom.value; S.facSig = ""; paintFac(); } });
+    acts = [h("div", { class: "hint" }, "Minutos para responder (luego 3 min de votación y resultados automáticos):"),
+      h("div", { class: "mins" }, ...[3, 5, 10].map(m => h("button", { "aria-pressed": mins === m, onclick: () => { S.lastMin = m; S.facSig = ""; paintFac(); } }, m + " min")), custom),
+      h("div", { class: "acts" }, h("button", { class: "btn grow", onclick: () => setTimer(mins) }, `▶ Iniciar ronda (${mins} min)`))];
+  } else if (r.fase === "respuestas") {
+    acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extend(1) }, "+1 min"), h("button", { class: "btn ghost sm", onclick: () => extend(5) }, "+5 min"),
+      h("button", { class: "btn sm grow", onclick: pasarAVotacion }, "Pasar a votación ahora"))];
+  } else if (r.fase === "votacion") {
+    acts = [h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => extendVoto(1) }, "+1 min"),
+      h("button", { class: "btn sm grow", onclick: pasarAResultados }, "Mostrar resultados ahora"))];
+  } else {
+    acts = [h("div", { class: "hint" }, "Ronda terminada. Cada grupo ve su ganadora y escribe su propuesta de solución."),
+      h("div", { class: "acts" }, h("button", { class: "btn ghost sm", onclick: () => setTimer(mins) }, "Repetir ronda"),
+        h("button", { class: "btn ghost sm", onclick: newPregunta }, "+ Nueva pregunta"),
+        h("button", { class: "btn sm grow", onclick: iniciarPlenario }, "Iniciar plenario (3 min)"))];
+  }
+  const rPanel = h("div", { class: "panel" }, h("div", { class: "ptitle" }, h("span", {}, "Ronda de la pregunta " + qNum(qActiva()))), steps, ...acts);
+
+  /* 3. grupos */
+  const gbar = h("div", { class: "groupbar", role: "group", "aria-label": "Ver grupo" },
+    h("button", { class: "gchip", "aria-pressed": S.viewG === 0, onclick: () => { S.viewG = 0; S.facSig = ""; render(); } }, "Todos los grupos"),
+    ...counts.map((n, i) => h("button", { class: "gchip", "aria-pressed": S.viewG === i + 1, onclick: () => { S.viewG = i + 1; S.facSig = ""; render(); } }, "Grupo " + (i + 1), h("small", {}, `${n}/${CUPO}`))),
+    h("button", { class: "gchip", onclick: openProj, title: "Pantalla grande para el proyector" }, svgScreen(), "Proyectar"));
+
+  $("facIn").replaceChildren(h("div", { class: "ctl-grid" }, qPanel, rPanel), gbar);
+}
+function toggleMenu(force) {
+  const m = $("menu"), b = $("menuBtn"); if (!m) return;
+  const open = force ?? m.hidden;
+  if (open) {
+    const item = (txt, fn, cls) => h("button", { role: "menuitem", class: cls || null, onclick: () => { toggleMenu(false); fn(); } }, txt);
+    m.replaceChildren(
+      item("Modo proyección (pantalla grande)", openProj),
+      item("Mostrar código y QR de la sala", () => shareOverlay()),
+      h("hr"),
+      item("📄 Informe final (imprimir o PDF)", informe),
+      item("Descargar resultados (Excel/CSV)", downloadCSV),
+      item("Copiar resultados de todos los grupos", () => copy(allResultsText(), "Resultados de todos los grupos copiados.")),
+      h("hr"),
+      item(S.room.encuesta ? "Cerrar la encuesta de cierre" : "⭐ Abrir la encuesta de cierre", () => { const v = !S.room.encuesta; setRoom({ encuesta: v }); toast(v ? "Encuesta abierta: aparecerá en el celular de cada participante." : "Encuesta cerrada."); }),
+      item(`Ver resultados de la encuesta (${S.enc.size})`, encuestaResultados),
+      h("hr"),
+      item("Agregar un grupo", () => { setRoom({ grupos: nGrupos() + 1 }); toast(`Se agregó el Grupo ${nGrupos() + 1}.`); }),
+      item("Texto, contraste y sonido", a11yPanel),
+      h("hr"),
+      item("Reiniciar respuestas y votos", confirmReset, "danger"),
+      item("Empezar de cero (borrar la sala)", confirmEmpezarDeCero, "danger"));
+  }
+  m.hidden = !open; b.setAttribute("aria-expanded", String(open));
+}
+
+/* ---------- resumen de todos los grupos ---------- */
+function viewSummary(tab) {
+  const q = curQ(), activa = q === qActiva();
+  const out = [banner(true), h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(q)}` + (activa ? " · activa en todos los grupos" : " · anterior (solo consulta)")), h("div", { class: "txt" }, qTexto(q)))];
+  const cards = [];
+  for (let g = 1; g <= nGrupos(); g++) {
+    const ms = miembrosDe(g), t = tally(g, q), pr = proposals(g, q);
+    let body;
+    if (tab === "respuestas") {
+      const falt = faltanResponder(g, q), hechos = ms.length - falt.length;
+      body = [h("span", { class: "note" }, `${hechos} de ${ms.length} respondieron · ${pr.length} ${pr.length === 1 ? "respuesta" : "respuestas"}`),
+        h("div", { class: "prog" }, h("i", { style: `width:${ms.length ? hechos / ms.length * 100 : 0}%` })),
+        activa && ms.length ? faltaLinea(falt, "responder") : null, ...pr.slice(-2).map(r => h("div", { class: "mini" }, r.t))];
+    } else if (tab === "votacion") {
+      const falt = faltanVotar(g, q);
+      body = [h("span", { class: "note" }, `${t.voters} de ${ms.length} votaron`), h("div", { class: "prog" }, h("i", { style: `width:${ms.length ? t.voters / ms.length * 100 : 0}%` })),
+        activa && ms.length ? faltaLinea(falt, "votar") : null];
+    } else {
+      const sol = gdata(g).sol.get(q);
+      body = ganadoras(t.ranked).map(r => h("div", { class: "mini" }, h("b", {}, "🏆"), r.t, ` (${r.n} ${r.n === 1 ? "voto" : "votos"})`));
+      if (!body.length) body = [h("span", { class: "note" }, "Sin votos todavía.")];
+      body.push(sol ? h("div", { class: "mini sol" }, h("b", {}, "💡"), sol.solucion, sol.responsable ? ` · Responsable: ${sol.responsable}` : "") : h("span", { class: "note" }, "Propuesta de solución pendiente"));
+    }
+    cards.push(h("button", { class: "gcard", style: `--d:${(g - 1) * 0.05}s`, onclick: () => { S.viewG = g; render(); } },
+      h("div", { class: "gt" }, h("h3", {}, "Grupo " + g), h("span", { class: "pill" + (ms.length >= CUPO ? " ok" : "") }, `${ms.length}/${CUPO}`)),
+      h("div", { class: "names" }, ...ms.map(([, m]) => h("span", {}, m.nombre || "Participante"))),
+      ...body.filter(Boolean), h("span", { class: "lnk open" }, "Abrir grupo →")));
+  }
+  out.push(h("div", { class: "ggrid", style: "margin-top:10px" }, ...cards));
+  out.push(h("div", { class: "ractions" },
+    h("button", { class: "btn ghost", onclick: () => shareOverlay() }, "Mostrar código y QR para que entren"),
+    h("button", { class: "btn ghost", onclick: openProj }, "Modo proyección")));
+  return out;
+}
+
+/* ---------- textos, CSV e informe ---------- */
+function groupText(g, q = curQ()) {
+  const { ranked, voters } = tally(g, q), win = ganadoras(ranked), sol = gdata(g).sol.get(q);
+  const lines = [`Grupo ${g} · ${S.room.titulo || "Taller"}`, `Pregunta ${qNum(q)}: ${qTexto(q)}`, ""];
   ranked.forEach((r, i) => lines.push(`${i + 1}. ${r.t.replace(/\s+/g, " ")} (${r.n} ${r.n === 1 ? "voto" : "votos"})${win.includes(r) ? (win.length > 1 ? " · EMPATE 1.er LUGAR" : " · GANADORA") : ""}`));
   lines.push(`Votaron: ${voters} de ${miembrosDe(g).length}`);
+  if (sol) lines.push(`Propuesta de solución: ${sol.solucion}`, `Responsable: ${sol.responsable || "—"}`);
   return lines.join("\n");
 }
-function allResultsText() { return Array.from({ length: nGrupos() }, (_, i) => groupText(i + 1)).join("\n\n"); }
 function downloadCSV() {
-  const q = s => '"' + String(s).replace(/"/g, '""') + '"';
-  const rows = [["N° pregunta", "Pregunta", "Grupo", "Puesto", "Respuesta", "Autor", "Votos", "Ganadora", "Propuesta de solución", "Responsable"].map(q).join(";")];
+  const c = s => '"' + String(s ?? "").replace(/"/g, '""') + '"';
+  // sin columna de autor; cada grupo cierra con una fila que suma sus votos
+  const rows = [["N° pregunta", "Pregunta", "Grupo", "Puesto", "Respuesta", "Votos", "Ganadora", "Propuesta de solución", "Responsable"].map(c).join(";")];
   preguntas().forEach((p, pi) => {
-    for (let g = 1; g <= nGrupos(); g++) { const rk = tally(g, p.id).ranked, win = ganadoras(rk); rk.forEach((r, i) =>
-      rows.push([pi + 1, p.t, g, i + 1, r.t.replace(/\s+/g, " "), r.a, r.n, win.includes(r) ? (win.length > 1 ? "Empate" : "Sí") : "", "", ""].map(q).join(";"))); }
+    for (let g = 1; g <= nGrupos(); g++) {
+      const rk = tally(g, p.id).ranked, win = ganadoras(rk), sol = gdata(g).sol.get(p.id);
+      if (!rk.length) continue;
+      rk.forEach((r, i) => { const w = win.includes(r); rows.push([pi + 1, p.t, `Grupo ${g}`, i + 1, r.t.replace(/\s+/g, " "), r.n, w ? (win.length > 1 ? "Empate" : "Sí") : "", w && sol ? sol.solucion : "", w && sol ? sol.responsable : ""].map(c).join(";")); });
+      rows.push([pi + 1, p.t, `Grupo ${g}`, "", `TOTAL GRUPO ${g}`, rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
+    }
+    const P = S.room.plenario;
+    if (P && P.q === p.id) {
+      const rk = plenTallyFor(P).ranked;
+      rk.forEach((r, i) => rows.push([pi + 1, p.t, "Plenario", i + 1, `[Grupo ${r.g}] ${r.t.replace(/\s+/g, " ")}`, r.n, i === 0 && r.n > 0 ? "Ganadora del plenario" : "", "", ""].map(c).join(";")));
+      rows.push([pi + 1, p.t, "Plenario", "", "TOTAL PLENARIO", rk.reduce((a, r) => a + r.n, 0), "", "", ""].map(c).join(";"));
+    }
   });
   const a = h("a", { href: URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" })), download: `resultados-sala-${S.code}.csv` });
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast("Descargado: resultados-sala-" + S.code + ".csv");
+}
+function informe() {
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const r = S.room, fecha = new Date().toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric" });
+  let b = `<header><img src="${esc(new URL("img/administrador-icono.jpg", location.href).href)}" alt=""><div><h1>${esc(r.titulo || "Taller")}</h1>
+    <p class="meta">Informe final · Sala ${esc(S.code)} · ${esc(fecha)} · ${S.miembros.size} participantes en ${nGrupos()} grupos</p></div></header>`;
+  b += `<h2>Participantes</h2><table><tr><th>Grupo</th><th>Integrantes</th></tr>`;
+  for (let g = 1; g <= nGrupos(); g++) b += `<tr><td>Grupo ${g}</td><td>${miembrosDe(g).map(([, m]) => esc(m.nombre)).join(", ") || "—"}</td></tr>`;
+  b += `</table>`;
+  preguntas().forEach((p, pi) => {
+    b += `<section><h2>Pregunta ${pi + 1}</h2><p class="q">${esc(p.t)}</p>`;
+    for (let g = 1; g <= nGrupos(); g++) {
+      const { ranked, voters } = tally(g, p.id); if (!ranked.length) continue;
+      const win = ganadoras(ranked), sol = gdata(g).sol.get(p.id);
+      b += `<h3>Grupo ${g}</h3>`;
+      if (win.length) b += `<div class="win">🏆 ${win.map(w => esc(w.t)).join(" <em>/</em> ")} <span>(${win[0].n} ${win[0].n === 1 ? "voto" : "votos"} de ${voters}${win.length > 1 ? " · empate" : ""})</span></div>`;
+      if (sol) b += `<div class="sol"><b>Propuesta de solución:</b> ${esc(sol.solucion)}<br><b>Responsable:</b> ${esc(sol.responsable || "—")}</div>`;
+      b += `<table><tr><th>#</th><th>Respuesta</th><th>Autor</th><th>Votos</th></tr>${ranked.map((x, i) => `<tr${win.includes(x) ? ' class="w"' : ""}><td>${i + 1}</td><td>${esc(x.t)}</td><td>${esc(x.a)}</td><td>${x.n}</td></tr>`).join("")}</table>`;
+    }
+    const P = r.plenario;
+    if (P && P.q === p.id) {
+      const { ranked, voters } = plenTallyFor(P), win = ganadoras(ranked);
+      b += `<h3>Plenario (${voters} votos)</h3>`;
+      if (win.length) b += `<div class="win">🏆 ${win.map(w => esc(w.t) + ` <span>(Grupo ${w.g})</span>`).join(" <em>/</em> ")}</div>`;
+      b += `<table><tr><th>#</th><th>Propuesta</th><th>Grupo</th><th>Votos</th></tr>${ranked.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.t)}</td><td>${x.g}</td><td>${x.n}</td></tr>`).join("")}</table>`;
+    }
+    b += `</section>`;
+  });
+  const vals = [...S.enc.values()].filter(v => v.nota >= 1);
+  if (vals.length) {
+    const avg = vals.reduce((a, v) => a + v.nota, 0) / vals.length;
+    b += `<section><h2>Encuesta de cierre</h2><p><b>${avg.toFixed(1)} de 5</b> · ${vals.length} respuestas</p>${vals.filter(v => v.comentario).map(v => `<p class="com">“${esc(v.comentario)}”</p>`).join("")}</section>`;
+  }
+  const doc = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe · ${esc(r.titulo || "Taller")} · ${esc(S.code)}</title>
+<style>body{font-family:"Segoe UI",system-ui,sans-serif;color:#111b21;max-width:880px;margin:0 auto;padding:28px 20px;line-height:1.45}
+header{display:flex;gap:16px;align-items:center;border-bottom:3px solid #128c5e;padding-bottom:14px;margin-bottom:8px}header img{width:64px;height:64px;border-radius:50%;object-fit:cover}
+h1{margin:0;font-size:26px}h2{margin:26px 0 6px;color:#0d5e4f;font-size:20px;border-bottom:1px solid #dfe5e2;padding-bottom:4px}h3{margin:16px 0 6px;font-size:16px}
+.meta{margin:4px 0 0;color:#5f6f78}.q{font-weight:600;font-size:16px;margin:4px 0 10px}.win{background:#e7f6ee;border-left:4px solid #128c5e;padding:8px 12px;border-radius:6px;font-weight:600;margin:6px 0}
+.win span{font-weight:400;color:#5f6f78}.sol{background:#fff8e1;border-left:4px solid #d79b00;padding:8px 12px;border-radius:6px;margin:6px 0}
+table{width:100%;border-collapse:collapse;margin:6px 0 12px;font-size:14px}th,td{border:1px solid #dfe5e2;padding:6px 8px;text-align:left;vertical-align:top}th{background:#f0f2f5}tr.w td{background:#f2fbf6;font-weight:600}
+.com{font-style:italic;color:#333;margin:4px 0}.bar{position:sticky;top:0;background:#fff;padding:10px 0;display:flex;gap:8px;justify-content:flex-end}
+.bar button{background:#128c5e;color:#fff;border:0;border-radius:999px;padding:9px 18px;font-weight:700;cursor:pointer}section{break-inside:avoid-page}
+@media print{.bar{display:none}body{padding:0}}</style></head><body><div class="bar"><button onclick="print()">Imprimir o guardar en PDF</button></div>${b}</body></html>`;
+  const w = window.open("", "_blank");
+  if (!w) return toast("Tu navegador bloqueó la ventana del informe. Permite ventanas emergentes para este sitio.", 5000);
+  w.document.open(); w.document.write(doc); w.document.close();
+}
+
+/* ---------- borrar datos ---------- */
+async function borrarColecciones(refs) {
+  const docs = (await Promise.all(refs.map(c => c.get()))).flatMap(q => q.docs);
+  for (let i = 0; i < docs.length; i += 400) { const b = S.db.batch(); docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
+}
+const coleccionesDeGrupos = () => Array.from({ length: nGrupos() }, (_, i) => i + 1).flatMap(g => ["respuestas", "votos", "soluciones"].map(c => grupoRef(g).collection(c)));
+async function resetSala() {
+  try {
+    await borrarColecciones([...coleccionesDeGrupos(), salaRef().collection("plenario"), salaRef().collection("encuesta")]);
+    await setRoom({ fin: null, voto: VOTO_MS, plenario: null, encuesta: false });
+    S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear(); S.sig = "";
+    toast("Se borraron las respuestas, votos, propuestas y encuesta de todos los grupos.");
+  } catch (e) { fbError(e); }
+}
+async function empezarDeCero() {
+  const code = S.code, ref = salaRef();
+  S.wiping = true;
+  loading("Borrando la sala " + code + "…");
+  try {
+    await borrarColecciones([ref.collection("miembros"), ...coleccionesDeGrupos(), ref.collection("plenario"), ref.collection("encuesta")]);
+    S.unsub.forEach(u => u()); S.unsub = [];
+    for (const [, us] of S.gsubs) us.forEach(u => u());
+    await ref.delete();
+    toast("Sala " + code + " borrada. Crea la nueva sala y sus grupos.", 4000);
+  } catch (e) { fbError(e); }
+  S.unsub.forEach(u => u()); S.unsub = [];
+  for (const [, us] of S.gsubs) us.forEach(u => u());
+  S.gsubs.clear(); S.G.clear(); S.miembros = new Map(); S.plen = new Map(); S.enc = new Map();
+  Object.assign(S, { code: null, room: null, roomReady: false, miembrosReady: false, qSeen: null, faseSeen: null, viewG: 0, viewQ: null, tab: null, sig: "", facSig: "", endedFor: null, wiping: false, plenKey: undefined });
+  S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
+  closeProj();
+  history.replaceState(null, "", location.pathname);
+  homeScreen();
 }
 
 /* ---------- bienvenida ---------- */
@@ -1365,6 +1857,7 @@ async function start() {
   try {
     if (!firebase.apps.length) firebase.initializeApp(S.cfg);
     S.db = firebase.firestore();
+    try { await S.db.enablePersistence({ synchronizeTabs: true }); } catch {}
     const cur = await new Promise(res => { const u = firebase.auth().onAuthStateChanged(x => { u(); res(x); }); });
     S.uid = (cur || (await firebase.auth().signInAnonymously()).user).uid;
   } catch (e) {

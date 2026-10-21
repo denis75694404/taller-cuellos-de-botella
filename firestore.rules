@@ -58,6 +58,35 @@ service cloud.firestore {
           && enVotacion(s);
         allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       }
+
+      // Bloque 2: propuesta de solución y responsable de la respuesta ganadora (un documento por pregunta).
+      match /grupos/{g}/soluciones/{q} {
+        allow read: if isAdmin() || miembroEn(s, g);
+        allow write: if isAdmin() || (miembroEn(s, g)
+          && request.resource.data.solucion is string && request.resource.data.solucion.size() <= 600
+          && request.resource.data.responsable is string && request.resource.data.responsable.size() <= 100);
+      }
+
+      // Plenario: cada participante vota una vez entre las ganadoras de todos los grupos, dentro del tiempo.
+      match /plenario/{vid} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && exists(miembro(s))
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.q == sala(s).plenario.q
+          && vid == request.auth.uid + '_' + request.resource.data.q
+          && request.resource.data.id is string
+          && request.time.toMillis() < sala(s).plenario.fin + 15000;
+        allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      }
+
+      // Encuesta de cierre: anónima para los grupos; solo el facilitador ve el conjunto.
+      match /encuesta/{uid} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow create, update: if signedIn() && request.auth.uid == uid
+          && sala(s).get('encuesta', false) == true
+          && request.resource.data.nota is int && request.resource.data.nota >= 1 && request.resource.data.nota <= 5;
+        allow delete: if isAdmin();
+      }
     }
   }
 }
