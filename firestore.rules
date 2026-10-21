@@ -79,26 +79,34 @@ service cloud.firestore {
         allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       }
 
-      // Bloque 2: cada participante agrega filas y escribe su propuesta de solución, dentro del tiempo.
-      // Solo se eliminan filas vacías: el autor siempre; los demás, si nadie escribió en ella en los últimos 15 s.
+      // Bloque 2: filas de propuestas. Empiezan libres (uid vacío); quien toca una fila libre la toma y escribe en ella.
+      // Una fila vacía se libera sola si nadie escribe en ella hace 15 s. Solo se eliminan filas vacías.
       match /b2prop/{id} {
         allow read: if signedIn();
-        allow create: if signedIn() && exists(miembro(s))
-          && request.resource.data.uid == request.auth.uid
+        allow create: if (isAdmin() || (signedIn() && exists(miembro(s))))
           && request.resource.data.q == sala(s).b2.q
           && request.resource.data.tema in ['t1', 't2']
+          && (request.resource.data.uid == '' || request.resource.data.uid == request.auth.uid)
           && request.resource.data.t is string && request.resource.data.t.size() <= 400
-          && request.time.toMillis() < sala(s).b2.fin + 15000;
-        allow update: if signedIn() && resource.data.uid == request.auth.uid
-          && request.resource.data.uid == resource.data.uid
+          && (isAdmin() || request.time.toMillis() < sala(s).b2.fin + 15000);
+        allow update: if signedIn() && exists(miembro(s))
           && request.resource.data.q == resource.data.q
           && request.resource.data.tema == resource.data.tema
           && request.resource.data.t is string && request.resource.data.t.size() <= 400
-          && request.time.toMillis() < sala(s).b2.fin + 15000;
+          && request.time.toMillis() < sala(s).b2.fin + 15000
+          && (
+            // el dueño escribe en su fila, o la suelta cuando está vacía
+            (resource.data.uid == request.auth.uid
+              && (request.resource.data.uid == request.auth.uid
+                  || (request.resource.data.uid == '' && request.resource.data.t == '')))
+            // tomar una fila vacía que está libre o abandonada
+            || (resource.data.t == '' && request.resource.data.uid == request.auth.uid
+                && (resource.data.uid == '' || request.time.toMillis() > resource.data.get('ed', 0) + 15000))
+          );
         allow delete: if isAdmin()
-          || (signedIn() && resource.data.t == '' && resource.data.uid == request.auth.uid)
           || (signedIn() && exists(miembro(s)) && resource.data.t == ''
-              && request.time.toMillis() > resource.data.get('ed', 0) + 15000);
+              && (resource.data.uid == request.auth.uid || resource.data.uid == ''
+                  || request.time.toMillis() > resource.data.get('ed', 0) + 15000));
       }
 
       // Bloque 2: prioridad. Un documento por participante (<uid>_<pregunta>) con hasta 2 marcas por cuello de botella.
