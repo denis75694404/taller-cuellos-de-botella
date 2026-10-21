@@ -2343,11 +2343,36 @@ setInterval(async () => {
     const d = await salaRef().get({ source: "server" });
     if (!d.exists) return reconectar("el taller cambió");
     if (estable(d.data()) !== S.roomRaw) reconectar("datos desactualizados");
+    // en la etapa en curso, revisa también lo del grupo: si el servidor tiene algo que aquí no llegó, se muestra ya
+    const f = S.room.fase, gs = isFac() ? [...S.gsubs.keys()] : (me()?.grupo ? [me().grupo] : []);
+    const col = f === "respuestas" && !S.room.espera ? "respuestas" : f === "votacion" ? "votos" : null;
+    let faltaba = false;
+    if (col) for (const g of gs) {
+      const q = await grupoRef(g).collection(col).get({ source: "server" });
+      const srv = q.docs.map(x => x.id).sort().join(), loc = (col === "respuestas" ? gdata(g).resp.filter(r => !r.pend).map(r => r.id) : [...gdata(g).votos.keys()]).sort().join();
+      if (srv !== loc) {
+        faltaba = true;
+        if (col === "respuestas") gdata(g).resp = q.docs.map(x => ({ id: x.id, ...x.data(), pend: false })).filter(r => typeof r.t === "string").sort((a, b) => (a.ts || 0) - (b.ts || 0));
+        else gdata(g).votos = new Map(q.docs.map(x => [x.id, x.data()]));
+      }
+    }
+    if (b2Fase() === "escribir" || b2Fase() === "votar") {
+      const c2 = b2Fase() === "escribir" ? "b2prop" : "b2voto";
+      const q = await salaRef().collection(c2).where("q", "==", qActiva()).get({ source: "server" });
+      const mapa = c2 === "b2prop" ? S.b2p : S.b2v, enUso = document.activeElement?.dataset?.b2;
+      const srv = q.docs.map(x => x.id).sort().join(), loc = [...mapa.values()].filter(x => x.q === qActiva()).map(x => x.id || "").sort().join();
+      if (c2 === "b2prop" ? srv !== loc : q.size !== [...mapa.values()].filter(x => x.q === qActiva()).length) {
+        faltaba = true;
+        for (const x of q.docs) if (x.id !== enUso) mapa.set(x.id, c2 === "b2prop" ? { id: x.id, ...x.data() } : x.data());
+        S.b2ver++;
+      }
+    }
+    if (faltaba) { S.sig = ""; S.facSig = ""; render(); reconectar("faltaban datos del grupo"); }
   } catch {}
 }, 15000);
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021184712";
+const BUILD = "20261021184913";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
