@@ -741,7 +741,7 @@ const qOf = r => r?.q || "p1";
 /* ---------- pantallas de inicio ---------- */
 const root = $("root");
 const HERO = ROLE === "admin"
-  ? { src: "img/administrador.jpg", cls: "hero", t: "Panel del facilitador", p: "Crea la sala, envía las preguntas a todos los grupos y sigue cada ronda en vivo." }
+  ? { src: "img/administrador.jpg", cls: "hero", t: "Panel del facilitador", p: "Envía las preguntas a todos los grupos y sigue cada ronda en vivo." }
   : { src: "img/grupo.jpg", cls: "hero contain", t: "Tu voz construye soluciones", p: "Responde con tu grupo, vota y descubre juntos las prioridades." };
 function screen(...cards) {
   const img = h("img", { src: HERO.src, alt: "", decoding: "async" });
@@ -749,7 +749,7 @@ function screen(...cards) {
   img.addEventListener("error", () => hero.remove());
   root.replaceChildren(h("div", { class: "screen" }, h("div", { class: "inner split" }, hero, h("div", { class: "col" },
     h("div", { class: "brand" }, h("div", { class: "gavatar", "aria-hidden": "true" }, svgHourglass()),
-      h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, S.code && ROLE === "admin" ? "Sala " + S.code : "Respuestas, votación y prioridades por grupo")), a11yBtn("a11y-pill")),
+      h("div", {}, h("h1", {}, S.room?.titulo || "Taller: cuellos de botella"), h("p", {}, "Respuestas, votación y prioridades por grupo")), a11yBtn("a11y-pill")),
     ...cards))));
 }
 function loading(msg) { S.mode = "loading"; screen(h("div", { class: "scard", style: "align-items:center;text-align:center" }, h("div", { class: "spinner" }), h("p", {}, msg))); }
@@ -765,29 +765,29 @@ function noConfigScreen() {
       h("li", {}, "Guarda el archivo y súbelo junto con admin.html y grupos.html."))));
 }
 
-function homeScreen() {
+function homeScreen(crear) {
   S.mode = "home";
   if (ROLE !== "admin") return joinScreen();
+  if (!crear) {
+    loading("Abriendo el taller…");
+    S.db.collection("salas").orderBy("ts", "desc").limit(1).get()
+      .then(q => q.empty ? homeScreen(true) : openSala(q.docs[0].id))
+      .catch(e => { fbError(e); homeScreen(true); });
+    return;
+  }
+  S.mode = "home";
   let n = 4;
   const nb = h("b", {}, n);
-  const tit = h("input", { id: "titIn", maxlength: 80, value: "Taller: cuellos de botella" });
   const q = h("textarea", { id: "qNew", class: "q", maxlength: 300 }); q.value = DEFAULT_Q;
-  const lista = h("div", { style: "display:flex;flex-direction:column;gap:8px" }, h("p", {}, "Cargando…"));
-  S.db.collection("salas").orderBy("ts", "desc").limit(15).get().then(q => {
-    lista.replaceChildren(...(q.empty ? [h("p", {}, "Todavía no hay salas.")] : q.docs.map(d => h("button", { class: "btn ghost block", style: "display:flex;justify-content:space-between;gap:10px;text-align:left", onclick: () => openSala(d.id) },
-      h("span", { style: "overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, (d.data().titulo || "Taller") + " · " + new Date(d.data().ts || 0).toLocaleDateString("es-PE")),
-      h("b", { style: "letter-spacing:.12em" }, d.id)))));
-  }).catch(() => lista.replaceChildren(h("p", {}, "No se pudo cargar la lista de salas.")));
   screen(
-    h("div", { class: "scard" }, h("h2", {}, "Crear una sala nueva"),
-      h("label", { for: "titIn" }, "Nombre del taller"), tit,
+    h("div", { class: "scard" }, h("h2", {}, "Prepara el taller"),
+      h("p", {}, "Escribe la primera pregunta y cuántos grupos habrá. Luego muestras el QR para que todos entren."),
       h("label", { for: "qNew" }, "Pregunta para todos los grupos"), q,
       h("label", {}, `Número de grupos (hasta ${CUPO} integrantes cada uno)`),
       h("div", { class: "stepper" },
         h("button", { "aria-label": "Menos grupos", onclick: () => { n = Math.max(1, n - 1); nb.textContent = n; } }, "−"), nb,
         h("button", { "aria-label": "Más grupos", onclick: () => { n = Math.min(20, n + 1); nb.textContent = n; } }, "+")),
-      h("button", { class: "btn block", onclick: () => crearSala(tit.value, q.value, n) }, "Crear sala")),
-    h("div", { class: "scard" }, h("h2", {}, "Salas anteriores"), h("p", {}, "Abre una sala ya creada para seguir administrándola."), lista));
+      h("button", { class: "btn block", onclick: () => crearSala(q.value, n) }, "Crear el taller")));
 }
 function adminCodeScreen(err) {
   S.mode = "code";
@@ -868,25 +868,25 @@ async function unirme(g) {
 
 /* ---------- salas ---------- */
 function nuevoCodigo() { const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for (const x of crypto.getRandomValues(new Uint8Array(6))) s += A[x % A.length]; return s; }
-async function crearSala(titulo, pregunta, n) {
-  loading("Creando la sala…");
+async function crearSala(pregunta, n) {
+  loading("Creando el taller…");
   try {
     let code;
     for (let i = 0; i < 5; i++) { code = nuevoCodigo(); if (!(await S.db.collection("salas").doc(code).get()).exists) break; }
     await S.db.collection("salas").doc(code).set({
-      creador: S.uid, titulo: (titulo || "").trim().slice(0, 80) || "Taller: cuellos de botella",
+      creador: S.uid, titulo: "Taller: cuellos de botella",
       preguntas: [{ id: "p1", t: (pregunta || "").trim().slice(0, 300) || DEFAULT_Q }], qid: "p1",
       fin: null, voto: VOTO_MS, grupos: n, ts: Date.now()
     });
     S.justCreated = true;
     openSala(code);
-  } catch (e) { fbError(e); homeScreen(); }
+  } catch (e) { fbError(e); homeScreen(true); }
 }
 function openSala(code) {
   S.joinUnsub?.(); S.joinUnsub = null;
   S.code = code; S.roomReady = false; S.miembrosReady = false; S.room = null;
   history.replaceState(null, "", "?sala=" + code + location.hash);
-  loading(ROLE === "admin" ? "Entrando a la sala " + code + "…" : "Entrando al taller…");
+  loading("Entrando al taller…");
   S.unsub.forEach(u => u()); S.unsub = [];
   S.unsub.push(salaRef().onSnapshot(d => {
     if (!d.exists) {
@@ -895,9 +895,9 @@ function openSala(code) {
       S.unsub.forEach(u => u()); S.unsub = [];
       for (const [, us] of S.gsubs) us.forEach(u => u());
       S.gsubs.clear(); S.G.clear(); S.room = null; S.roomReady = false; S.qSeen = null; S.faseSeen = null; S.sig = "";
-      if (ROLE === "admin") toast(habia ? "Esta sala se cerró." : "No existe una sala con el código " + code + ".", 5000);
+      if (ROLE === "admin") toast(habia ? "El taller se cerró. Prepara uno nuevo." : "Ese taller ya no existe. Prepara uno nuevo.", 5000);
       else { (S.badSalas = S.badSalas || new Set()).add(code); toast(habia ? "El facilitador reinició el taller. Entrando al nuevo…" : "Ese enlace ya no está activo. Entrando al taller actual…", 4000); }
-      history.replaceState(null, "", location.pathname); S.code = null; return homeScreen();
+      history.replaceState(null, "", location.pathname); S.code = null; return homeScreen(ROLE === "admin");
     }
     const v = d.data();
     const pre = (Array.isArray(v.preguntas) ? v.preguntas : []).filter(p => p && typeof p.id === "string" && typeof p.t === "string");
@@ -1013,7 +1013,7 @@ function extend(min) { const base = Math.max(S.room.fin || Date.now(), Date.now(
 /* ---------- compartir ---------- */
 function shareLink() { return new URL("grupos.html?sala=" + S.code, location.href).href; }
 function shareOverlay() {
-  const link = shareLink(), qr = h("div", { class: "qr", "aria-label": "Código QR para entrar a la sala" });
+  const link = shareLink(), qr = h("div", { class: "qr", "aria-label": "Código QR para entrar al taller" });
   let close;
   close = overlay(h("div", { class: "ocard" },
     h("div", { class: "eyebrow" }, "Entra al taller"),
@@ -1126,8 +1126,8 @@ function questionOverlay() {
 }
 function confirmEmpezarDeCero() {
   let close;
-  close = overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow", style: "color:var(--warn)" }, "Sala " + S.code), h("h3", {}, "¿Empezar de cero?"),
-    h("p", {}, "Se borrará la sala completa: grupos, integrantes, preguntas, respuestas y votos. Los participantes saldrán de la sala. Luego volverás a crear la sala y los grupos como al principio. No se puede deshacer."),
+  close = overlay(h("div", { class: "ocard" }, h("div", { class: "eyebrow", style: "color:var(--warn)" }, "Borrar todo"), h("h3", {}, "¿Empezar de cero?"),
+    h("p", {}, "Se borrará el taller completo: grupos, integrantes, preguntas, respuestas y votos. Los participantes saldrán del taller. Luego volverás a preparar el taller y los grupos como al principio. No se puede deshacer."),
     h("div", { class: "row", style: "justify-content:center;margin-top:14px" }, h("button", { class: "btn ghost", onclick: () => close() }, "Cancelar"),
       h("button", { class: "btn warn", onclick: () => { close(); empezarDeCero(); } }, "Borrar todo y empezar"))), 0);
 }
@@ -1668,7 +1668,7 @@ function render() {
   S.esperaSeen = S.room.espera;
   checkPlenario(); checkEncuesta();
   const tab = currentTab(), g = curG(), fac = isFac(), p = plen();
-  document.title = (S.room.titulo || "Taller") + (ROLE === "admin" ? " · " + S.code : "");
+  document.title = S.room.titulo || "Taller";
   $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
   const nm = g ? miembrosDe(g).length : S.miembros.size;
   const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
@@ -1841,7 +1841,7 @@ function toggleMenu(force) {
       item("Texto, contraste y sonido", a11yPanel),
       h("hr"),
       item("Reiniciar respuestas y votos", confirmReset, "danger"),
-      item("Empezar de cero (borrar la sala)", confirmEmpezarDeCero, "danger"));
+      item("Empezar de cero (borrar el taller)", confirmEmpezarDeCero, "danger"));
   }
   m.hidden = !open; b.setAttribute("aria-expanded", String(open));
 }
@@ -1982,13 +1982,15 @@ async function resetSala() {
 async function empezarDeCero() {
   const code = S.code, ref = salaRef();
   S.wiping = true;
-  loading("Borrando la sala " + code + "…");
+  loading("Borrando el taller…");
   try {
     await borrarColecciones([ref.collection("miembros"), ...coleccionesDeGrupos(), ref.collection("plenario"), ref.collection("encuesta")]);
     S.unsub.forEach(u => u()); S.unsub = [];
     for (const [, us] of S.gsubs) us.forEach(u => u());
     await ref.delete();
-    toast("Sala " + code + " borrada. Crea la nueva sala y sus grupos.", 4000);
+    const viejas = await S.db.collection("salas").get();
+    for (let i = 0; i < viejas.docs.length; i += 400) { const bt = S.db.batch(); viejas.docs.slice(i, i + 400).forEach(d => bt.delete(d.ref)); await bt.commit(); }
+    toast("Taller borrado. Prepara el nuevo y sus grupos.", 4000);
   } catch (e) { fbError(e); }
   S.unsub.forEach(u => u()); S.unsub = [];
   for (const [, us] of S.gsubs) us.forEach(u => u());
@@ -1997,7 +1999,7 @@ async function empezarDeCero() {
   S.seen.clear(); S.seenVote.clear(); S.seenRes.clear(); S.prevW.clear();
   closeProj();
   history.replaceState(null, "", location.pathname);
-  homeScreen();
+  homeScreen(true);
 }
 
 /* ---------- bienvenida ---------- */
