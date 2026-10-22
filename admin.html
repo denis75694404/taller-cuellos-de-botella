@@ -2434,7 +2434,13 @@ async function empezarDeCero() {
     S.unsub.forEach(u => u()); S.unsub = [];
     for (const [, us] of S.gsubs) us.forEach(u => u());
     await ref.delete();
+    // talleres viejos: se borran con todo su contenido (integrantes, respuestas, votos, plenario, Bloque 2 y encuesta)
     const viejas = await S.db.collection("salas").get();
+    for (const v of viejas.docs) {
+      const n = Math.max(1, Number(v.data()?.grupos) || 1), cols = ["miembros", "plenario", "encuesta", "b2prop", "b2voto"].map(c => v.ref.collection(c));
+      for (let g = 1; g <= n; g++) for (const c of ["respuestas", "votos", "soluciones"]) cols.push(v.ref.collection("grupos").doc(String(g)).collection(c));
+      try { await borrarColecciones(cols); } catch {}
+    }
     for (let i = 0; i < viejas.docs.length; i += 400) { const bt = S.db.batch(); viejas.docs.slice(i, i + 400).forEach(d => bt.delete(d.ref)); await bt.commit(); }
     toast("Taller borrado. Prepara el nuevo y sus grupos.", 4000);
   } catch (e) { fbError(e); }
@@ -2556,7 +2562,7 @@ setInterval(() => { const activo = (S.room?.fase === "respuestas" && !S.room?.es
 setInterval(() => { if (ROLE === "admin" && S.isAdmin && S.code && S.roomReady && !S.wiping) salaRef().update({ pulso: nowMs() }).catch(() => {}); }, 15000);
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021212610";
+const BUILD = "20261021212930";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
