@@ -928,7 +928,7 @@ function joinScreen() {
     if (d) { S.joinUnsub?.(); openSala(d.id); return true; }
     return false;
   };
-  const buscar = () => { if (!done) consulta().get({ source: "server" }).then(entrar).catch(() => {}); };
+  const buscar = () => { if (!done) consulta().get({ source: "server" }).then(x => x).then(entrar).catch(() => {}); };
   const alVolver = () => { if (document.visibilityState === "visible") buscar(); };
   const pantallaEspera = () => {
     if (esperando) return; esperando = true;
@@ -2481,7 +2481,17 @@ addEventListener("online", () => reconectar("volvió el internet"));
 // etapa actual (cambia al pasar de responder a votar, al plenario, a cada paso del Bloque 2…)
 const etapaClave = () => !S.room ? "" : [S.room.espera ? "espera" : S.room.fase, plenFase() || "", b2Fase() || ""].join(".");
 // vigilante: compara lo que muestra la página con lo que tiene Firebase y trae lo que no llegó en tiempo real
-let vigilando = false;
+let vigilando = false, trabas = 0;
+const conTiempo = (p, ms = 6000) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error("sin respuesta")), ms))]);
+// si los datos llegan trabados dos veces seguidas, este celular pasa al modo de conexión para redes difíciles (una sola vez)
+function trabado(motivo) {
+  trabas++;
+  reconectar(motivo);
+  if (trabas >= 2 && lsGet("taller-conexion") !== "lenta") {
+    lsSet("taller-conexion", "lenta");
+    try { if (!sessionStorage.getItem("taller-recargo-lenta")) { sessionStorage.setItem("taller-recargo-lenta", "1"); setTimeout(() => location.reload(), 600); } } catch {}
+  }
+}
 async function vigilar() {
   if (vigilando || !S.db || !S.code || !S.roomReady || document.visibilityState !== "visible" || S.wiping) return;
   const clave = etapaClave();
@@ -2492,7 +2502,7 @@ async function vigilar() {
   S.vigVeces++; vigilando = true;
   let faltaba = false;
   try {
-    const d = await salaRef().get({ source: "server" });
+    const d = await conTiempo(salaRef().get({ source: "server" }));
     if (!d.exists) return reconectar("el taller cambió");
     if (estable(d.data()) !== S.roomRaw) faltaba = true;
     const gs = isFac() ? [...S.gsubs.keys()] : (me()?.grupo ? [me().grupo] : []);
@@ -2500,7 +2510,7 @@ async function vigilar() {
     if (f === "respuestas" && !S.room.espera) cols.push("respuestas");
     if (f === "votacion" || (f === "resultados" && !plen())) cols.push("respuestas", "votos");
     for (const g of gs) for (const col of cols) {
-      const q = await grupoRef(g).collection(col).get({ source: "server" });
+      const q = await conTiempo(grupoRef(g).collection(col).get({ source: "server" }));
       const srv = q.docs.map(x => x.id + ":" + (x.data().id || x.data().t || "")).sort().join();
       const loc = (col === "respuestas" ? gdata(g).resp.filter(r => !r.pend).map(r => r.id + ":" + r.t) : [...gdata(g).votos].map(([k, v]) => k + ":" + (v.id || ""))).sort().join();
       if (srv !== loc) {
@@ -2511,7 +2521,7 @@ async function vigilar() {
     }
     // plenario: votos de todo el taller
     if (plen() && plenFase() !== "preparacion") {
-      const q = await salaRef().collection("plenario").get({ source: "server" });
+      const q = await conTiempo(salaRef().collection("plenario").get({ source: "server" }));
       const srv = q.docs.map(x => x.id + ":" + x.data().id).sort().join(), loc = [...S.plen].map(([k, v]) => k + ":" + v.id).sort().join();
       if (srv !== loc) { faltaba = true; S.plen = new Map(q.docs.map(x => [x.id, x.data()])); }
     }
@@ -2519,7 +2529,7 @@ async function vigilar() {
     const bf = b2Fase();
     if (bf && bf !== "prep") {
       const enUso = document.activeElement?.dataset?.b2;
-      const qp = await salaRef().collection("b2prop").where("q", "==", qActiva()).get({ source: "server" });
+      const qp = await conTiempo(salaRef().collection("b2prop").where("q", "==", qActiva()).get({ source: "server" }));
       const srvP = qp.docs.map(x => x.id + ":" + x.data().uid + ":" + x.data().t).sort().join();
       const locP = [...S.b2p.values()].filter(x => x.q === qActiva()).map(x => x.id + ":" + x.uid + ":" + x.t).sort().join();
       if (srvP !== locP) {
@@ -2529,20 +2539,22 @@ async function vigilar() {
         S.b2p = nuevo; S.b2ver++;
       }
       if (bf !== "escribir") {
-        const qv = await salaRef().collection("b2voto").where("q", "==", qActiva()).get({ source: "server" });
+        const qv = await conTiempo(salaRef().collection("b2voto").where("q", "==", qActiva()).get({ source: "server" }));
         const srvV = qv.docs.map(x => x.id + ":" + JSON.stringify(x.data().sel || {})).sort().join();
         const locV = [...S.b2v].filter(([, v]) => v.q === qActiva()).map(([k, v]) => k + ":" + JSON.stringify(v.sel || {})).sort().join();
         if (srvV !== locV) { faltaba = true; S.b2v = new Map(qv.docs.map(x => [x.id, x.data()])); S.b2ver++; }
       }
     }
-  } catch {} finally { vigilando = false; }
-  if (faltaba) { S.sig = ""; S.facSig = ""; S.projSig = ""; render(); reconectar("faltaban datos"); }
+  } catch (e) { if (e?.message === "sin respuesta") { vigilando = false; return trabado("el servidor no respondió"); } } finally { vigilando = false; }
+  if (faltaba) { S.sig = ""; S.facSig = ""; S.projSig = ""; render(); trabado("faltaban datos"); }
+  else trabas = 0;
 }
-setInterval(vigilar, 12000);
+// más seguido mientras se responde, vota o escribe; más espaciado en las demás etapas
+setInterval(() => { const activo = (S.room?.fase === "respuestas" && !S.room?.espera) || S.room?.fase === "votacion" || plenFase() === "votacion" || ["escribir", "votar"].includes(b2Fase()); if (activo || (S.vigTick = (S.vigTick || 0) + 1) % 2 === 0) vigilar(); }, 8000);
 
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021191800";
+const BUILD = "20261021203312";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
@@ -2631,8 +2643,8 @@ async function start() {
   try {
     if (!firebase.apps.length) firebase.initializeApp(S.cfg);
     S.db = firebase.firestore();
-    try { S.db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch {}
-    try { await S.db.enablePersistence({ synchronizeTabs: true }); } catch {}
+    const forzar = lsGet("taller-conexion") === "lenta";
+    try { S.db.settings(forzar ? { experimentalForceLongPolling: true, merge: true } : { experimentalAutoDetectLongPolling: true, merge: true }); } catch {}
     const cur = await new Promise(res => { const u = firebase.auth().onAuthStateChanged(x => { u(); res(x); }); });
     S.uid = (cur || (await firebase.auth().signInAnonymously()).user).uid;
   } catch (e) {
