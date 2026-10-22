@@ -571,6 +571,15 @@ html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 .b2ok{padding:7px 16px}
 .b2edit,.b2take{padding:7px 14px;font-weight:700;color:var(--accent)}
 .b2take{border-style:dashed}
+/* barra "Ahora" */
+.guia{background:var(--accent-soft);color:var(--fg);border-bottom:1px solid var(--line)}
+.guia .inner{display:flex;align-items:center;gap:10px;padding-block:8px;font-size:14px;line-height:1.3}
+.guia .gtx{flex:1;min-width:0}
+.guia .gdot{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-size:13px;font-weight:800;animation:ping 2s infinite}
+.guia.ok .gdot{animation:none}
+.guia.ok{background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
+.guia .gir{flex:none;border:0;background:var(--accent);color:var(--accent-fg);border-radius:999px;padding:6px 14px;font-weight:800;font-size:13.5px}
+html.fs1 .guia .inner{font-size:16px}html.fs2 .guia .inner{font-size:18.5px}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -594,7 +603,7 @@ html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 /* panel del facilitador: pregunta | ronda, y debajo los grupos */
 .ctl{background:var(--bar);border-bottom:1px solid var(--line)}
 .ctl .inner{padding-block:12px 10px;display:flex;flex-direction:column;gap:10px}
-.ctl-grid{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px}
+.ctl-grid{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:10px;align-items:start}
 .panel{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .ptitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .ptitle .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:ping 2s infinite}
@@ -1192,7 +1201,7 @@ function buildApp() {
       ...FASES.map((f, i) => h("button", { class: "tab", role: "tab", "data-tab": f, onclick: () => { if (tabAllowed(f)) { S.tab = f; S.sig = ""; render(); } } }, h("span", { class: "tn" }, (i + 1) + " · "), ["Responder", "Votar", "Resultados"][i])),
       h("button", { class: "tab", role: "tab", "data-tab": "plenario", hidden: true, onclick: () => { if (tabAllowed("plenario")) { S.tab = "plenario"; S.sig = ""; render(); } } }, h("span", { class: "tn" }, "4 · "), "Plenario"),
       h("button", { class: "tab", role: "tab", "data-tab": "bloque2", hidden: true, onclick: () => { if (tabAllowed("bloque2")) { S.tab = "bloque2"; S.sig = ""; render(); } } }, h("span", { class: "tn" }, "5 · "), "Bloque 2"),
-      h("span", { class: "ink", id: "ink" }))),
+      h("span", { class: "ink", id: "ink" })), h("div", { class: "guia", id: "guia", hidden: true, role: "status", "aria-live": "polite" })),
     h("section", { class: "ctl", id: "fac", hidden: true }, h("div", { class: "inner", id: "facIn" })),
     h("main", { id: "main" }, h("div", { class: "inner", id: "view" })),
     h("footer", { class: "composer", id: "composer" }, h("div", { class: "inner" },
@@ -1285,7 +1294,7 @@ function confirmReset() {
 
 
 function viewChat(g) {
-  const out = [isFac() ? null : banner(false), h("div", { class: "day" }, "Grupo " + g)].filter(Boolean);
+  const out = [isFac() || myProps().length || (S.room.fase !== "respuestas") ? null : banner(false), h("div", { class: "day" }, "Grupo " + g)].filter(Boolean);
   out.push(h("div", { class: "msg q" }, h("div", { class: "who" }, `Pregunta ${qNum(curQ())} del facilitador`), h("div", { class: "txt" }, qTexto(curQ()))));
   const fac = isFac(), props = proposals(g);
   let stagger = 0;
@@ -1334,9 +1343,9 @@ function viewVote(g) {
   out.push(h("div", { class: "card" }, h("div", { class: "vhead" },
     h("div", {}, h("h2", {}, fac ? `Votación del Grupo ${g}` : "Elige 1 respuesta"),
       h("p", {}, fac ? `${t.voters} de ${nm} integrantes ya votaron.${S.room.fase === "votacion" && faltanVotar(g).length ? " Faltan: " + faltanVotar(g).join(", ") + "." : ""} Los votos se muestran en Resultados.`
-        : S.room.fase === "votacion" ? `Toca la respuesta de tu grupo que mejor describe el cuello de botella. Tienes ${minVoto()}; puedes cambiar tu voto hasta que termine el tiempo.`
+        : S.room.fase === "votacion" ? `Toca la respuesta que mejor describe el cuello de botella. Tienes ${minVoto()} y puedes cambiar tu voto hasta el final.`
         : S.room.fase === "respuestas" ? `La votación empieza sola cuando termine el tiempo para responder y dura ${minVoto()}.` : "La votación está cerrada.")),
-    fac ? null : h("div", { class: "chips", "aria-label": mv ? "Ya votaste" : "Aún no votas" }, h("span", { class: "chip" + (mv ? " used" + (S.pulse ? " new" : "") : "") }, mv ? svgCheck() : "1")))));
+    null)));
   if (!props.length) { out.push(h("div", { class: "card empty" }, h("b", {}, "No hay respuestas para votar"), "Las respuestas del grupo aparecerán aquí.")); return out; }
   const list = h("div", { class: "vlist" });
   let stagger = 0;
@@ -1557,7 +1566,7 @@ function viewPlenario(entering) {
         : f === "votacion"
         ? (fac ? `${voters} de ${S.miembros.size} participantes ya votaron.` : "Estas son las respuestas ganadoras de todos los grupos. Tienes 1 voto para elegir la que debe priorizar todo el taller.")
         : "La propuesta con más votos de todo el taller es la ganadora del plenario.")),
-    open ? h("div", { class: "chips" }, h("span", { class: "chip" + (mv ? " used" : "") }, mv ? svgCheck() : "1")) : null)));
+    null)));
   if (f === "preparacion") {
     // el facilitador ve solo la tarjeta de edición (que ya lista las propuestas); los participantes ven la lista
     if (!fac) out.push(h("div", { class: "vlist" }, ...p.items.map((it, i) => h("div", { class: "vitem" + (entering ? " enter" : ""), style: `--d:${i * 0.06}s` },
@@ -2055,12 +2064,12 @@ function render() {
   checkPlenario(); checkEncuesta();
   const tab = currentTab(), g = curG(), fac = isFac(), p = plen();
   document.title = S.room.titulo || "Taller";
-  $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g} · ${S.room.titulo || "Taller"}`;
+  $("title").textContent = fac ? (S.room.titulo || "Taller") : `Grupo ${g}`;
   const nm = g ? miembrosDe(g).length : S.miembros.size;
   const qLbl = `Pregunta ${qNum(curQ())} de ${preguntas().length}`;
   $("sub").textContent = fac
-    ? (g ? `Facilitador · Grupo ${g} · ${qLbl}` : `Facilitador · ${nGrupos()} grupos · ${S.miembros.size} participantes · ${qLbl}`)
-    : `${S.nombre} · ${nm} de ${CUPO} integrantes · ${qLbl} · ${bloque2() ? "Bloque 2" : p ? "Plenario" : FASE_NOMBRE[S.room.fase]}`;
+    ? (g ? `Viendo el Grupo ${g} · ${qLbl}` : `${nGrupos()} grupos · ${S.miembros.size} participantes · ${qLbl}`)
+    : `${S.nombre} · ${qLbl}`;
   const vivo = bloque2() ? "bloque2" : p ? "plenario" : S.room.fase;
   document.querySelectorAll(".tab").forEach(b => {
     const t = b.dataset.tab;
@@ -2070,7 +2079,7 @@ function render() {
     b.querySelector(".live")?.remove();
     if (t === vivo) b.prepend(h("span", { class: "live", "aria-label": "etapa actual" }));
   });
-  moveInk(); paintFac(); paintTimer();
+  moveInk(); paintFac(); paintTimer(); guia();
 
   const q = curQ(), pt = p ? plenTally() : null;
   const sig = JSON.stringify([tab, g, q, qTexto(q), qActiva(), S.room.fase, fac, abierto(), S.room.grupos, !!S.room.encuesta, S.encDone,
@@ -2096,9 +2105,40 @@ function render() {
   }
   S.stick = false; S.pulse = null;
   if (S.focusB2) { const el = document.querySelector(`[data-b2="${S.focusB2}"]`); if (el) { S.focusB2 = null; el.focus(); el.scrollIntoView({ block: "center" }); } }
-  $("composer").hidden = tab !== "respuestas" || !g;
+  $("composer").hidden = tab !== "respuestas" || !g || (!fac && S.room.fase !== "respuestas");
   updateComposer();
   paintProj();
+}
+
+/* ---------- barra "Ahora": qué hacer en este momento (participantes) ---------- */
+function guia() {
+  const el = $("guia"); if (!el) return;
+  if (isFac() || !S.room || !me()) { el.hidden = true; return; }
+  const p = plen(), pf = plenFase(), bf = b2Fase(), f = S.room.fase;
+  let txt, ok = false, tab;
+  if (bf) {
+    tab = "bloque2";
+    if (bf === "prep") txt = "Bloque 2: en un momento empiezan las propuestas de solución";
+    else if (bf === "escribir") { const n = temasB2().map(t => misPropsB2(t.id).filter(x => x.t.trim()).length); ok = n.every(x => x >= B2_MAX); txt = ok ? "Escribiste tus propuestas. Puedes editarlas hasta que acabe el tiempo" : "Escribe tus propuestas (" + n.map((x, i) => `cuello ${i + 1}: ${x}/${B2_MAX}`).join(" · ") + ")"; }
+    else if (bf === "votar") { const n = temasB2().map(t => (miSelB2()[t.id] || []).length); ok = n.every(x => x >= B2_SEL); txt = ok ? "Marcaste tus prioridades. Puedes cambiarlas hasta que acabe el tiempo" : "Marca prioridades (" + n.map((x, i) => `cuello ${i + 1}: ${x}/${B2_SEL}`).join(" · ") + ")"; }
+    else txt = "Mira la tabla de propuestas priorizadas";
+  } else if (p) {
+    tab = "plenario";
+    if (pf === "preparacion") txt = "Plenario: el facilitador revisa las propuestas finalistas";
+    else if (pf === "votacion") { ok = !!myPlenVote(); txt = ok ? "Tu voto del plenario está guardado. Puedes cambiarlo" : "Vota por la mejor propuesta de todo el taller"; }
+    else txt = "Mira la propuesta ganadora del plenario";
+  } else if (S.room.espera) { tab = "respuestas"; txt = "Lee la pregunta: el facilitador iniciará el tiempo"; }
+  else if (f === "respuestas") { tab = "respuestas"; ok = myProps().length > 0; txt = ok ? "Respuesta enviada. Puedes editarla hasta que acabe el tiempo" : "Escribe tu respuesta (1 por persona)"; }
+  else if (f === "votacion") { tab = "votacion"; ok = !!myVote(); txt = ok ? "Tu voto está guardado. Puedes cambiarlo" : "Vota por 1 respuesta de tu grupo"; }
+  else { tab = "resultados"; txt = "Mira la respuesta ganadora de tu grupo"; }
+  const aqui = currentTab() === tab, sig = [txt, ok, aqui].join("|");
+  el.hidden = false; el.classList.toggle("ok", ok);
+  if (el.dataset.sig === sig) return;
+  el.dataset.sig = sig;
+  el.replaceChildren(h("div", { class: "inner" },
+    h("span", { class: "gdot", "aria-hidden": "true" }, ok ? "✓" : ""),
+    h("span", { class: "gtx" }, ok ? txt : h("b", {}, "Ahora: "), ok ? null : txt),
+    aqui ? null : h("button", { class: "gir", onclick: () => { S.tab = null; S.sig = ""; render(); } }, "Ir →")));
 }
 
 /* ---------- panel del facilitador ---------- */
@@ -2261,7 +2301,8 @@ function toggleMenu(force) {
 /* ---------- resumen de todos los grupos ---------- */
 function viewSummary(tab) {
   const q = curQ(), activa = q === qActiva();
-  const out = [banner(true), h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(q)}` + (activa ? " · activa en todos los grupos" : " · anterior (solo consulta)")), h("div", { class: "txt" }, qTexto(q)))];
+  // la pregunta ya está en el panel de arriba: aquí solo se avisa si se mira una pregunta anterior
+  const out = [banner(true), activa ? null : h("div", { class: "msg q", style: "align-self:stretch;max-width:none" }, h("div", { class: "who" }, `Pregunta ${qNum(q)} · anterior (solo consulta)`), h("div", { class: "txt" }, qTexto(q)))].filter(Boolean);
   const cards = [];
   for (let g = 1; g <= nGrupos(); g++) {
     const ms = miembrosDe(g), t = tally(g, q), pr = proposals(g, q);
@@ -2279,7 +2320,7 @@ function viewSummary(tab) {
       const sol = gdata(g).sol.get(q);
       body = ganadoras(t.ranked).map(r => h("div", { class: "mini" }, h("b", {}, "🏆"), r.t, ` (${r.n} ${r.n === 1 ? "voto" : "votos"})`));
       if (!body.length) body = [h("span", { class: "note" }, "Sin votos todavía.")];
-      body.push(sol ? h("div", { class: "mini sol" }, h("b", {}, "💡"), sol.solucion, sol.responsable ? ` · Responsable: ${sol.responsable}` : "") : h("span", { class: "note" }, "Propuesta de solución pendiente"));
+      if (nGrupos() === 1) body.push(sol ? h("div", { class: "mini sol" }, h("b", {}, "💡"), sol.solucion, sol.responsable ? ` · Responsable: ${sol.responsable}` : "") : h("span", { class: "note" }, "Propuesta de solución pendiente"));
     }
     cards.push(h("button", { class: "gcard", style: `--d:${(g - 1) * 0.05}s`, onclick: () => { S.viewG = g; render(); } },
       h("div", { class: "gt" }, h("h3", {}, "Grupo " + g), h("span", { class: "pill" + (ms.length >= CUPO ? " ok" : "") }, `${ms.length}/${CUPO}`)),
@@ -2501,7 +2542,7 @@ setInterval(vigilar, 12000);
 
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021191410";
+const BUILD = "20261021191800";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
