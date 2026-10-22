@@ -528,7 +528,7 @@ html.fs1 .ntitle{font-size:22px}html.fs2 .ntitle{font-size:25px}
 .b2mini{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;font-weight:700;color:var(--fg)}
 .b2tablewrap{align-self:stretch;overflow-x:auto;margin-top:10px;border-radius:16px;box-shadow:var(--shadow);background:var(--panel)}
 .b2table{width:100%;border-collapse:collapse;font-size:14.5px}
-.b2table th,.b2table td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.b2table th,.b2table td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
 .b2table thead th{background:var(--head);color:var(--head-fg);font-size:13px;font-weight:800;overflow-wrap:normal;word-break:normal;hyphens:manual}
 .b2table tbody th{width:34%;background:var(--accent-soft);font-weight:700;border-right:1px solid var(--line)}
 .b2table tr.first > *{border-top:2px solid var(--accent)}
@@ -551,7 +551,7 @@ html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 .b2table tr.on td{background:var(--accent-soft)}
 .b2table tr.mine td:not(.pri){background:color-mix(in srgb,var(--mine) 55%,transparent)}
 .b2table tr.on.mine td{background:var(--accent-soft)}
-.b2t{overflow-wrap:anywhere}
+.b2t{overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
 .b2who{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px;display:flex;gap:10px;align-items:center}
 .b2check{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:var(--panel);display:inline-grid;place-items:center;color:var(--accent-fg);transition:transform .15s,background .2s,border-color .2s}
 .b2check:active{transform:scale(.9)}
@@ -580,6 +580,11 @@ html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 .guia.ok{background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
 .guia .gir{flex:none;border:0;background:var(--accent);color:var(--accent-fg);border-radius:999px;padding:6px 14px;font-weight:800;font-size:13.5px}
 html.fs1 .guia .inner{font-size:16px}html.fs2 .guia .inner{font-size:18.5px}
+/* letra grande: descripciones y tabla también crecen */
+html.fs1 :is(.vhead p,.b2who,.note){font-size:16px}html.fs2 :is(.vhead p,.b2who,.note){font-size:18px}
+html.fs1 .b2table thead th{font-size:15px}html.fs2 .b2table thead th{font-size:17px}
+.b2take{white-space:nowrap}
+@media (max-width:340px){.b2take,.b2edit{padding:6px 10px;font-size:12.5px}.b2table .pri{width:52px}.b2check,.b2del{width:36px;height:36px}}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -1020,7 +1025,9 @@ function openSala(code) {
       history.replaceState(null, "", location.pathname); S.code = null; return homeScreen(ROLE === "admin");
     }
     const v = d.data();
-    S.roomRaw = estable(v); S.roomVisto = Date.now();
+    // si solo cambió el pulso del panel, se anota sin redibujar nada
+    if (S.roomReady && S.room && sinPulso(v) === S.roomRaw) { S.room.pulso = v.pulso; S.roomVisto = Date.now(); return; }
+    S.roomRaw = sinPulso(v); S.roomVisto = Date.now();
     const pre = (Array.isArray(v.preguntas) ? v.preguntas : []).filter(p => p && typeof p.id === "string" && typeof p.t === "string");
     if (!pre.length) pre.push({ id: "p1", t: v.pregunta || DEFAULT_Q });
     const qid = pre.some(p => p.id === v.qid) ? v.qid : pre[pre.length - 1].id;
@@ -1487,7 +1494,7 @@ const svgPend = () => svg("0 0 16 16", '<circle cx="8" cy="8" r="6" fill="none" 
 function netBanner() {
   let el = $("net");
   if (navigator.onLine) { el?.remove(); return; }
-  if (!el) document.body.append(h("div", { id: "net", class: "net", role: "status" }, "Sin conexión · lo que escribas se enviará cuando vuelva la señal"));
+  if (!el) document.body.append(h("div", { id: "net", class: "net", role: "status" }, "Sin conexión · no cierres esta página: lo que escribas se enviará al volver la señal"));
 }
 addEventListener("online", () => { netBanner(); toast("Conexión recuperada."); });
 addEventListener("offline", netBanner);
@@ -1654,7 +1661,6 @@ const enUsoB2 = p => !!p.ed && nowMs() - p.ed < B2_EDIT_MS;
 const libreB2 = p => !p.t.trim() && p.uid !== S.uid && (!p.uid || !enUsoB2(p));
 const puedeBorrarB2 = p => !p.t.trim() && (p.uid === S.uid || isFac() || !p.uid || !enUsoB2(p));
 const misPropsB2 = tema => b2Filas(tema).filter(p => p.uid === S.uid);
-const libresB2 = tema => b2Filas(tema).filter(p => libreB2(p)).length;
 const miSelB2 = () => S.b2v.get(S.uid + "_" + qActiva())?.sel || {};
 const autoresB2 = () => new Set([...S.b2p.values()].filter(p => p.q === qActiva() && p.t?.trim()).map(p => p.uid)).size;
 const votantesB2 = () => [...S.b2v.values()].filter(v => v.q === qActiva() && Object.values(v.sel || {}).some(l => l?.length)).length;
@@ -1710,17 +1716,6 @@ function escribirB2(id, ta) {
   clearTimeout(b2Timers.get(id));
   b2Timers.set(id, setTimeout(() => guardarB2(id, ta.value.slice(0, 400), true), 600));
 }
-function soltarB2(id, ta) {
-  clearTimeout(b2Timers.get(id)); clearInterval(S.b2Pulso);
-  const t = ta.value.trim().slice(0, 400), loc = S.b2p.get(id);
-  if (!t) { // vacía: vuelve a quedar libre para cualquiera
-    if (loc) Object.assign(loc, { t: "", uid: "", nombre: "", ed: 0 });
-    salaRef().collection("b2prop").doc(id).update({ t: "", uid: "", nombre: "", ed: 0 }).catch(() => {});
-    return;
-  }
-  if (loc) { loc.t = t; loc.ed = 0; }
-  guardarB2(id, t, false);
-}
 // pausa: al salir del cuadro se guarda lo escrito (sin cerrarlo); el cuadro se cierra con "Aceptar"
 function pausarB2(id, ta) {
   clearTimeout(b2Timers.get(id)); clearInterval(S.b2Pulso);
@@ -1753,19 +1748,6 @@ async function tomarFilaB2(p, tema) {
   catch (e) {
     if (loc && antes) Object.assign(loc, antes);
     S.b2Edit = null; document.activeElement?.blur?.(); S.sig = ""; S.b2ver++; render();
-    toast(b2Fase() !== "escribir" ? "Se acabó el tiempo para escribir propuestas." : "Otra persona tomó esta fila. Elige otra o agrega una nueva.");
-  }
-}
-async function tomarB2(p, ta, tema) {
-  if (misPropsB2(tema).length >= B2_MAX) { ta.blur(); return toast(`Ya tienes ${B2_MAX} propuestas en este cuello de botella.`); }
-  const loc = S.b2p.get(p.id), antes = loc && { ...loc };
-  if (loc) Object.assign(loc, { uid: S.uid, nombre: S.nombre.slice(0, 50), ed: nowMs() });
-  try {
-    await salaRef().collection("b2prop").doc(p.id).update({ uid: S.uid, nombre: S.nombre.slice(0, 50), g: me()?.grupo || 0, ed: nowMs() });
-    enfocarB2(p.id, ta);
-  } catch (e) {
-    if (loc && antes) Object.assign(loc, antes);
-    ta.blur(); S.sig = ""; render();
     toast(b2Fase() !== "escribir" ? "Se acabó el tiempo para escribir propuestas." : "Otra persona tomó esta fila. Elige otra o agrega una nueva.");
   }
 }
@@ -2467,6 +2449,7 @@ async function empezarDeCero() {
 }
 
 /* ---------- conexión: si la escucha en tiempo real se queda dormida, se reconecta sola ---------- */
+const sinPulso = o => { const c = { ...(o || {}) }; delete c.pulso; return estable(c); };
 const estable = o => JSON.stringify(o, (k, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(x => [x, v[x]])) : v);
 let reconectando = false;
 async function reconectar(motivo) {
@@ -2489,7 +2472,9 @@ function trabado(motivo) {
   reconectar(motivo);
   if (trabas >= 2 && lsGet("taller-conexion") !== "lenta") {
     lsSet("taller-conexion", "lenta");
-    try { if (!sessionStorage.getItem("taller-recargo-lenta")) { sessionStorage.setItem("taller-recargo-lenta", "1"); setTimeout(() => location.reload(), 600); } } catch {}
+    const escribiendo = () => { const ae = document.activeElement; return ae && /^(TEXTAREA|INPUT)$/.test(ae.tagName) && ae.value.trim(); };
+    const recargar = () => { if (escribiendo()) return setTimeout(recargar, 3000); location.reload(); };
+    try { if (!sessionStorage.getItem("taller-recargo-lenta")) { sessionStorage.setItem("taller-recargo-lenta", "1"); setTimeout(recargar, 600); } } catch {}
   }
 }
 async function vigilar() {
@@ -2502,47 +2487,61 @@ async function vigilar() {
   S.vigVeces++; vigilando = true;
   let faltaba = false;
   try {
+    // 1 lectura: el documento del taller. El panel del facilitador le da un "pulso" cada 15 s:
+    // si el servidor tiene un pulso mucho más nuevo que el último que llegó aquí, la escucha está trabada.
     const d = await conTiempo(salaRef().get({ source: "server" }));
     if (!d.exists) return reconectar("el taller cambió");
-    if (estable(d.data()) !== S.roomRaw) faltaba = true;
+    const sv = d.data(), distinto = sinPulso(sv) !== S.roomRaw;
+    const atascado = (sv.pulso || 0) - (S.room.pulso || 0) > 10000;
+    const panelVivo = nowMs() - (sv.pulso || 0) < 60000;
+    if (distinto || atascado) faltaba = true;
+    // revisión completa: al cambiar de etapa (2 primeras vueltas), si hay atasco, o cada ~40 s si no hay pulso (o soy el panel)
+    S.vigTodo = (S.vigTodo || 0) + 1;
+    const enGrupo = (S.room.fase === "respuestas" && !S.room.espera) || S.room.fase === "votacion";
+    const completa = S.vigVeces <= 2 || faltaba || (enGrupo && S.vigTodo % 2 === 0) || ((isFac() || !panelVivo) && S.vigTodo % 5 === 0);
+    if (!completa) { vigilando = false; if (!faltaba) trabas = 0; return; }
     const gs = isFac() ? [...S.gsubs.keys()] : (me()?.grupo ? [me().grupo] : []);
     const f = S.room.fase, cols = [];
     if (f === "respuestas" && !S.room.espera) cols.push("respuestas");
     if (f === "votacion" || (f === "resultados" && !plen())) cols.push("respuestas", "votos");
     for (const g of gs) for (const col of cols) {
       const q = await conTiempo(grupoRef(g).collection(col).get({ source: "server" }));
-      const srv = q.docs.map(x => x.id + ":" + (x.data().id || x.data().t || "")).sort().join();
-      const loc = (col === "respuestas" ? gdata(g).resp.filter(r => !r.pend).map(r => r.id + ":" + r.t) : [...gdata(g).votos].map(([k, v]) => k + ":" + (v.id || ""))).sort().join();
+      const mio = id => col === "votos" && id === voteId();
+      const srv = q.docs.filter(x => !mio(x.id)).map(x => x.id + ":" + (x.data().id || x.data().t || "")).sort().join();
+      const loc = (col === "respuestas" ? gdata(g).resp.filter(r => !r.pend).map(r => r.id + ":" + r.t) : [...gdata(g).votos].filter(([k]) => !mio(k)).map(([k, v]) => k + ":" + (v.id || ""))).sort().join();
       if (srv !== loc) {
         faltaba = true;
         if (col === "respuestas") gdata(g).resp = q.docs.map(x => ({ id: x.id, ...x.data(), pend: false })).filter(r => typeof r.t === "string").sort((a, b) => (a.ts || 0) - (b.ts || 0));
-        else gdata(g).votos = new Map(q.docs.map(x => [x.id, x.data()]));
+        else { const yo = gdata(g).votos.get(voteId()); gdata(g).votos = new Map(q.docs.map(x => [x.id, x.data()])); if (yo) gdata(g).votos.set(voteId(), yo); }
       }
     }
     // plenario: votos de todo el taller
     if (plen() && plenFase() !== "preparacion") {
       const q = await conTiempo(salaRef().collection("plenario").get({ source: "server" }));
-      const srv = q.docs.map(x => x.id + ":" + x.data().id).sort().join(), loc = [...S.plen].map(([k, v]) => k + ":" + v.id).sort().join();
-      if (srv !== loc) { faltaba = true; S.plen = new Map(q.docs.map(x => [x.id, x.data()])); }
+      const yoId = S.uid + "_" + plen().q, yo = S.plen.get(yoId);
+      const srv = q.docs.filter(x => x.id !== yoId).map(x => x.id + ":" + x.data().id).sort().join(), loc = [...S.plen].filter(([k]) => k !== yoId).map(([k, v]) => k + ":" + v.id).sort().join();
+      if (srv !== loc) { faltaba = true; S.plen = new Map(q.docs.map(x => [x.id, x.data()])); if (yo) S.plen.set(yoId, yo); }
     }
     // Bloque 2: filas de propuestas y marcas de prioridad
     const bf = b2Fase();
     if (bf && bf !== "prep") {
       const enUso = document.activeElement?.dataset?.b2;
       const qp = await conTiempo(salaRef().collection("b2prop").where("q", "==", qActiva()).get({ source: "server" }));
-      const srvP = qp.docs.map(x => x.id + ":" + x.data().uid + ":" + x.data().t).sort().join();
-      const locP = [...S.b2p.values()].filter(x => x.q === qActiva()).map(x => x.id + ":" + x.uid + ":" + x.t).sort().join();
+      const ajena = (id, uid) => id !== enUso && uid !== S.uid && S.b2p.get(id)?.uid !== S.uid;
+      const srvP = qp.docs.filter(x => ajena(x.id, x.data().uid)).map(x => x.id + ":" + x.data().uid + ":" + x.data().t).sort().join();
+      const locP = [...S.b2p.values()].filter(x => x.q === qActiva() && ajena(x.id, x.uid)).map(x => x.id + ":" + x.uid + ":" + x.t).sort().join();
       if (srvP !== locP) {
         faltaba = true;
         const nuevo = new Map(qp.docs.map(x => [x.id, { id: x.id, ...x.data() }]));
-        if (enUso && S.b2p.has(enUso)) nuevo.set(enUso, S.b2p.get(enUso)); // no pisar lo que escribo ahora
+        for (const [id, x] of S.b2p) if (id === enUso || x.uid === S.uid) nuevo.set(id, x); // no pisar lo que escribo ni mis filas
         S.b2p = nuevo; S.b2ver++;
       }
       if (bf !== "escribir") {
         const qv = await conTiempo(salaRef().collection("b2voto").where("q", "==", qActiva()).get({ source: "server" }));
-        const srvV = qv.docs.map(x => x.id + ":" + JSON.stringify(x.data().sel || {})).sort().join();
-        const locV = [...S.b2v].filter(([, v]) => v.q === qActiva()).map(([k, v]) => k + ":" + JSON.stringify(v.sel || {})).sort().join();
-        if (srvV !== locV) { faltaba = true; S.b2v = new Map(qv.docs.map(x => [x.id, x.data()])); S.b2ver++; }
+        const yoV = S.uid + "_" + qActiva(), mia = S.b2v.get(yoV), selK = v => JSON.stringify(Object.fromEntries(Object.entries(v.sel || {}).sort()));
+        const srvV = qv.docs.filter(x => x.id !== yoV).map(x => x.id + ":" + selK(x.data())).sort().join();
+        const locV = [...S.b2v].filter(([k, v]) => v.q === qActiva() && k !== yoV).map(([k, v]) => k + ":" + selK(v)).sort().join();
+        if (srvV !== locV) { faltaba = true; S.b2v = new Map(qv.docs.map(x => [x.id, x.data()])); if (mia) S.b2v.set(yoV, mia); S.b2ver++; }
       }
     }
   } catch (e) { if (e?.message === "sin respuesta") { vigilando = false; return trabado("el servidor no respondió"); } } finally { vigilando = false; }
@@ -2553,8 +2552,11 @@ async function vigilar() {
 setInterval(() => { const activo = (S.room?.fase === "respuestas" && !S.room?.espera) || S.room?.fase === "votacion" || plenFase() === "votacion" || ["escribir", "votar"].includes(b2Fase()); if (activo || (S.vigTick = (S.vigTick || 0) + 1) % 2 === 0) vigilar(); }, 8000);
 
 
+// pulso del panel del facilitador: 1 escritura cada 20 s que permite a cada celular saber si su escucha está al día
+setInterval(() => { if (ROLE === "admin" && S.isAdmin && S.code && S.roomReady && !S.wiping) salaRef().update({ pulso: nowMs() }).catch(() => {}); }, 15000);
+
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021203312";
+const BUILD = "20261021212610";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
