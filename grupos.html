@@ -565,6 +565,12 @@ html.fs1 .b2table{font-size:17px}html.fs2 .b2table{font-size:20px}
 .b2del svg{width:20px;height:20px}
 .b2del:disabled{color:var(--muted);opacity:.6}
 .b2add{padding:8px 14px;font-size:14px;font-weight:700;color:var(--accent);border-style:dashed}
+/* Bloque 2: aceptar y editar */
+.b2acts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.b2acts .b2who{margin:0}
+.b2ok{padding:7px 16px}
+.b2edit,.b2take{padding:7px 14px;font-weight:700;color:var(--accent)}
+.b2take{border-style:dashed}
 /* cartel con imagen dentro de la sala */
 .wbanner{align-self:stretch;display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:10px 14px 10px 10px;margin:4px 0 8px;overflow:hidden;animation:cardIn .6s cubic-bezier(.2,.9,.3,1.2) both}
 .wbanner .bimg{flex:none;width:92px;height:92px;border-radius:12px;background-size:cover;background-position:center}
@@ -1682,7 +1688,7 @@ function agregarFilaB2(tema) {
   if (b2Fase() !== "escribir" || isFac() || !me()) return;
   if (misPropsB2(tema).length >= B2_MAX) return toast(`Puedes tener hasta ${B2_MAX} filas en cada cuello de botella.`);
   const ref = salaRef().collection("b2prop").doc();
-  S.focusB2 = ref.id;
+  S.focusB2 = ref.id; S.b2Edit = ref.id;
   ref.set({ uid: S.uid, nombre: S.nombre.slice(0, 50), g: me()?.grupo || 0, tema, t: "", q: qActiva(), ts: nowMs(), ed: nowMs() }).catch(e => { S.focusB2 = null; fbError(e); });
 }
 const b2Timers = new Map();
@@ -1705,6 +1711,41 @@ function soltarB2(id, ta) {
   }
   if (loc) { loc.t = t; loc.ed = 0; }
   guardarB2(id, t, false);
+}
+// pausa: al salir del cuadro se guarda lo escrito (sin cerrarlo); el cuadro se cierra con "Aceptar"
+function pausarB2(id, ta) {
+  clearTimeout(b2Timers.get(id)); clearInterval(S.b2Pulso);
+  const loc = S.b2p.get(id); if (!loc || loc.uid !== S.uid) return;
+  const t = ta.value.slice(0, 400); loc.t = t; loc.ed = 0;
+  guardarB2(id, t, false);
+}
+function aceptarB2(id, ta) {
+  clearTimeout(b2Timers.get(id)); clearInterval(S.b2Pulso);
+  const t = ta.value.trim().slice(0, 400), loc = S.b2p.get(id);
+  S.b2Edit = null;
+  if (!t) { // vacía: la fila vuelve a quedar libre
+    if (loc) Object.assign(loc, { t: "", uid: "", nombre: "", ed: 0 });
+    salaRef().collection("b2prop").doc(id).update({ t: "", uid: "", nombre: "", ed: 0 }).catch(() => {});
+    toast("La fila quedó libre.");
+  } else {
+    if (loc) { loc.t = t; loc.ed = 0; }
+    guardarB2(id, t, false);
+    burst({ particleCount: 35, spread: 50, origin: { y: .7 } });
+  }
+  ta.blur(); S.sig = ""; S.b2ver++; render();
+}
+async function tomarFilaB2(p, tema) {
+  if (b2Fase() !== "escribir" || isFac() || !me()) return;
+  if (misPropsB2(tema).length >= B2_MAX) return toast(`Ya tienes ${B2_MAX} propuestas en este cuello de botella.`);
+  const loc = S.b2p.get(p.id), antes = loc && { ...loc };
+  if (loc) Object.assign(loc, { uid: S.uid, nombre: S.nombre.slice(0, 50), ed: nowMs() });
+  S.b2Edit = p.id; S.focusB2 = p.id; S.sig = ""; S.b2ver++; render();
+  try { await salaRef().collection("b2prop").doc(p.id).update({ uid: S.uid, nombre: S.nombre.slice(0, 50), g: me()?.grupo || 0, ed: nowMs() }); }
+  catch (e) {
+    if (loc && antes) Object.assign(loc, antes);
+    S.b2Edit = null; document.activeElement?.blur?.(); S.sig = ""; S.b2ver++; render();
+    toast(b2Fase() !== "escribir" ? "Se acabó el tiempo para escribir propuestas." : "Otra persona tomó esta fila. Elige otra o agrega una nueva.");
+  }
 }
 async function tomarB2(p, ta, tema) {
   if (misPropsB2(tema).length >= B2_MAX) { ta.blur(); return toast(`Ya tienes ${B2_MAX} propuestas en este cuello de botella.`); }
@@ -1767,7 +1808,7 @@ function viewBloque2(g, entering) {
   const f = b2Fase(), fac = isFac(), temas = temasB2(), tot = S.miembros.size;
   const titulo = { prep: "Bloque 2: propuestas de solución", escribir: "Bloque 2: escribe tus propuestas", votar: "Bloque 2: marca las prioritarias", resultados: "Bloque 2: propuestas priorizadas" }[f];
   const desc = f === "prep" ? (fac ? "Estos son los 2 cuellos de botella más votados en el plenario. Elige los minutos en el panel e inicia el Bloque 2." : "Estos son los 2 cuellos de botella priorizados por todo el taller. En un momento podrás escribir tus propuestas de solución.")
-    : f === "escribir" ? (fac ? `${autoresB2()} de ${tot} participantes ya escribieron al menos una propuesta.` : `Toca una fila libre y escribe tu propuesta de solución. Puedes escribir hasta ${B2_MAX} por cada cuello de botella y agregar filas si hacen falta. Se guarda sola; solo se eliminan filas vacías.`)
+    : f === "escribir" ? (fac ? `${autoresB2()} de ${tot} participantes ya escribieron al menos una propuesta.` : `Pulsa «Escribir aquí» en una fila libre, escribe tu propuesta y pulsa Aceptar. Puedes escribir hasta ${B2_MAX} por cada cuello de botella y editarlas con «Editar». Solo se eliminan filas vacías.`)
     : f === "votar" ? (fac ? `${votantesB2()} de ${tot} participantes ya marcaron sus prioridades.` : `Marca hasta ${B2_SEL} propuestas por cada cuello de botella: las que deberían hacerse primero.`)
     : "Las propuestas de solución están ordenadas por su total de marcas de prioridad, de mayor a menor.";
   const out = [h("div", { class: "card" }, h("div", { class: "vhead" }, h("div", {}, h("h2", {}, titulo), h("p", {}, desc))))];
@@ -1791,13 +1832,23 @@ function tablaB2Trabajo(f, temas) {
       const on = sel.includes(p.id), mine = p.uid === S.uid, vacia = !p.t.trim(), usando = !mine && enUsoB2(p);
       let celda, pri;
       const libre = escribir && libreB2(p), puedoTomar = libre && puedeEscribir && mias < B2_MAX;
-      if (escribir && !fac && (mine || puedoTomar)) {
-        const ta = h("textarea", { rows: 2, maxlength: 400, "data-b2": p.id, placeholder: mine ? "Escribe aquí tu propuesta de solución…" : "Toca aquí para escribir una propuesta…", "aria-label": "Propuesta para el cuello de botella " + (k + 1) });
-        ta.value = mine ? p.t : "";
+      const editando = escribir && !fac && mine && (S.b2Edit === p.id || vacia);
+      if (editando) {
+        // cuadro abierto solo mientras se edita; "Aceptar" guarda y lo cierra
+        const ta = h("textarea", { rows: 2, maxlength: 400, "data-b2": p.id, placeholder: "Escribe aquí tu propuesta de solución…", "aria-label": "Propuesta para el cuello de botella " + (k + 1) });
+        ta.value = p.t;
         ta.addEventListener("input", () => escribirB2(p.id, ta));
-        ta.addEventListener("focus", () => { const x = S.b2p.get(p.id); if (x && x.uid === S.uid) enfocarB2(p.id, ta); else tomarB2(p, ta, tm.id); });
-        ta.addEventListener("blur", () => { const x = S.b2p.get(p.id); if (x && x.uid === S.uid) soltarB2(p.id, ta); });
-        celda = h("td", {}, ta, h("div", { class: "b2who" }, mine ? "Tu propuesta · se guarda sola" : "Fila libre"));
+        ta.addEventListener("focus", () => enfocarB2(p.id, ta));
+        ta.addEventListener("blur", () => { if (S.b2Edit === p.id || !S.b2p.get(p.id)?.t?.trim()) pausarB2(p.id, ta); });
+        ta.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); aceptarB2(p.id, ta); } });
+        const ok = h("button", { class: "btn sm b2ok", onpointerdown: e => e.preventDefault(), onclick: () => aceptarB2(p.id, ta) }, "Aceptar");
+        celda = h("td", {}, ta, h("div", { class: "b2acts" }, ok, h("span", { class: "b2who" }, "Escribe y pulsa Aceptar")));
+      } else if (escribir && !fac && mine) {
+        celda = h("td", {}, h("div", { class: "b2t" }, p.t), h("div", { class: "b2acts" },
+          h("button", { class: "btn ghost sm b2edit", onclick: () => { S.b2Edit = p.id; S.focusB2 = p.id; S.sig = ""; render(); } }, "✎ Editar"),
+          h("span", { class: "b2who" }, "Tu propuesta")));
+      } else if (puedoTomar) {
+        celda = h("td", {}, h("button", { class: "btn ghost sm b2take", onclick: () => tomarFilaB2(p, tm.id) }, "✎ Escribir aquí"), h("div", { class: "b2who" }, "Fila libre"));
       } else if (libre) celda = h("td", {}, h("div", { class: "b2t muted" }, "(fila libre)"), h("div", { class: "b2who" }, mias >= B2_MAX ? `Ya escribiste tus ${B2_MAX} propuestas` : ""));
       else celda = h("td", {}, vacia ? h("div", { class: "b2t muted" }, usando ? "✎ Escribiendo…" : "(fila vacía)") : h("div", { class: "b2t" }, p.t),
         h("div", { class: "b2who" }, mine ? "Tú" : p.nombre || "Participante", !vacia && usando ? " · ✎ escribiendo…" : ""));
@@ -2450,7 +2501,7 @@ setInterval(vigilar, 12000);
 
 
 /* ---------- versión: si hay una página más nueva publicada, se recarga sola ---------- */
-const BUILD = "20261021190650";
+const BUILD = "20261021191410";
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?nv=" + Date.now(), { cache: "no-store" })).text();
